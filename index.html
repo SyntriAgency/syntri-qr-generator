@@ -198,10 +198,22 @@
       if((e.ctrlKey||e.metaKey) && e.key === 'Enter'){ render(); updateShareLink(); }
     });
 
-    // Init
-    syncFromURL();
-    render();
-    updateShareLink();
+    // Init — wait until QRCode is available (handles async fallback load)
+    (function initWhenReady(){
+      const start = Date.now();
+      (function check(){
+        if (window.QRCode) {
+          syncFromURL();
+          render();
+          updateShareLink();
+        } else if (Date.now() - start < 8000) {
+          setTimeout(check, 50);
+        } else {
+          console.error('QRCode library failed to load');
+          alert('QR library failed to load. Please refresh (Ctrl/Cmd+F5).');
+        }
+      })();
+    })();
   </script>
 </body>
 </html>
