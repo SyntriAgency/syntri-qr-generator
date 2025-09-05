@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Syntri • QR Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIrt8jvQpW9N+MGPbY6rY3s6QCG+YtG1vCvtKo1YFpsioeQq9v7bSIL3V7CwKqVdQ0bV1PpL5x1sI6W7Gd2g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    :root { --bg: #0b0f14; --panel:#111722; --muted:#90a3b3; --text:#e8eef6; --accent:#7dd3fc; --accent-2:#22d3ee; }
+    @media (prefers-color-scheme: light){ :root{ --bg:#f6f8fb; --panel:#ffffff; --muted:#5b6b78; --text:#0b0f14; --accent:#0284c7; --accent-2:#06b6d4; } }
+    *{ box-sizing: border-box; }
+    body{ margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; background: radial-gradient(1200px 500px at 80% -10%, rgba(125,211,252,.15), transparent), var(--bg); color: var(--text); }
+    .wrap{ max-width: 980px; margin: 48px auto; padding: 0 20px; }
+    .card{ background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 18px; box-shadow: 0 10px 32px rgba(0,0,0,.25); overflow: hidden; }
+    header{ padding: 22px 24px; display:flex; align-items:center; justify-content: space-between; border-bottom:1px solid rgba(255,255,255,.06); }
+    h1{ margin:0; font-size: 18px; font-weight: 700; letter-spacing:.2px; }
+    .badge{ font-size: 12px; padding: 4px 10px; border-radius: 999px; border:1px solid rgba(255,255,255,.12); color: var(--muted); }
+    .grid{ display:grid; grid-template-columns: 1.1fr .9fr; gap: 22px; padding:22px; }
+    @media (max-width: 860px){ .grid{ grid-template-columns: 1fr; } }
+    label{ display:block; font-size: 12px; color: var(--muted); margin-bottom: 8px; letter-spacing:.2px; }
+    input[type="text"], select, input[type="number"]{ width:100%; padding: 12px 14px; border-radius: 12px; border:1px solid rgba(255,255,255,.14); background: transparent; color: var(--text); outline:none; }
+    input::placeholder{ color: #7a8a98; }
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn{ appearance:none; border:none; cursor:pointer; padding: 12px 14px; border-radius: 12px; font-weight: 600; }
+    .btn-primary{ background: linear-gradient(135deg, var(--accent), var(--accent-2)); color:#001018; }
+    .btn-ghost{ background: transparent; color: var(--text); border:1px solid rgba(255,255,255,.14); }
+    .muted{ color: var(--muted); font-size: 12px; }
+    .preview{ display:flex; align-items:center; justify-content:center; background: repeating-conic-gradient(from 0deg, #0000 0 15deg, rgba(255,255,255,.03) 15deg 30deg); border-radius: 14px; min-height: 380px; position: relative; }
+    .qr-box{ padding: 16px; background: #fff; border-radius: 12px; }
+    footer{ padding: 16px 22px; display:flex; align-items:center; justify-content: space-between; border-top:1px solid rgba(255,255,255,.06); }
+    .left{ display:flex; gap:10px; align-items:center; }
+    .kbd{ font: 600 11px/1 Inter, sans-serif; border:1px solid rgba(255,255,255,.2); padding:6px 8px; border-radius:8px; color:var(--muted); }
+    a.link{ color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <h1>Syntri • QR Generator</h1>
+        <span class="badge">offline • client‑side</span>
+      </header>
+
+      <div class="grid">
+        <section>
+          <div class="field">
+            <label for="text">Treść (URL / tekst)</label>
+            <input id="text" type="text" placeholder="https://example.com" value="https://syntri.app" />
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <div>
+              <label for="size">Rozmiar (px)</label>
+              <input id="size" type="number" min="128" max="2048" step="16" value="320" />
+            </div>
+            <div>
+              <label for="margin">Margines</label>
+              <input id="margin" type="number" min="0" max="16" step="1" value="2" />
+            </div>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <div>
+              <label for="ecc">Korekcja błędów</label>
+              <select id="ecc">
+                <option value="L">L (7%)</option>
+                <option value="M" selected>M (15%)</option>
+                <option value="Q">Q (25%)</option>
+                <option value="H">H (30%)</option>
+              </select>
+            </div>
+            <div>
+              <label for="fg">Kolor kodu</label>
+              <input id="fg" type="color" value="#000000" />
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:16px;">
+            <button id="generate" class="btn btn-primary">Generuj (Enter)</button>
+            <button id="clear" class="btn btn-ghost">Wyczyść</button>
+          </div>
+          <p class="muted" style="margin-top:10px;">Działa lokalnie w przeglądarce – żadne dane nie opuszczają urządzenia.</p>
+        </section>
+
+        <section>
+          <div class="preview">
+            <div id="qr" class="qr-box"></div>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:12px;">
+            <button id="downloadPng" class="btn btn-ghost">Pobierz PNG</button>
+            <button id="downloadSvg" class="btn btn-ghost">Pobierz SVG</button>
+          </div>
+        </section>
+      </div>
+
+      <footer>
+        <div class="left">
+          <span class="kbd">⌘ / Ctrl</span><span class="kbd">Enter</span>
+          <span class="muted">— szybkie generowanie</span>
+        </div>
+        <a class="link" href="#" id="shareLink" title="Udostępnij parametry w URL">Udostępnij</a>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // Helpers
+    const $ = (s) => document.querySelector(s);
+    const params = new URLSearchParams(location.search);
+
+    const text = $('#text');
+    const size = $('#size');
+    const ecc  = $('#ecc');
+    const margin = $('#margin');
+    const fg = $('#fg');
+    const qrBox = $('#qr');
+
+    let qr;
+
+    function render(){
+      qrBox.innerHTML = '';
+      const value = text.value.trim() || 'https://syntri.app';
+      const colorDark = fg.value || '#000000';
+      const colorLight = '#ffffff';
+      const width = clamp(parseInt(size.value||320,10), 128, 2048);
+      const m = clamp(parseInt(margin.value||2,10), 0, 16);
+
+      qr = new QRCode(qrBox, {
+        text: value,
+        width,
+        height: width,
+        colorDark,
+        colorLight,
+        correctLevel: QRCode.CorrectLevel[ecc.value || 'M'],
+        margin: m
+      });
+    }
+
+    function clamp(n, min, max){ return Math.min(Math.max(n, min), max); }
+
+    function downloadPNG(){
+      const canvas = qrBox.querySelector('canvas');
+      if(!canvas){
+        alert('Najpierw wygeneruj QR');
+        return;
+      }
+      const a = document.createElement('a');
+      a.download = 'qr.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    }
+
+    function downloadSVG(){
+      const img = qrBox.querySelector('img'); // qrcodejs generuje <img> (fallback) lub <canvas>; SVG nie jest natywnie wspierane
+      const canvas = qrBox.querySelector('canvas');
+      if(canvas){
+        // Konwersja Canvas->SVG jest złożona; prościej: osadzamy PNG w kontenerze SVG
+        const pngData = canvas.toDataURL('image/png');
+        const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}"><image href="${pngData}" width="100%" height="100%"/></svg>`;
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'qr.svg'; a.click();
+        URL.revokeObjectURL(url);
+      } else if(img) {
+        const a = document.createElement('a');
+        a.download = 'qr.png';
+        a.href = img.src;
+        a.click();
+      } else {
+        alert('Najpierw wygeneruj QR');
+      }
+    }
+
+    function syncFromURL(){
+      if(params.has('t')) text.value = decodeURIComponent(params.get('t'));
+      if(params.has('s')) size.value = params.get('s');
+      if(params.has('e')) ecc.value = params.get('e');
+      if(params.has('m')) margin.value = params.get('m');
+      if(params.has('c')) fg.value = params.get('c');
+    }
+
+    function updateShareLink(){
+      const p = new URLSearchParams({
+        t: text.value.trim(), s: size.value, e: ecc.value, m: margin.value, c: fg.value
+      });
+      $('#shareLink').href = location.pathname + '?' + p.toString();
+    }
+
+    // Events
+    $('#generate').addEventListener('click', () => { render(); updateShareLink(); });
+    $('#clear').addEventListener('click', () => { text.value=''; render(); updateShareLink(); });
+    $('#downloadPng').addEventListener('click', downloadPNG);
+    $('#downloadSvg').addEventListener('click', downloadSVG);
+
+    document.addEventListener('keydown', (e)=>{
+      if((e.ctrlKey||e.metaKey) && e.key === 'Enter'){ render(); updateShareLink(); }
+    });
+
+    // Init
+    syncFromURL();
+    render();
+    updateShareLink();
+  </script>
+</body>
+</html>
+    
