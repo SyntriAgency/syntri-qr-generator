@@ -267,52 +267,115 @@
 
     // --- modal z animacją 5s; content (tytuł + przyciski) pojawia się dopiero po animacji
     function startCinematic(){
-      if(!qr || !qr._oQRCode){ render(); }
-      if(!qr || !qr._oQRCode){ alert(i18n('alert_generate_first')); return; }
+  // upewnij się, że mamy świeży QR
+  if(!qr || !qr._oQRCode){ render(); }
+  if(!qr || !qr._oQRCode){ alert(i18n('alert_generate_first')); return; }
 
-      const q = qr._oQRCode;
-      const modules = q.moduleCount;
-      const cell = 10; // px per module in animation canvas
-      const marginCells = clamp(parseInt(margin.value||2,10), 0, 16);
-      const canvasSize = (modules + marginCells*2) * cell;
+  const q = qr._oQRCode;                  // QRCodeModel
+  const modules = q.moduleCount;
+  const matrix  = q.modules || [];        // boolean[y][x]
+  const cell = 10;                        // px per moduł w canvasie animacji
+  const marginCells = clamp(parseInt(margin.value||2,10), 0, 16);
+  const quietPx = marginCells * cell;
+  const canvasSize = (modules + marginCells*2) * cell;
 
-      // zbuduj listę ciemnych modułów i potasuj
-      const dark = [];
-      for(let r=0; r<modules; r++) for(let c=0; c<modules; c++) if(q.isDark(r,c)) dark.push([c, r]);
-      for(let i=dark.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [dark[i],dark[j]]=[dark[j],dark[i]]; }
+  // zbuduj listę "ciemnych" modułów [x,y] z macierzy
+  const dark = [];
+  for (let y = 0; y < modules; y++){
+    for (let x = 0; x < modules; x++){
+      if (matrix[y] && matrix[y][x]) dark.push([x,y]);
+    }
+  }
+  // jeśli z jakiegoś powodu macierz pusta → fallback do natychmiastowego wyświetlenia
+  if (dark.length === 0){
+    console.warn('QR matrix empty; falling back to immediate modal.');
+  }
+  // przetasuj kolejność, żeby było "losowo"
+  for (let i=dark.length-1; i>0; i--){ const j = Math.floor(Math.random()*(i+1)); [dark[i],dark[j]] = [dark[j],dark[i]]; }
 
-      // overlay
-      const overlay = document.createElement('div'); overlay.className='syntri-overlay';
-      const modal = document.createElement('div'); modal.className='syntri-modal';
-      const closeBtn = document.createElement('div'); closeBtn.className='syntri-close'; closeBtn.textContent = i18n('btn_close');
-      closeBtn.onclick = ()=>{ overlay.style.opacity='0'; setTimeout(()=>overlay.remove(),200); };
+  // ---- overlay/modal ----
+  const overlay = document.createElement('div'); overlay.className='syntri-overlay';
+  const modal = document.createElement('div'); modal.className='syntri-modal';
+  const closeBtn = document.createElement('div'); closeBtn.className='syntri-close'; closeBtn.textContent = i18n('btn_close');
+  closeBtn.onclick = ()=>{ overlay.style.opacity='0'; setTimeout(()=>overlay.remove(),200); };
 
-      const title = document.createElement('h2'); title.className='syntri-title'; title.textContent = i18n('modal_title');
-      const sub = document.createElement('div'); sub.className='syntri-sub'; sub.textContent = i18n('modal_sub');
+  const title = document.createElement('h2'); title.className='syntri-title'; title.textContent = i18n('modal_title');
+  const sub   = document.createElement('div'); sub.className='syntri-sub'; sub.textContent = i18n('modal_sub');
+  const grid  = document.createElement('div'); grid.className='syntri-grid';
+  const hint  = document.createElement('div'); hint.className='muted'; hint.id='cin-hint'; hint.textContent = i18n('modal_hint');
 
-      const grid = document.createElement('div'); grid.className='syntri-grid';
-      const cv = document.createElement('canvas'); cv.id='cin-canvas'; cv.width=canvasSize; cv.height=canvasSize;
-      const ctx = cv.getContext('2d', { alpha: true });
-      if (!transparent.checked){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height); }
-      const quietPx = marginCells*cell;
+  const cv = document.createElement('canvas'); cv.id='cin-canvas'; cv.width=canvasSize; cv.height=canvasSize;
+  const ctx = cv.getContext('2d', { alpha: true });
+  if (!$('#transparent')?.checked){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height); }
 
-      const actions = document.createElement('div'); actions.className='syntri-actions';
-      const btnPng = document.createElement('button'); btnPng.className='btn btn-ghost'; btnPng.textContent = i18n('btn_png'); btnPng.disabled = true;
-      const btnSvg = document.createElement('button'); btnSvg.className='btn btn-ghost'; btnSvg.textContent = i18n('btn_svg'); btnSvg.disabled = true;
-      actions.appendChild(btnPng); actions.appendChild(btnSvg);
+  const actions = document.createElement('div'); actions.className='syntri-actions';
+  const btnPng = document.createElement('button'); btnPng.className='btn btn-ghost'; btnPng.textContent = i18n('btn_png'); btnPng.disabled = true;
+  const btnSvg = document.createElement('button'); btnSvg.className='btn btn-ghost'; btnSvg.textContent = i18n('btn_svg'); btnSvg.disabled = true;
+  actions.appendChild(btnPng); actions.appendChild(btnSvg);
 
-      const hint = document.createElement('div'); hint.className='muted'; hint.id='cin-hint'; hint.textContent = i18n('modal_hint');
+  grid.appendChild(cv);
+  modal.appendChild(closeBtn);
+  modal.appendChild(title); modal.appendChild(sub);
+  modal.appendChild(grid);
+  modal.appendChild(actions);
+  modal.appendChild(hint);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  requestAnimationFrame(()=>{ overlay.style.opacity='1'; });
 
-      grid.appendChild(cv);
-      modal.appendChild(closeBtn);
-      // UWAGA: tytuł, sub i actions są ukryte CSS-em do czasu końca animacji
-      modal.appendChild(title); modal.appendChild(sub);
-      modal.appendChild(grid);
-      modal.appendChild(actions);
-      modal.appendChild(hint);
-      overlay.appendChild(modal);
-      document.body.appendChild(overlay);
-      requestAnimationFrame(()=>{ overlay.style.opacity='1'; });
+  // ---- animacja 5s ----
+  const totalMs = 5000;
+  const t0 = performance.now();
+  const N = dark.length;
+  const fgColor = ($('#fg')?.value) || '#000000';
+  let lastDrawn = 0;
+
+  function frame(now){
+    // ujemne wartości → clamp do 0 (eliminuje "-0%")
+    const elapsed = Math.max(0, now - t0);
+    const t = Math.min(1, elapsed / totalMs);
+    const shouldDraw = (N === 0) ? 0 : Math.floor(N * t);
+
+    // dorysuj brakujące moduły
+    if (N > 0){
+      ctx.fillStyle = fgColor;
+      for (let i = lastDrawn; i < shouldDraw; i++){
+        const [x,y] = dark[i];
+        ctx.fillRect(quietPx + x*cell, quietPx + y*cell, cell, cell);
+      }
+      lastDrawn = shouldDraw;
+    }
+
+    // progress
+    const pct = Math.round(t*100);
+    hint.textContent = (t < 1) ? `${i18n('modal_hint')} ${pct}%` : '';
+
+    if (t < 1){
+      requestAnimationFrame(frame);
+    } else {
+      // koniec animacji → jeżeli macierz była pusta, narysuj finalny stan od razu
+      if (N === 0){
+        // pełne odtworzenie z matrix
+        ctx.fillStyle = fgColor;
+        for (let y = 0; y < modules; y++){
+          for (let x = 0; x < modules; x++){
+            if (matrix[y] && matrix[y][x]){
+              ctx.fillRect(quietPx + x*cell, quietPx + y*cell, cell, cell);
+            }
+          }
+        }
+      }
+      // pokaż tytuł i przyciski, odblokuj download
+      document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions').forEach(el=>{ el.style.display='block'; });
+      btnPng.disabled = false; btnSvg.disabled = false;
+      btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
+      btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+      hint.textContent = '';
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
 
       // animacja 5s
       const totalMs = 5000;
