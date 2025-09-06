@@ -6,7 +6,7 @@
   <title>Syntri • QR Generator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIrt8jvQpW9N+MGPbY6rY3s6QCG+YtG1vCvtKo1YFpsioeQq9v7bSIL3V7CwKqVdQ0bV1PpL5x1sI6W7Gd2g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
     if(!window.QRCode){
@@ -27,7 +27,7 @@
     .wrap{ max-width: 980px; margin: 48px auto; padding: 0 20px; }
     .card{ background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 18px; box-shadow: 0 10px 32px rgba(0,0,0,.25); overflow: hidden; }
     header{ padding: 22px 24px; display:flex; align-items:center; justify-content: space-between; border-bottom:1px solid rgba(255,255,255,.06); }
-    h1{ margin:0; font-size: 18px; font-weight: 700; letter-spacing:.2px; }
+    h1{ margin:0; font-size: 18px; font-weight: 800; letter-spacing:.2px; }
     .badge{ font-size: 12px; padding: 4px 10px; border-radius: 999px; border:1px solid rgba(255,255,255,.12); color: var(--muted); }
     .grid{ display:grid; grid-template-columns: 1.1fr .9fr; gap: 22px; padding:22px; }
     @media (max-width: 860px){ .grid{ grid-template-columns: 1fr; } }
@@ -35,21 +35,36 @@
     input[type="text"], select, input[type="number"]{ width:100%; padding: 12px 14px; border-radius: 12px; border:1px solid rgba(255,255,255,.14); background: transparent; color: var(--text); outline:none; }
     input::placeholder{ color: #7a8a98; }
     .row{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .btn{ appearance:none; border:none; cursor:pointer; padding: 12px 14px; border-radius: 12px; font-weight: 600; }
+    .btn{ appearance:none; border:none; cursor:pointer; padding: 12px 14px; border-radius: 12px; font-weight: 700; }
     .btn-primary{ background: linear-gradient(135deg, var(--accent), var(--accent-2)); color:#001018; }
     .btn-ghost{ background: transparent; color: var(--text); border:1px solid rgba(255,255,255,.14); }
     .muted{ color: var(--muted); font-size: 12px; }
     .preview{ display:flex; align-items:center; justify-content:center; background: repeating-conic-gradient(from 0deg, #0000 0 15deg, rgba(255,255,255,.03) 15deg 30deg); border-radius: 14px; min-height: 380px; position: relative; }
+    .preview:has(canvas), .preview:has(img){ background:#0b0f1420; }
     .qr-box{ padding: 16px; background: #fff; border-radius: 12px; }
     footer{ padding: 16px 22px; display:flex; align-items:center; justify-content: space-between; border-top:1px solid rgba(255,255,255,.06); }
     .left{ display:flex; gap:10px; align-items:center; }
-    .kbd{ font: 600 11px/1 Inter, sans-serif; border:1px solid rgba(255,255,255,.2); padding:6px 8px; border-radius:8px; color:var(--muted); }
+    .kbd{ font: 800 11px/1 Inter, sans-serif; border:1px solid rgba(255,255,255,.2); padding:6px 8px; border-radius:8px; color:var(--muted); }
     a.link{ color: var(--accent); text-decoration: none; }
+
     /* --- Sub-navigation (sticky) --- */
     .subnav{ position:sticky; top:0; z-index:5; background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.15) 100%), var(--panel); border-bottom:1px solid rgba(255,255,255,.06); display:flex; gap:10px; padding:10px 16px; backdrop-filter: blur(6px); }
     .subnav a{ font-size:12px; padding:8px 10px; border-radius:10px; text-decoration:none; color:var(--muted); border:1px solid transparent; }
     .subnav a.active{ color:var(--text); border-color: rgba(255,255,255,.14); }
     html{ scroll-behavior:smooth; }
+
+    /* === Cinematic overlay === */
+    .syntri-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+      background:#000a;backdrop-filter:blur(6px);opacity:0;transition:opacity .25s ease;}
+    .syntri-modal{width:min(720px,92vw);background:var(--panel);border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.45);padding:24px; text-align:center; position:relative;}
+    .syntri-title{font-weight:800;letter-spacing:.12em;margin:4px 0 8px 0;}
+    .syntri-sub{margin:0 0 12px 0;font-weight:700;letter-spacing:.25em;}
+    .syntri-grid{display:grid;grid-template-columns:1fr;gap:14px;place-items:center;margin-top:8px;}
+    #cin-canvas{background:#fff;border-radius:12px;padding:12px;}
+    .syntri-actions{display:flex;gap:10px;justify-content:center;margin-top:8px;}
+    .syntri-actions .btn[disabled]{opacity:.5;pointer-events:none;}
+    .syntri-close{position:absolute;right:16px;top:12px;cursor:pointer;font-weight:700;color:var(--muted);}
   </style>
 </head>
 <body>
@@ -65,6 +80,7 @@
         </div>
         <span class="badge">offline • client-side</span>
       </header>
+
       <!-- Sub navigation -->
       <nav class="subnav" aria-label="Section navigation">
         <a href="#sec-input" id="nav-input">Input</a>
@@ -107,6 +123,12 @@
               <input id="fg" type="color" value="#000000" />
             </div>
           </div>
+
+          <!-- Transparent background toggle -->
+          <label style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+            <input id="transparent" type="checkbox"> <span class="muted" data-i18n="label_transparent">Przezroczyste tło</span>
+          </label>
+
           <div style="display:flex; gap:10px; margin-top:16px;">
             <button id="generate" class="btn btn-primary" data-i18n="btn_generate">Generuj (Enter)</button>
             <button id="cinema" class="btn btn-ghost" data-i18n="btn_cinema">Tryb kinowy</button>
@@ -131,7 +153,10 @@
           <span class="kbd">⌘ / Ctrl</span><span class="kbd">Enter</span>
           <span class="muted" id="hint-hotkey" data-i18n="hint_hotkey">— szybkie generowanie</span>
         </div>
-        <a class="link" href="#" id="shareLink" data-i18n="link_share" title="Udostępnij parametry w URL">Udostępnij</a>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <a class="link" href="#" id="shareLink" data-i18n="link_share" title="Udostępnij parametry w URL">Udostępnij</a>
+          <button id="copyLink" class="btn btn-ghost" data-i18n="btn_copy">Kopiuj link</button>
+        </div>
       </footer>
     </div>
   </div>
@@ -142,12 +167,16 @@
     // ----------------------------------------------
     const $ = (s) => document.querySelector(s);
     const params = new URLSearchParams(location.search);
+    const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
+    const persist = (k,v) => localStorage.setItem(`syntri.qr.${k}`, v);
+    const load = (k, def) => localStorage.getItem(`syntri.qr.${k}`) ?? def;
 
     const text = $('#text');
     const size = $('#size');
     const ecc  = $('#ecc');
     const margin = $('#margin');
     const fg = $('#fg');
+    const transparent = $('#transparent');
     const qrBox = $('#qr');
 
     let qr; // instance holder
@@ -159,7 +188,7 @@
       qrBox.innerHTML = '';
       const value = text.value.trim() || 'https://syntri.app';
       const colorDark = fg.value || '#000000';
-      const colorLight = '#ffffff';
+      const colorLight = transparent?.checked ? 'rgba(0,0,0,0)' : '#ffffff';
       const width = clamp(parseInt(size.value||320,10), 128, 2048);
       const m = clamp(parseInt(margin.value||2,10), 0, 16);
 
@@ -172,41 +201,70 @@
         correctLevel: QRCode.CorrectLevel[ecc.value || 'M'],
         margin: m
       });
+
+      // a11y
+      qrBox.setAttribute('role','img');
+      qrBox.setAttribute('aria-label', `QR code, size ${width}px, ECC ${ecc.value}, margin ${m}`);
     }
 
     function clamp(n, min, max){ return Math.min(Math.max(n, min), max); }
 
-    function downloadPNG(){
+    function filename(ext){
+      const raw = text.value.trim() || 'syntri';
+      const slug = raw.replace(/^https?:\/\//,'').slice(0,64).replace(/[^a-z0-9\-_.]+/gi,'-').replace(/-+/g,'-').replace(/(^-|-$)/g,'');
+      return `syntri-qr-${slug || 'code'}.${ext}`;
+    }
+
+    function downloadPNG(scale=2){
       const canvas = qrBox.querySelector('canvas');
-      if(!canvas){
-        alert('Najpierw wygeneruj QR');
-        return;
-      }
+      if(!canvas){ alert(i18n('alert_generate_first')); return; }
+
+      const off = document.createElement('canvas');
+      off.width = canvas.width*scale; off.height = canvas.height*scale;
+      const ctx = off.getContext('2d');
+
+      if (!transparent.checked){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,off.width,off.height); }
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(canvas, 0, 0, off.width, off.height);
+
       const a = document.createElement('a');
-      a.download = 'qr.png';
-      a.href = canvas.toDataURL('image/png');
+      a.download = filename('png');
+      a.href = off.toDataURL('image/png');
       a.click();
     }
 
     function downloadSVG(){
-      const img = qrBox.querySelector('img');
       const canvas = qrBox.querySelector('canvas');
-      if(canvas){
-        const pngData = canvas.toDataURL('image/png');
-        const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}"><image href="${pngData}" width="100%" height="100%"/></svg>`;
-        const blob = new Blob([svg], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'qr.svg'; a.click();
-        URL.revokeObjectURL(url);
-      } else if(img) {
-        const a = document.createElement('a');
-        a.download = 'qr.png';
-        a.href = img.src;
-        a.click();
-      } else {
-        alert('Najpierw wygeneruj QR');
-      }
+      if(!canvas){ alert(i18n('alert_generate_first')); return; }
+      const pngData = canvas.toDataURL('image/png');
+      const bg = transparent.checked ? '' : '<rect width="100%" height="100%" fill="#fff"/>';
+      const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">${bg}<image href="${pngData}" width="100%" height="100%"/></svg>`;
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename('svg'); a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Helpers to download from cinematic canvas
+    function downloadCanvasAsPNG(canvas, name){
+      const scale = 2;
+      const off = document.createElement('canvas');
+      off.width = canvas.width*scale; off.height = canvas.height*scale;
+      const ctx = off.getContext('2d');
+      if(!transparent.checked){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,off.width,off.height); }
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(canvas, 0, 0, off.width, off.height);
+      const a = document.createElement('a'); a.download = name; a.href = off.toDataURL('image/png'); a.click();
+    }
+    function downloadCanvasAsSVG(canvas, name, transparentBg){
+      const pngData = canvas.toDataURL('image/png');
+      const bg = transparentBg ? '' : '<rect width="100%" height="100%" fill="#fff"/>';
+      const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">${bg}<image href="${pngData}" width="100%" height="100%"/></svg>`;
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+      URL.revokeObjectURL(url);
     }
 
     // ----------------------------------------------
@@ -218,26 +276,62 @@
       if(params.has('e')) ecc.value = params.get('e');
       if(params.has('m')) margin.value = params.get('m');
       if(params.has('c')) fg.value = params.get('c');
+      if(params.has('bg')) transparent.checked = params.get('bg') === '1';
+    }
+
+    function restoreState(){
+      if(!params.has('t')) text.value   = load('t', text.value);
+      if(!params.has('s')) size.value   = load('s', size.value);
+      if(!params.has('e')) ecc.value    = load('e', ecc.value);
+      if(!params.has('m')) margin.value = load('m', margin.value);
+      if(!params.has('c')) fg.value     = load('c', fg.value);
+      if(!params.has('bg')) transparent.checked = (load('bg','0')==='1');
+    }
+
+    function saveState(){
+      persist('t', text.value.trim());
+      persist('s', size.value);
+      persist('e', ecc.value);
+      persist('m', margin.value);
+      persist('c', fg.value);
+      persist('bg', transparent.checked ? '1':'0');
     }
 
     function updateShareLink(){
       const p = new URLSearchParams({
-        t: text.value.trim(), s: size.value, e: ecc.value, m: margin.value, c: fg.value
+        t: text.value.trim(), s: size.value, e: ecc.value, m: margin.value, c: fg.value,
+        bg: transparent.checked ? '1':'0'
       });
-      $('#shareLink').href = location.pathname + '?' + p.toString();
+      const url = location.origin + location.pathname + '?' + p.toString();
+      $('#shareLink').href = url;
+      $('#copyLink').onclick = async ()=>{ try{ await navigator.clipboard.writeText(url); toast(i18n('copied')); }catch{} };
     }
 
+    function toast(msg){ console.log(msg); }
+
     // ----------------------------------------------
-    // 4) Events & Hotkeys
+    // 4) Events & Hotkeys (live render with debounce)
     // ----------------------------------------------
-    $('#generate').addEventListener('click', () => { render(); updateShareLink(); });
-    $('#clear').addEventListener('click', () => { text.value=''; render(); updateShareLink(); });
-    $('#downloadPng').addEventListener('click', downloadPNG);
+    function debounce(fn, ms=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+    const liveRender = debounce(()=>{ render(); updateShareLink(); saveState(); }, 300);
+
+    ['input','change'].forEach(ev=>{
+      on(text, ev, liveRender);
+      on(size, ev, liveRender);
+      on(ecc, ev, liveRender);
+      on(margin, ev, liveRender);
+      on(fg, ev, liveRender);
+      on(transparent, ev, liveRender);
+    });
+
+    $('#generate').addEventListener('click', () => { render(); updateShareLink(); saveState(); });
+    $('#clear').addEventListener('click', () => { text.value=''; render(); updateShareLink(); saveState(); });
+    $('#downloadPng').addEventListener('click', ()=>downloadPNG(2));
     $('#downloadSvg').addEventListener('click', downloadSVG);
     document.getElementById('cinema')?.addEventListener('click', startCinematic);
 
     document.addEventListener('keydown', (e)=>{
-      if((e.ctrlKey||e.metaKey) && e.key === 'Enter'){ render(); updateShareLink(); }
+      if((e.ctrlKey||e.metaKey) && e.key === 'Enter'){ render(); updateShareLink(); saveState(); }
     });
 
     // ----------------------------------------------
@@ -248,6 +342,7 @@
       (function check(){
         if (window.QRCode) {
           syncFromURL();
+          restoreState();
           render();
           updateShareLink();
         } else if (Date.now() - start < 8000) {
@@ -258,14 +353,95 @@
         }
       })();
     })();
-  
-    // ----------------------------------------------
-    // 6) Cinematic Mode (popup with 5s pixel build)
-    // ----------------------------------------------
-    function startCinematic(){ /* TODO: paste your animation code here (unchanged) */ }
 
     // ----------------------------------------------
-    // 7) Subnav active link on scroll
+    // 6) Cinematic Mode (5s random pixel build → enable PNG/SVG)
+    // ----------------------------------------------
+    function startCinematic(){
+      if(!qr || !qr._oQRCode){ render(); }
+      if(!qr || !qr._oQRCode){ alert(i18n('alert_generate_first')); return; }
+
+      const q = qr._oQRCode;
+      const modules = q.moduleCount;
+      const cell = 10; // px per module in animation canvas
+      const marginCells = clamp(parseInt(margin.value||2,10), 0, 16);
+      const canvasSize = (modules + marginCells*2) * cell;
+
+      // dark modules list [x,y]
+      const dark = [];
+      for(let r=0; r<modules; r++){
+        for(let c=0; c<modules; c++){
+          if(q.isDark(r,c)) dark.push([c, r]);
+        }
+      }
+      shuffle(dark);
+
+      // overlay/modal
+      const overlay = document.createElement('div'); overlay.className='syntri-overlay';
+      const modal = document.createElement('div'); modal.className='syntri-modal';
+      const closeBtn = document.createElement('div'); closeBtn.className='syntri-close'; closeBtn.textContent = i18n('btn_close');
+      closeBtn.onclick = ()=>{ overlay.style.opacity='0'; setTimeout(()=>overlay.remove(),200); };
+
+      const title = document.createElement('h2'); title.className='syntri-title'; title.textContent = i18n('modal_title');
+      const sub = document.createElement('div'); sub.className='syntri-sub'; sub.textContent = i18n('modal_sub');
+      const hint = document.createElement('div'); hint.className='muted'; hint.id='cin-hint'; hint.textContent = i18n('modal_hint');
+
+      const grid = document.createElement('div'); grid.className='syntri-grid';
+      const cv = document.createElement('canvas'); cv.id='cin-canvas'; cv.width=canvasSize; cv.height=canvasSize;
+      const ctx = cv.getContext('2d', { alpha: true });
+      if (!transparent.checked){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height); }
+      const quietPx = marginCells*cell;
+
+      const actions = document.createElement('div'); actions.className='syntri-actions';
+      const btnPng = document.createElement('button'); btnPng.className='btn btn-ghost'; btnPng.textContent = i18n('btn_png'); btnPng.disabled = true;
+      const btnSvg = document.createElement('button'); btnSvg.className='btn btn-ghost'; btnSvg.textContent = i18n('btn_svg'); btnSvg.disabled = true;
+
+      actions.appendChild(btnPng); actions.appendChild(btnSvg);
+
+      grid.appendChild(cv);
+      modal.appendChild(closeBtn);
+      modal.appendChild(title); modal.appendChild(sub); modal.appendChild(grid);
+      modal.appendChild(actions);
+      modal.appendChild(hint);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+      requestAnimationFrame(()=>{ overlay.style.opacity='1'; });
+
+      // animation
+      const totalMs = 5000;
+      const start = performance.now();
+      const totalPixels = dark.length;
+      const fgColor = fg.value || '#000000';
+      let lastDrawn = 0;
+
+      function frame(now){
+        const t = Math.min(1, (now - start)/totalMs);
+        const shouldDraw = Math.floor(totalPixels * t);
+
+        ctx.fillStyle = fgColor;
+        for(let i=lastDrawn;i<shouldDraw;i++){
+          const [x,y] = dark[i];
+          ctx.fillRect(quietPx + x*cell, quietPx + y*cell, cell, cell);
+        }
+        lastDrawn = shouldDraw;
+
+        hint.textContent = t<1 ? `${i18n('modal_hint')} ${(t*100).toFixed(0)}%` : '';
+
+        if(t<1){
+          requestAnimationFrame(frame);
+        }else{
+          btnPng.disabled = false; btnSvg.disabled = false;
+          btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
+          btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), transparent.checked);
+        }
+      }
+      requestAnimationFrame(frame);
+
+      function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
+    }
+
+    // ----------------------------------------------
+    // 7) Subnav active link on scroll (IntersectionObserver)
     // ----------------------------------------------
     const NAV_LINKS = [
       { id: 'nav-input',   sec: 'sec-input' },
@@ -273,20 +449,15 @@
       { id: 'nav-preview', sec: 'sec-preview' },
       { id: 'nav-export',  sec: 'sec-export' },
     ];
-    const sections = NAV_LINKS.map(x => ({ link: document.getElementById(x.id), node: document.getElementById(x.sec) }));
-    const setActive = () => {
-      const y = window.scrollY + 100;
-      let active = null;
-      for (const s of sections){
-        if(!s.node) continue;
-        const r = s.node.getBoundingClientRect();
-        const top = r.top + window.scrollY; const bottom = top + r.height;
-        if (y >= top && y < bottom) active = s;
-      }
-      sections.forEach(s => s.link && s.link.classList.toggle('active', s===active));
-    };
-    window.addEventListener('scroll', setActive);
-    window.addEventListener('load', setActive);
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{
+        const s = NAV_LINKS.find(x=>x.sec===e.target.id);
+        if(!s) return;
+        const link = document.getElementById(s.id);
+        if (link) link.classList.toggle('active', e.isIntersecting && e.intersectionRatio>0.5);
+      });
+    }, {root:null, rootMargin:'-20% 0px -60% 0px', threshold:[0.5]});
+    ['sec-input','sec-options','sec-preview','sec-export'].forEach(id=>{ const n=document.getElementById(id); if(n) io.observe(n); });
 
     // ----------------------------------------------
     // 8) i18n (dictionary + apply)
@@ -299,14 +470,22 @@
         label_ecc: 'Korekcja błędów',
         label_margin: 'Margines',
         label_color: 'Kolor kodu',
+        label_transparent: 'Przezroczyste tło',
         btn_generate: 'Generuj (Enter)',
         btn_clear: 'Wyczyść',
         btn_cinema: 'Tryb kinowy',
         btn_png: 'Pobierz PNG',
         btn_svg: 'Pobierz SVG',
+        btn_copy: 'Kopiuj link',
+        btn_close: 'Zamknij',
         link_share: 'Udostępnij',
         note_offline: 'Działa lokalnie w przeglądarce – żadne dane nie opuszczają urządzenia.',
-        hint_hotkey: '— szybkie generowanie'
+        hint_hotkey: '— szybkie generowanie',
+        alert_generate_first: 'Najpierw wygeneruj QR',
+        copied: 'Skopiowano',
+        modal_title: 'Its your qr code',
+        modal_sub: 'Generator by Syntri',
+        modal_hint: 'Budowanie pikseli…'
       },
       en: {
         title: 'Syntri • QR Generator',
@@ -315,16 +494,26 @@
         label_ecc: 'Error correction',
         label_margin: 'Margin',
         label_color: 'Code color',
+        label_transparent: 'Transparent background',
         btn_generate: 'Generate (Enter)',
         btn_clear: 'Clear',
         btn_cinema: 'Cinema mode',
         btn_png: 'Download PNG',
         btn_svg: 'Download SVG',
+        btn_copy: 'Copy link',
+        btn_close: 'Close',
         link_share: 'Share',
         note_offline: 'Runs locally in your browser — no data leaves your device.',
-        hint_hotkey: '— quick generate'
+        hint_hotkey: '— quick generate',
+        alert_generate_first: 'Generate the QR first',
+        copied: 'Copied',
+        modal_title: 'Its your qr code',
+        modal_sub: 'Generator by Syntri',
+        modal_hint: 'Building pixels…'
       }
     };
+
+    function i18n(k){ const lang = localStorage.getItem('syntri.lang') || 'en'; return (I18N[lang]||I18N.en)[k] || k; }
 
     const userLang = localStorage.getItem('syntri.lang') || ((navigator.language || 'en').startsWith('pl') ? 'pl' : 'en');
 
@@ -341,9 +530,8 @@
       localStorage.setItem('syntri.lang', lang);
     }
 
-    document.getElementById('btn-pl')?.addEventListener('click', ()=>applyI18n('pl'));
-    document.getElementById('btn-en')?.addEventListener('click', ()=>applyI18n('en'));
-
+    document.getElementById('btn-pl')?.addEventListener('click', ()=>{ applyI18n('pl'); });
+    document.getElementById('btn-en')?.addEventListener('click', ()=>{ applyI18n('en'); });
     applyI18n(userLang);
   </script>
 </body>
