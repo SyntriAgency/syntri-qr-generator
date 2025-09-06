@@ -8,7 +8,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIrt8jvQpW9N+MGPbY6rY3s6QCG+YtG1vCvtKo1YFpsioeQq9v7bSIL3V7CwKqVdQ0bV1PpL5x1sI6W7Gd2g==" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="(function(){var s=document.createElement('script');s.src='https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js';document.head.appendChild(s);})();"></script>
-  <script>if(!window.QRCode){var s=document.createElement('script');s.src='https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js';document.head.appendChild(s);}</script>
+  <script>
+    // ==============================================
+    //  Syntri QR Generator — Script Index
+    //  1) Query helpers & refs
+    //  2) Core: render(), downloadPNG/SVG, clamp()
+    //  3) State sync: syncFromURL(), updateShareLink()
+    //  4) Events & Hotkeys
+    //  5) Init (wait for QRCode lib)
+    //  6) Cinematic Mode (popup animation)
+    //  7) Subnav (active link on scroll)
+    //  8) i18n
+    // ==============================================if(!window.QRCode){var s=document.createElement('script');s.src='https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js';document.head.appendChild(s);}</script>
   <style>
     .lang-switch{ display:flex; gap:6px; }
     .decor-gear{ position:absolute; left: -10px; top: -12px; width: 64px; height: 64px; opacity: .9; filter: drop-shadow(0 2px 4px rgba(0,0,0,.25)); }
@@ -39,6 +50,11 @@
     .left{ display:flex; gap:10px; align-items:center; }
     .kbd{ font: 600 11px/1 Inter, sans-serif; border:1px solid rgba(255,255,255,.2); padding:6px 8px; border-radius:8px; color:var(--muted); }
     a.link{ color: var(--accent); text-decoration: none; }
+    /* --- Sub‑navigation (sticky) --- */
+    .subnav{ position:sticky; top:0; z-index:5; background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.15) 100%), var(--panel); border-bottom:1px solid rgba(255,255,255,.06); display:flex; gap:10px; padding:10px 16px; backdrop-filter: blur(6px); }
+    .subnav a{ font-size:12px; padding:8px 10px; border-radius:10px; text-decoration:none; color:var(--muted); border:1px solid transparent; }
+    .subnav a.active{ color:var(--text); border-color: rgba(255,255,255,.14); }
+    html{ scroll-behavior:smooth; }
   </style>
 </head>
 <body>
@@ -54,14 +70,24 @@
         </div>
         <span class="badge">offline • client‑side</span>
       </header>
+      <!-- Sub navigation -->
+      <nav class="subnav" aria-label="Section navigation">
+        <a href="#sec-input" id="nav-input">Input</a>
+        <a href="#sec-options" id="nav-options">Options</a>
+        <a href="#sec-preview" id="nav-preview">Preview</a>
+        <a href="#sec-export" id="nav-export">Export</a>
+      </nav>
 
       <div class="grid">
-        <section>
+        <!-- =============================
+             SECTION: INPUT + OPTIONS
+             ============================= -->
+        <section id="sec-input">
           <div class="field">
             <label for="text" id="label-text" data-i18n="label_text">Treść (URL / tekst)</label>
             <input id="text" type="text" placeholder="https://example.com" value="https://syntri.app" />
           </div>
-          <div class="row" style="margin-top:12px;">
+          <div class="row" id="sec-options" style="margin-top:12px;">
             <div>
               <label for="size" id="label-size" data-i18n="label_size">Rozmiar (px)</label>
               <input id="size" type="number" min="128" max="2048" step="16" value="320" />
@@ -93,11 +119,11 @@
           <p class="muted" id="note-offline" style="margin-top:10px;" data-i18n="note_offline">Działa lokalnie w przeglądarce – żadne dane nie opuszczają urządzenia.</p>
         </section>
 
-        <section>
+        <section id="sec-preview">
           <div class="preview">
             <div id="qr" class="qr-box"></div>
           </div>
-          <div style="display:flex; gap:10px; margin-top:12px;">
+          <div id="sec-export" style="display:flex; gap:10px; margin-top:12px;">
             <button id="downloadPng" class="btn btn-ghost" data-i18n="btn_png">Pobierz PNG</button>
             <button id="downloadSvg" class="btn btn-ghost" data-i18n="btn_svg">Pobierz SVG</button>
           </div>
@@ -115,7 +141,9 @@
   </div>
 
   <script>
-    // Helpers
+    // ----------------------------------------------
+    // 1) Query helpers & refs
+    // ----------------------------------------------
     const $ = (s) => document.querySelector(s);
     const params = new URLSearchParams(location.search);
 
@@ -126,9 +154,13 @@
     const fg = $('#fg');
     const qrBox = $('#qr');
 
-    let qr;
+    let qr; // instance holder
 
+    // ----------------------------------------------
+    // 2) Core rendering & downloads
+    // ----------------------------------------------
     function render(){
+
       qrBox.innerHTML = '';
       const value = text.value.trim() || 'https://syntri.app';
       const colorDark = fg.value || '#000000';
@@ -183,7 +215,11 @@
       }
     }
 
+    // ----------------------------------------------
+    // 3) State sync (URL <-> UI)
+    // ----------------------------------------------
     function syncFromURL(){
+
       if(params.has('t')) text.value = decodeURIComponent(params.get('t'));
       if(params.has('s')) size.value = params.get('s');
       if(params.has('e')) ecc.value = params.get('e');
@@ -198,7 +234,9 @@
       $('#shareLink').href = location.pathname + '?' + p.toString();
     }
 
-    // Events
+    // ----------------------------------------------
+    // 4) Events & Hotkeys
+    // ----------------------------------------------
     $('#generate').addEventListener('click', () => { render(); updateShareLink(); });
     $('#clear').addEventListener('click', () => { text.value=''; render(); updateShareLink(); });
     $('#downloadPng').addEventListener('click', downloadPNG);
@@ -208,7 +246,9 @@
       if((e.ctrlKey||e.metaKey) && e.key === 'Enter'){ render(); updateShareLink(); }
     });
 
-    // Init — wait until QRCode is available (handles async fallback load)
+    // ----------------------------------------------
+    // 5) Init — wait until QRCode is available (handles async fallback load)
+    // ----------------------------------------------
     (function initWhenReady(){
       const start = Date.now();
       (function check(){
@@ -225,7 +265,9 @@
       })();
     })();
   
-    // --- CINEMATIC MODE (popup with 5s pixel build + auto download) ---
+    // ----------------------------------------------
+    // 6) Cinematic Mode (popup with 5s pixel build + auto download)
+    // ----------------------------------------------
     function startCinematic(){
       const value = (document.querySelector('#text')?.value || 'https://syntri.app').trim();
       const colorDark = document.querySelector('#fg')?.value || '#000000';
@@ -319,6 +361,35 @@
 
     // hook cinema button safely
     (function(){ const c=document.getElementById('cinema'); if(c) c.addEventListener('click', startCinematic); })();
+
+    // ----------------------------------------------
+    // 7) Subnav — highlight active link on scroll
+    // ----------------------------------------------
+    const NAV_LINKS = [
+      { id: 'nav-input',   sec: 'sec-input' },
+      { id: 'nav-options', sec: 'sec-options' },
+      { id: 'nav-preview', sec: 'sec-preview' },
+      { id: 'nav-export',  sec: 'sec-export' },
+    ];
+    const sections = NAV_LINKS.map(x => ({ link: document.getElementById(x.id), node: document.getElementById(x.sec) }));
+    const setActive = () => {
+      const y = window.scrollY + 100; // offset for sticky bar
+      let active = null;
+      for (const s of sections){
+        if(!s.node) continue;
+        const r = s.node.getBoundingClientRect();
+        const top = r.top + window.scrollY; const bottom = top + r.height;
+        if (y >= top && y < bottom) active = s;
+      }
+      sections.forEach(s => s.link && s.link.classList.toggle('active', s===active));
+    };
+    window.addEventListener('scroll', setActive);
+    window.addEventListener('load', setActive);
+
+    // ----------------------------------------------
+    // 8) i18n
+    // ----------------------------------------------
+if(c) c.addEventListener('click', startCinematic); })();
   
     // --- i18n ---
     const I18N = {
