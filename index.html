@@ -266,7 +266,7 @@
     })();
 
     // --- modal z animacją 5s; content (tytuł + przyciski) pojawia się dopiero po animacji
-    function startCinematic(){
+  function startCinematic(){
   // upewnij się, że mamy świeży QR
   if(!qr || !qr._oQRCode){ render(); }
   if(!qr || !qr._oQRCode){ alert(i18n('alert_generate_first')); return; }
@@ -375,42 +375,6 @@
   }
   requestAnimationFrame(frame);
 }
-
-
-      // animacja 5s
-      const totalMs = 5000;
-      const start = performance.now();
-      const totalPixels = dark.length;
-      const fgColor = fg.value || '#000000';
-      let lastDrawn = 0;
-
-      function frame(now){
-        const t = Math.min(1, (now - start)/totalMs);
-        const shouldDraw = Math.floor(totalPixels * t);
-        ctx.fillStyle = fgColor;
-
-        // dorysuj brakujące moduły
-        for(let i=lastDrawn;i<shouldDraw;i++){
-          const [x,y] = dark[i];
-          ctx.fillRect(quietPx + x*cell, quietPx + y*cell, cell, cell);
-        }
-        lastDrawn = shouldDraw;
-
-        hint.textContent = t<1 ? `${i18n('modal_hint')} ${(t*100).toFixed(0)}%` : '';
-
-        if(t<1){
-          requestAnimationFrame(frame);
-        }else{
-          // po animacji: pokaż tytuł i przyciski, odblokuj download
-          document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions').forEach(el=>el.style.display='block');
-          btnPng.disabled = false; btnSvg.disabled = false;
-          btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
-          btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), transparent.checked);
-          hint.textContent = ''; // ukryj komunikat o budowaniu
-        }
-      }
-      requestAnimationFrame(frame);
-    }
 
     // --- subnav active
     const NAV_LINKS = [
