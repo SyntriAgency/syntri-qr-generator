@@ -561,17 +561,26 @@ function showCooldownUI(resetMs){
 }
     
 function ensureHomeGate(){
-  if (!canGenerateNow()){
-    showCooldownUI(Date.now() + remainingMs());   // countdown + CTA w Preview
+  const ok = canGenerateNow();
+
+  // blokada guzika
+  const btn = document.querySelector('#generate');
+  if (btn) { 
+    btn.disabled = !ok; 
+    btn.setAttribute('aria-disabled', String(!ok));
+    btn.title = ok ? '' : (i18n('paywall_title') || 'Free limit reached'); 
+  }
+
+  if (!ok){
+    showCooldownUI(Date.now() + remainingMs());
   } else {
-    // jeśli wcześniej był countdown, przywróć normalny preview
     const preview = document.querySelector('#sec-preview .preview');
     if (preview && preview.querySelector('#cooldown-timer')) {
       preview.innerHTML = '<div id="qr" class="qr-box"></div>';
       render();
     }
   }
-}    
+}   
 
     // ----------------------------------------------
     // URL state / live events / init
