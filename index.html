@@ -460,7 +460,7 @@
       [text,size,ecc,margin,fg,transparent].forEach(el=> on(el, ev, liveRender));
     });
 
-    $('#generate').addEventListener('click', () => { render(); updateShareLink(); saveState(); startCinematic(); });
+    $('#generate').addEventListener('click', async () => { render(); updateShareLink(); saveState(); startCinematic(); try { await bumpQrCount(); console.log("QR count incremented"); } catch (err) { console.error("bumpQrCount error", err); } });
     $('#clear').addEventListener('click', () => { text.value=''; render(); updateShareLink(); saveState(); });
     document.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey) && e.key === 'Enter'){ render(); updateShareLink(); saveState(); startCinematic(); } });
 
