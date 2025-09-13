@@ -138,6 +138,12 @@
             <span id="usagePill" class="usage-pill" title="Free monthly quota">10 / 10</span>
           </div>
 
+<!-- DEV panel – widoczny tylko z ?dev=1 -->
+<div id="dev-panel" style="display:none; margin-top:8px; display:flex; gap:8px;">
+  <button id="dev-exhaust" class="btn btn-ghost">DEV: Max limit</button>
+  <button id="dev-reset"   class="btn btn-ghost">DEV: Reset</button>
+</div>
+          
           <p class="muted" id="note-offline" style="margin-top:10px;" data-i18n="note_offline">
             Działa lokalnie w przeglądarce — żadne dane nie opuszczają urządzenia.
           </p>
@@ -220,6 +226,8 @@
     const margin=$('#margin'); const fg=$('#fg'); const transparent=$('#transparent');
     const qrBox=$('#qr'); const usagePill = $('#usagePill');
 
+
+    
     let qr;
 
    // --- metrics (stub) ---
@@ -699,6 +707,32 @@ function ensureHomeGate(){
       alert('PayPal Subscriptions (stub). Podmień na realny endpoint.');
     });
 
+// DEV panel – działa tylko z ?dev=1
+(function setupDevPanel(){
+  const showDev = params.get('dev') === '1';
+  const panel = document.getElementById('dev-panel');
+  if (panel) panel.style.display = showDev ? 'flex' : 'none';
+
+  // DEV: wyczerp limit (ustawia plan Free, used=quota, reset za 60s)
+  on(document.getElementById('dev-exhaust'), 'click', () => {
+    localStorage.setItem('syntri.plan','Free'); // zapewnia skończoną quotę
+    const u = getUsage();                       // { used, quota, resetAt }
+    const exhausted = { ...u, used: u.quota, resetAt: Date.now() + 60_000 };
+    saveUsage(exhausted);
+    renderUsagePill();                          // odświeża pill + ensureHomeGate()
+    alert('DEV: quota wyczerpana na 60s (Free plan).');
+  });
+
+  // DEV: reset limitu (used=0, resetAt -> początek następnego miesiąca)
+  on(document.getElementById('dev-reset'), 'click', () => {
+    const u = getUsage();
+    const reset = { ...u, used: 0, resetAt: monthResetAtMs() };
+    saveUsage(reset);
+    renderUsagePill();
+    alert('DEV: quota zresetowana.');
+  });
+})();
+    
     // ----------------------------------------------
     // i18n
     // ----------------------------------------------
