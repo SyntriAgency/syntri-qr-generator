@@ -222,6 +222,14 @@
 
     let qr;
 
+   // --- metrics (stub) ---
+   // Podmień na wywołanie Firestore, gdy podepniesz Firebase.
+   async function bumpQrCount(){
+   if (!AUTH.isLoggedIn()) return;          // Zliczaj tylko zalogowanych
+   // TODO: Firestore: increment(qrCount) dla bieżącego użytkownika
+     console.debug('bumpQrCount (mock) – zalogowany:', AUTH.email());
+   }
+    
     function clamp(n, min, max){ return Math.min(Math.max(n, min), max); }
     function filename(ext){
       const raw = text.value.trim() || 'syntri';
