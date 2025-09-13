@@ -262,31 +262,94 @@
       $('#nav-signout').style.display = logged ? 'inline-block' : 'none';
       // logged → liczenie usage na serwerze (tu: unlimited until backend)
       renderUsagePill();
+      ensureHomeGate();  
     }
 
     // ----------------------------------------------
-    // Free usage (soft limit for anon only)
-    // ----------------------------------------------
-    function usageKey(){ const d=new Date(); const ym=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; return `syntri.qr.usage.${ym}`; }
-    function getUsage(){
-      const def = { used:0, quota:10 };
-      if (AUTH.isLoggedIn()) return { used:0, quota:Infinity };
-      try{ return JSON.parse(localStorage.getItem(usageKey())||JSON.stringify(def)); }catch{return def;}
-    }
-    function saveUsage(u){ if (!AUTH.isLoggedIn()) localStorage.setItem(usageKey(), JSON.stringify(u)); }
-    function renderUsagePill(){
-      const u = getUsage();
-      const left = (u.quota===Infinity) ? '∞' : Math.max(0, u.quota - u.used);
-      usagePill.textContent = (u.quota===Infinity) ? 'Pro • unlimited' : `${left} / ${u.quota}`;
-      usagePill.title = (u.quota===Infinity) ? 'Paid plan' : 'Free monthly quota';
-    }
-    function tryConsumeUsage(){
-      if (AUTH.isLoggedIn()) return { ok:true, remaining:Infinity };
-      const u = getUsage();
-      if (u.used >= u.quota) return { ok:false, remaining:0 };
-      u.used += 1; saveUsage(u); renderUsagePill();
-      return { ok:true, remaining: u.quota - u.used };
-    }
+// Usage & Plans (front-gate for anon + logged)
+// ----------------------------------------------
+
+// Plan (mock). Na razie trzymany w localStorage; gdy podepniesz backend, zwracaj realny plan.
+// Ustaw ręcznie w konsoli np.: localStorage.setItem('syntri.plan','Free'|'Basic'|'Pro')
+function getPlan(){
+  return AUTH.isLoggedIn() ? (localStorage.getItem('syntri.plan') || 'Free') : 'Free';
+}
+
+// Reset miesięczny: 1. dzień następnego miesiąca, 00:00
+function monthResetAtMs(){
+  const d = new Date();
+  const y = d.getFullYear(), m = d.getMonth();
+  return new Date(y, m + 1, 1, 0, 0, 0, 0).getTime();
+}
+
+function usageKey(){
+  const d=new Date();
+  const ym=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`;
+  return `syntri.qr.usage.${ym}`;
+}
+
+// Quoty per plan
+function planQuota(plan){
+  if (plan === 'Pro') return Infinity;
+  if (plan === 'Basic') return 100;
+  return 15; // Free
+}
+
+// Zwraca {used, quota, resetAt}
+function getUsage(){
+  const plan = getPlan();
+  const quota = planQuota(plan);
+  const resetAt = monthResetAtMs();
+  const def = { used:0, quota, resetAt };
+
+  try {
+    const raw = JSON.parse(localStorage.getItem(usageKey()) || JSON.stringify(def));
+    raw.quota = quota;
+    raw.resetAt = resetAt;
+    return raw;
+  } catch {
+    return def;
+  }
+}
+
+function saveUsage(u){
+  // zapisujemy dla wszystkich (anon + logged), by front-gate był spójny
+  localStorage.setItem(usageKey(), JSON.stringify(u));
+}
+
+function renderUsagePill(){
+  const u = getUsage();
+  const plan = getPlan();
+  const left = (u.quota===Infinity) ? '∞' : Math.max(0, u.quota - u.used);
+  usagePill.textContent = (u.quota===Infinity) ? `${plan} • unlimited` : `${left} / ${u.quota}`;
+  usagePill.title = (u.quota===Infinity) ? 'Paid plan' : 'Monthly quota';
+  ensureHomeGate();
+}
+
+// Konsumpcja: { ok, remaining, resetMs }
+function tryConsumeUsage(){
+  const u = getUsage();
+  if (u.quota === Infinity) return { ok:true, remaining:Infinity, resetMs:0 };
+
+  if (u.used >= u.quota){
+    const resetMs = Math.max(0, u.resetAt - Date.now());
+    return { ok:false, remaining:0, resetMs };
+  }
+  u.used += 1;
+  saveUsage(u);
+  renderUsagePill();
+  return { ok:true, remaining: u.quota - u.used, resetMs: Math.max(0, u.resetAt - Date.now()) };
+}
+    // --- helpers: szybkie sprawdzenie limitu na stronie głównej ---
+function canGenerateNow(){ 
+  const u = getUsage();
+  return u.quota === Infinity || u.used < u.quota;
+}
+
+function remainingMs(){
+  const u = getUsage();
+  return u.quota === Infinity ? 0 : Math.max(0, u.resetAt - Date.now());
+}
 
     // ----------------------------------------------
     // QR render
@@ -420,6 +483,83 @@
       requestAnimationFrame(frame);
     }
 
+// ----------------------------------------------
+// Cooldown UI (zamiana preview na odliczanie + CTA)
+// ----------------------------------------------
+let cooldownTimerId = null;
+
+function formatDHMS(ms){
+  const s = Math.max(0, Math.floor(ms/1000));
+  const d = Math.floor(s/86400);
+  const h = Math.floor((s%86400)/3600);
+  const m = Math.floor((s%3600)/60);
+  const sec = s%60;
+  return { d, h, m, s:sec };
+}
+
+function showCooldownUI(resetMs){
+  const preview = document.querySelector('#sec-preview .preview');
+  if (!preview) return;
+
+  preview.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.style.textAlign='center';
+  wrap.style.padding='20px';
+
+  const h = document.createElement('h3');
+  h.textContent = i18n('paywall_title') || 'Free limit reached';
+  h.style.margin='0 0 6px 0';
+
+  const p = document.createElement('p');
+  p.className = 'muted';
+  p.style.margin='0 0 12px 0';
+  p.textContent = i18n('paywall_copy') || 'You used all free codes this month.';
+
+  const timer = document.createElement('div');
+  timer.style.fontWeight='800';
+  timer.style.fontSize='18px';
+  timer.style.margin='8px 0 12px 0';
+  timer.id = 'cooldown-timer';
+
+  const ctaRow = document.createElement('div');
+  ctaRow.style.display='flex';
+  ctaRow.style.gap='10px';
+  ctaRow.style.justifyContent='center';
+
+  const btnUpgrade1 = document.createElement('button');
+  btnUpgrade1.className='btn btn-primary';
+  btnUpgrade1.textContent='Upgrade – Stripe';
+  btnUpgrade1.onclick = ()=> alert('Stripe Checkout (stub). Podmień na realny endpoint.');
+
+  const btnUpgrade2 = document.createElement('button');
+  btnUpgrade2.className='btn btn-ghost';
+  btnUpgrade2.textContent='Upgrade – PayPal';
+  btnUpgrade2.onclick = ()=> alert('PayPal Subscriptions (stub). Podmień na realny endpoint.');
+
+  ctaRow.appendChild(btnUpgrade1);
+  ctaRow.appendChild(btnUpgrade2);
+
+  wrap.appendChild(h); wrap.appendChild(p); wrap.appendChild(timer); wrap.appendChild(ctaRow);
+  preview.appendChild(wrap);
+
+  if (cooldownTimerId) clearInterval(cooldownTimerId);
+  const tick = ()=>{
+    const ms = Math.max(0, resetMs - Date.now());
+    const {d,h,m,s} = formatDHMS(ms);
+    timer.textContent = (d>0 ? `${d}d ` : '') + `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (ms <= 0){
+      clearInterval(cooldownTimerId);
+      renderUsagePill();
+      // przywróć pusty preview z ramką QR
+      document.querySelector('#sec-preview .preview').innerHTML = '<div id="qr" class="qr-box"></div>';
+      render();
+    }
+  };
+  tick();
+  cooldownTimerId = setInterval(tick, 1000);
+}
+
     // ----------------------------------------------
     // URL state / live events / init
     // ----------------------------------------------
@@ -467,7 +607,7 @@
     (function initWhenReady(){
       const start = Date.now();
       (function check(){
-        if (window.QRCode) { syncFromURL(); restoreState(); render(); updateShareLink(); renderAuthUI(); }
+        if (window.QRCode) { syncFromURL(); restoreState(); render(); updateShareLink(); renderAuthUI(); ensureHomeGate(); }
         else if (Date.now() - start < 8000) setTimeout(check, 50);
         else { console.error('QRCode library failed to load'); alert('QR library failed to load. Please refresh (Ctrl/Cmd+F5).'); }
       })();
