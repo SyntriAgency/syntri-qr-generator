@@ -537,16 +537,12 @@ function showCooldownUI(resetMs){
 
   const btnUpgrade1 = document.createElement('button');
   btnUpgrade1.className='btn btn-primary';
-  btnUpgrade1.textContent='Upgrade – Stripe';
+  btnUpgrade1.textContent='Upgrade plan';
   btnUpgrade1.onclick = ()=> alert('Stripe Checkout (stub). Podmień na realny endpoint.');
 
-  const btnUpgrade2 = document.createElement('button');
-  btnUpgrade2.className='btn btn-ghost';
-  btnUpgrade2.textContent='Upgrade – PayPal';
-  btnUpgrade2.onclick = ()=> alert('PayPal Subscriptions (stub). Podmień na realny endpoint.');
 
   ctaRow.appendChild(btnUpgrade1);
-  ctaRow.appendChild(btnUpgrade2);
+
 
   wrap.appendChild(h); wrap.appendChild(p); wrap.appendChild(timer); wrap.appendChild(ctaRow);
   preview.appendChild(wrap);
