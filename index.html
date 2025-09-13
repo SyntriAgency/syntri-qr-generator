@@ -462,7 +462,7 @@
 
     $('#generate').addEventListener('click', async () => { render(); updateShareLink(); saveState(); startCinematic(); try { await bumpQrCount(); console.log("QR count incremented"); } catch (err) { console.error("bumpQrCount error", err); } });
     $('#clear').addEventListener('click', () => { text.value=''; render(); updateShareLink(); saveState(); });
-    document.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey) && e.key === 'Enter'){ render(); updateShareLink(); saveState(); startCinematic(); } });
+   document.addEventListener('keydown', async e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { render(); updateShareLink(); saveState(); startCinematic(); try { await bumpQrCount(); console.log("QR count incremented"); } catch (err) { console.error("bumpQrCount error", err); } } });
 
     (function initWhenReady(){
       const start = Date.now();
