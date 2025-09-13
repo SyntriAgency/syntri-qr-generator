@@ -559,6 +559,19 @@ function showCooldownUI(resetMs){
   tick();
   cooldownTimerId = setInterval(tick, 1000);
 }
+    
+function ensureHomeGate(){
+  if (!canGenerateNow()){
+    showCooldownUI(Date.now() + remainingMs());   // countdown + CTA w Preview
+  } else {
+    // jeśli wcześniej był countdown, przywróć normalny preview
+    const preview = document.querySelector('#sec-preview .preview');
+    if (preview && preview.querySelector('#cooldown-timer')) {
+      preview.innerHTML = '<div id="qr" class="qr-box"></div>';
+      render();
+    }
+  }
+}    
 
     // ----------------------------------------------
     // URL state / live events / init
