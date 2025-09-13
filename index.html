@@ -622,9 +622,9 @@ function ensureHomeGate(){
       [text,size,ecc,margin,fg,transparent].forEach(el=> on(el, ev, liveRender));
     });
 
-    $('#generate').addEventListener('click', async () => { render(); updateShareLink(); saveState(); startCinematic(); try { await bumpQrCount(); console.log("QR count incremented"); } catch (err) { console.error("bumpQrCount error", err); } });
+    $('#generate').addEventListener('click', async () => { if(!canGenerateNow()){ ensureHomeGate(); return; } render(); updateShareLink(); saveState(); startCinematic(); try { await bumpQrCount(); console.log("QR count incremented"); } catch (err) { console.error("bumpQrCount error", err); } });
     $('#clear').addEventListener('click', () => { text.value=''; render(); updateShareLink(); saveState(); });
-   document.addEventListener('keydown', async e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { render(); updateShareLink(); saveState(); startCinematic(); try { await bumpQrCount(); console.log("QR count incremented"); } catch (err) { console.error("bumpQrCount error", err); } } });
+   document.addEventListener('keydown', async e => { if ((e.ctrlKey||e.metaKey) && e.key==='Enter'){ if(!canGenerateNow()){ ensureHomeGate(); return; } render(); updateShareLink(); saveState(); startCinematic(); try{ await bumpQrCount(); } catch (err){ console.error(err); } } });
 
     (function initWhenReady(){
       const start = Date.now();
