@@ -807,36 +807,50 @@ document.addEventListener('keydown', async e => {
     document.getElementById('btn-en')?.addEventListener('click', ()=>{ applyI18n('en'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
     applyI18n(userLang);
   </script>
- <script type="module">
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
-  getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink,
-  signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged
+  getAuth,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-/* === KONFIG Z PROJEKTU syntri-qr-scanner (wklej swój z konsoli) === */
+// --- KONFIGURACJA Firebase ---
 const firebaseConfig = {
-  apiKey: "TU_WKLEJ_Z_KONSOLI",
-  authDomain: "syntri-qr-scanner.firebaseapp.com",
-  projectId: "syntri-qr-scanner",
-  storageBucket: "syntri-qr-scanner.appspot.com",
-  messagingSenderId: "TU_WKLEJ",
-  appId: "TU_WKLEJ",
-  // measurementId: "opcjonalnie"
+  apiKey: "AIzaSyCN4mFs-l3SVfLGSiqOeSObenSPgQlx2XU",
+  authDomain: "syntri-qr-generator.firebaseapp.com",
+  projectId: "syntri-qr-generator",
+  storageBucket: "syntri-qr-generator.appspot.com",
+  messagingSenderId: "535838079759",
+  appId: "1:535838079759:web:865ddfaee615280b645c7a",
+  measurementId: "G-D1V72QVK11"
 };
 
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-/* === STAŁY RETURN_URL musi być autoryzowany w tym projekcie === */
-const RETURN_URL = "https://syntri-qr-scanner.web.app/";
+// --- Stały URL zwrotny – musi być na liście „Authorized domains” w Firebase ---
+// ✅ Jeśli testujesz lokalnie (Live Server itp.):
+const RETURN_URL = "http://localhost:5500/";
+// 🔹 Po wdrożeniu zmień np. na:
+// const RETURN_URL = "https://syntri-qr-generator.web.app/";
+// const RETURN_URL = "https://syntri-qr-generator.firebaseapp.com/";
 
-/* Email Link – wyślij */
+// --- Logowanie linkiem e-mail ---
 document.getElementById('loginEmailLink')?.addEventListener('click', async () => {
   const email = (document.getElementById('loginEmail')?.value || '').trim();
   if (!email) { alert('Wpisz email'); return; }
   try {
-    await sendSignInLinkToEmail(auth, email, { url: RETURN_URL, handleCodeInApp: true });
+    const actionCodeSettings = {
+      url: RETURN_URL,           // używamy autoryzowanego adresu
+      handleCodeInApp: true
+    };
+    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
     localStorage.setItem('pendingEmail', email);
     alert('Link logowania wysłany. Sprawdź skrzynkę.');
   } catch (err) {
@@ -845,7 +859,7 @@ document.getElementById('loginEmailLink')?.addEventListener('click', async () =>
   }
 });
 
-/* Email Link – dokończenie */
+// --- Dokończenie logowania po kliknięciu w link z maila ---
 if (isSignInWithEmailLink(auth, location.href)) {
   const email = localStorage.getItem('pendingEmail') || prompt('Podaj e-mail:');
   try {
@@ -860,7 +874,7 @@ if (isSignInWithEmailLink(auth, location.href)) {
   }
 }
 
-/* Google */
+// --- Google Sign-In ---
 document.getElementById('loginGoogle')?.addEventListener('click', async () => {
   try {
     await signInWithPopup(auth, new GoogleAuthProvider());
@@ -872,11 +886,14 @@ document.getElementById('loginGoogle')?.addEventListener('click', async () => {
   }
 });
 
-/* Wylogowanie + sync UI */
+// --- Wylogowanie ---
 document.getElementById('nav-signout')?.addEventListener('click', async (e) => {
   e.preventDefault();
-  try { await signOut(auth); } catch (err) { alert('Błąd wylogowania: ' + (err?.message || err)); }
+  try { await signOut(auth); }
+  catch (err) { console.error(err); alert('Błąd wylogowania: ' + (err?.message || err)); }
 });
+
+// --- Synchronizacja stanu z istniejącym UI ---
 onAuthStateChanged(auth, (user) => {
   if (user) {
     localStorage.setItem('syntri.auth.uid', user.uid);
