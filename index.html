@@ -189,16 +189,8 @@
     <div class="field-row" style="margin-top:12px;display:flex;gap:8px;">
       <button id="btnRegister" class="btn btn-primary" type="button">Zarejestruj</button>
       <button id="btnLogin"    class="btn btn-ghost"   type="button">Zaloguj</button>
+      <button id="btnForgot"   class="btn btn-ghost"   type="button">Forgot password?</button>
     </div>
-
-    <!-- Opcjonalnie Google, jeśli chcesz dodać później -->
-    <!--
-    <div class="field-row" style="margin-top:6px;">
-      <button id="loginGoogle" class="btn btn-ghost" type="button">
-        Sign in with Google
-      </button>
-    </div>
-    -->
 
     <div class="modal-actions">
       <button class="btn btn-ghost" id="loginCancel" data-i18n="btn_cancel" type="button">Cancel</button>
@@ -818,15 +810,13 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  // opcjonalnie:
-  // signInWithPopup, GoogleAuthProvider,
+  sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
   updateProfile
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-/* 1) KONFIG: wklej dokładnie TĘ samą konfigurację projektu,
-      którego używasz (ta, która NIE zgłasza "api-key-invalid"). */
+/* === 1) KONFIGURACJA Firebase (ta sama co w konsoli projektu) === */
 const firebaseConfig = {
   apiKey: "AIzaSyCN4mFs-l3SVfLGSiqOeSObenSPgQlx2XU",
   authDomain: "syntri-qr-generator.firebaseapp.com",
@@ -840,21 +830,34 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-/* 2) Pomoce */
+/* === 2) Pomocnicze === */
 const $ = (s) => document.querySelector(s);
-function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
+function closeModal(sel){
+  const m = $(sel);
+  if (!m) return;
+  m.classList.remove('show');
+  m.setAttribute('aria-hidden','true');
+}
+function setBusy(el, busy){
+  if (!el) return;
+  el.disabled = !!busy;
+  el.setAttribute('aria-busy', busy ? 'true':'false');
+}
 
-/* 3) Zarejestruj (createUserWithEmailAndPassword) */
+/* === 3) Rejestracja === */
 $('#btnRegister')?.addEventListener('click', async () => {
+  const btn   = $('#btnRegister');
   const email = ($('#loginEmail')?.value || '').trim();
   const pass  = ($('#loginPass')?.value  || '').trim();
-  if (!email || !pass) { alert('Podaj email i hasło.'); return; }
-  if (pass.length < 6) { alert('Hasło musi mieć min. 6 znaków.'); return; }
+
+  if (!email || !pass){ alert('Podaj email i hasło.'); return; }
+  if (pass.length < 6){ alert('Hasło musi mieć min. 6 znaków.'); return; }
 
   try {
+    setBusy(btn, true);
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    // (opcjonalnie) ustaw displayName = fragment z emaila
-    const name = email.split('@')[0].slice(0,32);
+    // (opcjonalnie) ustaw nazwę z części e-maila
+    const name = email.split('@')[0].slice(0, 32);
     try { await updateProfile(cred.user, { displayName: name }); } catch {}
     alert('Konto utworzone i zalogowano: ' + (cred.user.email || email));
     closeModal('#loginModal');
@@ -862,15 +865,21 @@ $('#btnRegister')?.addEventListener('click', async () => {
     console.error(err);
     // Najczęstsze: auth/email-already-in-use, auth/invalid-email, auth/weak-password
     alert('Rejestracja nieudana: ' + (err?.code || err?.message || err));
+  } finally {
+    setBusy(btn, false);
   }
 });
 
-/* 4) Zaloguj (signInWithEmailAndPassword) */
+/* === 4) Logowanie === */
 $('#btnLogin')?.addEventListener('click', async () => {
+  const btn   = $('#btnLogin');
   const email = ($('#loginEmail')?.value || '').trim();
   const pass  = ($('#loginPass')?.value  || '').trim();
-  if (!email || !pass) { alert('Podaj email i hasło.'); return; }
+
+  if (!email || !pass){ alert('Podaj email i hasło.'); return; }
+
   try {
+    setBusy(btn, true);
     const cred = await signInWithEmailAndPassword(auth, email, pass);
     alert('Zalogowano jako: ' + (cred.user.email || email));
     closeModal('#loginModal');
@@ -878,29 +887,47 @@ $('#btnLogin')?.addEventListener('click', async () => {
     console.error(err);
     // Najczęstsze: auth/user-not-found, auth/wrong-password
     alert('Logowanie nieudane: ' + (err?.code || err?.message || err));
+  } finally {
+    setBusy(btn, false);
   }
 });
 
-/* 5) (opcjonalnie) Google — jeśli chcesz, włącz i dodaj Authorized Domains
-// const provider = new GoogleAuthProvider();
-// $('#loginGoogle')?.addEventListener('click', async () => {
-//   try {
-//     await signInWithPopup(auth, provider);
-//     closeModal('#loginModal');
-//   } catch (err) {
-//     alert('Google Sign-In error: ' + (err?.code || err?.message || err));
-//   }
-// });
-*/
+/* === 5) Reset hasła (Forgot password) === */
+$('#btnForgot')?.addEventListener('click', async () => {
+  const btn   = $('#btnForgot');
+  const email = ($('#loginEmail')?.value || '').trim();
+  if (!email){ alert('Podaj adres e-mail, aby zresetować hasło.'); return; }
 
-/* 6) Wylogowanie (z Twojego istniejącego menu) */
-$('#nav-signout')?.addEventListener('click', async (e) => {
-  e.preventDefault();
-  try { await signOut(auth); }
-  catch (err) { alert('Błąd wylogowania: ' + (err?.code || err?.message || err)); }
+  try {
+    setBusy(btn, true);
+    await sendPasswordResetEmail(auth, email);
+    alert('Wysłaliśmy link resetu hasła na: ' + email);
+  } catch (err) {
+    console.error(err);
+    // Np. auth/user-not-found, auth/invalid-email
+    alert('Nie udało się wysłać resetu: ' + (err?.code || err?.message || err));
+  } finally {
+    setBusy(btn, false);
+  }
 });
 
-/* 7) Synchronizacja z istniejącym UI (AUTH mock → localStorage) */
+/* === 6) Wylogowanie (link w nawigacji) === */
+$('#nav-signout')?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  const link = $('#nav-signout');
+  try {
+    setBusy(link, true);
+    await signOut(auth);
+    alert('Wylogowano.');
+  } catch (err) {
+    console.error(err);
+    alert('Błąd wylogowania: ' + (err?.code || err?.message || err));
+  } finally {
+    setBusy(link, false);
+  }
+});
+
+/* === 7) Synchronizacja z Twoim istniejącym UI / localStorage === */
 onAuthStateChanged(auth, (user) => {
   if (user) {
     localStorage.setItem('syntri.auth.uid',   user.uid);
@@ -912,6 +939,7 @@ onAuthStateChanged(auth, (user) => {
   if (typeof renderAuthUI === 'function') renderAuthUI();
 });
 </script>
+
 </body>
 </html>
 
