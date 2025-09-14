@@ -64,7 +64,7 @@
     .syntri-actions .btn[disabled]{opacity:.5;pointer-events:none}
     .syntri-close{position:absolute;right:16px;top:12px;cursor:pointer;font-weight:700;color:var(--muted)}
 
-    /* Generic modal */
+    /* Generic modal for Login/Account/Paywall */
     .modal{position:fixed;inset:0;z-index:9998;display:none;align-items:center;justify-content:center;background:#000a;backdrop-filter:blur(4px)}
     .modal.show{display:flex}
     .modal-card{width:min(520px,92vw);background:var(--panel);border:1px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.45);padding:20px}
@@ -81,6 +81,7 @@
         <h1 id="title" class="page-title" data-i18n="title">Syntri • QR Generator</h1>
       </header>
 
+      <!-- Simplified nav: Login / Language -->
       <nav class="subnav" aria-label="App navigation">
         <a href="#" id="nav-login" data-i18n="nav_login">Login</a>
         <a href="#" id="nav-account" style="display:none" data-i18n="nav_account">Account</a>
@@ -92,6 +93,7 @@
         <button type="button" class="btn btn-ghost" id="btn-en">EN</button>
       </div>
 
+      <!-- Single section: Input + compact options + preview -->
       <div class="grid">
         <section>
           <div class="field">
@@ -136,10 +138,11 @@
             <span id="usagePill" class="usage-pill" title="Free monthly quota">10 / 10</span>
           </div>
 
-          <div id="dev-panel" style="display:none; margin-top:8px; display:flex; gap:8px;">
-            <button id="dev-exhaust" class="btn btn-ghost">DEV: Max limit</button>
-            <button id="dev-reset"   class="btn btn-ghost">DEV: Reset</button>
-          </div>
+<!-- DEV panel – widoczny tylko z ?dev=1 -->
+<div id="dev-panel" style="display:none; margin-top:8px; display:flex; gap:8px;">
+  <button id="dev-exhaust" class="btn btn-ghost">DEV: Max limit</button>
+  <button id="dev-reset"   class="btn btn-ghost">DEV: Reset</button>
+</div>
           
           <p class="muted" id="note-offline" style="margin-top:10px;" data-i18n="note_offline">
             Działa lokalnie w przeglądarce — żadne dane nie opuszczają urządzenia.
@@ -166,23 +169,54 @@
     </div>
   </div>
 
-  <!-- Login modal (JEDEN, bez duplikatów) -->
-  <div id="loginModal" class="modal" aria-hidden="true">
-    <div class="modal-card">
-      <h3 data-i18n="login_title">Log in</h3>
-      <div class="field-row">
-        <label for="loginEmail" class="muted" data-i18n="login_email_label">Email</label>
-        <input id="loginEmail" type="email" placeholder="you@domain.com" required autocomplete="email" inputmode="email" />
-      </div>
-      <div class="field-row" style="margin-top:12px;">
-        <button id="loginEmailLink" class="btn btn-primary" type="button">Sign in via Email Link</button>
-        <button id="loginGoogle" class="btn btn-ghost"   type="button">Sign in with Google</button>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="loginCancel" data-i18n="btn_cancel" type="button">Cancel</button>
-      </div>
+ <!-- Login modal -->
+<div id="loginModal" class="modal" aria-hidden="true">
+  <div class="modal-card">
+    <h3 data-i18n="login_title">Log in</h3>
+
+    <!-- E-mail input (Email Link) -->
+    <div class="field-row">
+      <label for="loginEmail" class="muted" data-i18n="login_email_label">Email</label>
+      <input id="loginEmail"
+             type="email"
+             placeholder="you@domain.com"
+             required
+             autocomplete="email"
+             inputmode="email" />
+    </div>
+
+    <!-- Metody logowania -->
+    <div class="field-row" style="margin-top:12px;">
+      <button id="loginEmailLink" class="btn btn-primary" type="button">
+        Sign in via Email Link
+      </button>
+      <button id="loginGoogle" class="btn btn-ghost" type="button">
+        Sign in with Google
+      </button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="loginCancel" data-i18n="btn_cancel" type="button">Cancel</button>
     </div>
   </div>
+</div>
+
+    <!-- Metody logowania -->
+    <div class="field-row" style="margin-top:12px;">
+      <button id="loginEmailLink" class="btn btn-primary" type="button">
+        Sign in via Email Link
+      </button>
+      <button id="loginGoogle" class="btn btn-ghost" type="button">
+        Sign in with Google
+      </button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="loginCancel" data-i18n="btn_cancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
 
   <!-- Account modal -->
   <div id="accountModal" class="modal" aria-hidden="true">
@@ -205,6 +239,7 @@
       <div class="modal-actions" style="justify-content:space-between">
         <div style="display:flex;gap:8px">
           <button class="btn btn-primary" id="subscribeStripe">Subscribe – Stripe</button>
+          <button class="btn btn-ghost" id="subscribePayPal">Subscribe – PayPal</button>
         </div>
         <button class="btn btn-ghost" id="paywallClose" data-i18n="btn_close">Close</button>
       </div>
@@ -212,7 +247,9 @@
   </div>
 
   <script>
-    // ===== Twój dotychczasowy app.js (zostawiony, usunięto tylko mock signout i PayPal) =====
+    // ----------------------------------------------
+    // helpers / state
+    // ----------------------------------------------
     const $ = (s) => document.querySelector(s);
     const params = new URLSearchParams(location.search);
     const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
@@ -222,10 +259,19 @@
     const text = $('#text'); const size=$('#size'); const ecc=$('#ecc');
     const margin=$('#margin'); const fg=$('#fg'); const transparent=$('#transparent');
     const qrBox=$('#qr'); const usagePill = $('#usagePill');
+
+
+    
     let qr;
 
-    async function bumpQrCount(){ /* zostawione jako stub */ }
-
+   // --- metrics (stub) ---
+   // Podmień na wywołanie Firestore, gdy podepniesz Firebase.
+   async function bumpQrCount(){
+   if (!AUTH.isLoggedIn()) return;          // Zliczaj tylko zalogowanych
+   // TODO: Firestore: increment(qrCount) dla bieżącego użytkownika
+     console.debug('bumpQrCount (mock) – zalogowany:', AUTH.email());
+   }
+    
     function clamp(n, min, max){ return Math.min(Math.max(n, min), max); }
     function filename(ext){
       const raw = text.value.trim() || 'syntri';
@@ -233,10 +279,17 @@
       return `syntri-qr-${slug || 'code'}.${ext}`;
     }
 
-    // Mock AUTH tylko do odświeżenia UI (stan wypełnia Firebase)
+    // ----------------------------------------------
+    // Auth (mock) – podmień na Firebase Auth
+    // ----------------------------------------------
     const AUTH = {
       isLoggedIn: () => !!localStorage.getItem('syntri.auth.uid'),
       email:      () => localStorage.getItem('syntri.auth.email') || '',
+      loginMock(email){
+        localStorage.setItem('syntri.auth.uid','dev_uid');
+        localStorage.setItem('syntri.auth.email', email || 'user@example.com');
+        renderAuthUI();
+      },
       logout(){
         localStorage.removeItem('syntri.auth.uid');
         localStorage.removeItem('syntri.auth.email');
@@ -249,105 +302,354 @@
       $('#nav-login').style.display   = logged ? 'none' : 'inline-block';
       $('#nav-account').style.display = logged ? 'inline-block' : 'none';
       $('#nav-signout').style.display = logged ? 'inline-block' : 'none';
+      // logged → liczenie usage na serwerze (tu: unlimited until backend)
       renderUsagePill();
-      ensureHomeGate();
+      ensureHomeGate();  
     }
 
-    // Usage
-    function getPlan(){ return AUTH.isLoggedIn() ? (localStorage.getItem('syntri.plan') || 'Free') : 'Free'; }
-    function monthResetAtMs(){ const d=new Date(); return new Date(d.getFullYear(), d.getMonth()+1, 1, 0,0,0,0).getTime(); }
-    function usageKey(){ const d=new Date(); const ym=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`; return `syntri.qr.usage.${ym}`; }
-    function planQuota(p){ if(p==='Pro')return Infinity; if(p==='Basic')return 100; return 15; }
-    function getUsage(){ const plan=getPlan(); const q=planQuota(plan); const def={used:0,quota:q,resetAt:monthResetAtMs()}; try{ const raw=JSON.parse(localStorage.getItem(usageKey())||JSON.stringify(def)); raw.quota=q; raw.resetAt=monthResetAtMs(); return raw;}catch{return def;} }
-    function saveUsage(u){ localStorage.setItem(usageKey(), JSON.stringify(u)); }
-    function renderUsagePill(){ const u=getUsage(); const plan=getPlan(); const left=(u.quota===Infinity)?'∞':Math.max(0,u.quota-u.used); usagePill.textContent=(u.quota===Infinity)?`${plan} • unlimited`:`${left} / ${u.quota}`; usagePill.title=(u.quota===Infinity)?'Paid plan':'Monthly quota'; ensureHomeGate(); }
-    function tryConsumeUsage(){ const u=getUsage(); if(u.quota===Infinity) return {ok:true,remaining:Infinity,resetMs:0}; if(u.used>=u.quota){ return {ok:false,remaining:0,resetMs:Math.max(0,u.resetAt-Date.now())}; } u.used+=1; saveUsage(u); renderUsagePill(); return {ok:true,remaining:u.quota-u.used,resetMs:Math.max(0,u.resetAt-Date.now())}; }
-    function canGenerateNow(){ const u=getUsage(); return u.quota===Infinity || u.used<u.quota; }
-    function remainingMs(){ const u=getUsage(); return u.quota===Infinity?0:Math.max(0,u.resetAt-Date.now()); }
+    // ----------------------------------------------
+// Usage & Plans (front-gate for anon + logged)
+// ----------------------------------------------
 
-    // QR
+// Plan (mock). Na razie trzymany w localStorage; gdy podepniesz backend, zwracaj realny plan.
+// Ustaw ręcznie w konsoli np.: localStorage.setItem('syntri.plan','Free'|'Basic'|'Pro')
+function getPlan(){
+  return AUTH.isLoggedIn() ? (localStorage.getItem('syntri.plan') || 'Free') : 'Free';
+}
+
+// Reset miesięczny: 1. dzień następnego miesiąca, 00:00
+function monthResetAtMs(){
+  const d = new Date();
+  const y = d.getFullYear(), m = d.getMonth();
+  return new Date(y, m + 1, 1, 0, 0, 0, 0).getTime();
+}
+
+function usageKey(){
+  const d=new Date();
+  const ym=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`;
+  return `syntri.qr.usage.${ym}`;
+}
+
+// Quoty per plan
+function planQuota(plan){
+  if (plan === 'Pro') return Infinity;
+  if (plan === 'Basic') return 100;
+  return 15; // Free
+}
+
+// Zwraca {used, quota, resetAt}
+function getUsage(){
+  const plan = getPlan();
+  const quota = planQuota(plan);
+  const resetAt = monthResetAtMs();
+  const def = { used:0, quota, resetAt };
+
+  try {
+    const raw = JSON.parse(localStorage.getItem(usageKey()) || JSON.stringify(def));
+    raw.quota = quota;
+    raw.resetAt = resetAt;
+    return raw;
+  } catch {
+    return def;
+  }
+}
+
+function saveUsage(u){
+  // zapisujemy dla wszystkich (anon + logged), by front-gate był spójny
+  localStorage.setItem(usageKey(), JSON.stringify(u));
+}
+
+function renderUsagePill(){
+  const u = getUsage();
+  const plan = getPlan();
+  const left = (u.quota===Infinity) ? '∞' : Math.max(0, u.quota - u.used);
+  usagePill.textContent = (u.quota===Infinity) ? `${plan} • unlimited` : `${left} / ${u.quota}`;
+  usagePill.title = (u.quota===Infinity) ? 'Paid plan' : 'Monthly quota';
+  ensureHomeGate();
+}
+
+// Konsumpcja: { ok, remaining, resetMs }
+function tryConsumeUsage(){
+  const u = getUsage();
+  if (u.quota === Infinity) return { ok:true, remaining:Infinity, resetMs:0 };
+
+  if (u.used >= u.quota){
+    const resetMs = Math.max(0, u.resetAt - Date.now());
+    return { ok:false, remaining:0, resetMs };
+  }
+  u.used += 1;
+  saveUsage(u);
+  renderUsagePill();
+  return { ok:true, remaining: u.quota - u.used, resetMs: Math.max(0, u.resetAt - Date.now()) };
+}
+    // --- helpers: szybkie sprawdzenie limitu na stronie głównej ---
+function canGenerateNow(){ 
+  const u = getUsage();
+  return u.quota === Infinity || u.used < u.quota;
+}
+
+function remainingMs(){
+  const u = getUsage();
+  return u.quota === Infinity ? 0 : Math.max(0, u.resetAt - Date.now());
+}
+
+    // ----------------------------------------------
+    // QR render
+    // ----------------------------------------------
     function render(){
-      qrBox.innerHTML='';
-      const placeholderDefault='https://syntriagency.github.io/syntri-qr-generator/';
-      const value=text.value.trim() || placeholderDefault;
-      const colorDark=fg.value||'#000000';
-      const colorLight=transparent?.checked ? 'rgba(0,0,0,0)' : '#ffffff';
-      const width=clamp(parseInt(size.value||100,10),64,2048);
-      const m=clamp(parseInt(margin.value||2,10),0,16);
+      qrBox.innerHTML = '';
+      const placeholderDefault = 'https://syntriagency.github.io/syntri-qr-generator/';
+      const value = text.value.trim() || placeholderDefault;
+      const colorDark = fg.value || '#000000';
+      const colorLight = transparent?.checked ? 'rgba(0,0,0,0)' : '#ffffff';
+      const width = clamp(parseInt(size.value||100,10), 64, 2048);
+      const m = clamp(parseInt(margin.value||2,10), 0, 16);
 
-      qr = new QRCode(qrBox,{
-        text:value,width,height:width,
-        colorDark,colorLight,
-        correctLevel: QRCode.CorrectLevel[ecc.value||'M'],
-        margin:m
+      qr = new QRCode(qrBox, {
+        text: value, width, height: width,
+        colorDark, colorLight,
+        correctLevel: QRCode.CorrectLevel[ecc.value || 'M'],
+        margin: m
       });
 
       qrBox.setAttribute('role','img');
-      qrBox.setAttribute('aria-label',`QR code, size ${width}px, ECC ${ecc.value}, margin ${m}`);
+      qrBox.setAttribute('aria-label', `QR code, size ${width}px, ECC ${ecc.value}, margin ${m}`);
     }
 
-    function downloadCanvasAsPNG(canvas,name){
-      const scale=2;
-      const off=document.createElement('canvas');
-      off.width=canvas.width*scale; off.height=canvas.height*scale;
-      const ctx=off.getContext('2d');
-      if(!transparent.checked){ ctx.fillStyle='#fff'; ctx.fillRect(0,0,off.width,off.height); }
-      ctx.imageSmoothingEnabled=false;
-      ctx.drawImage(canvas,0,0,off.width,off.height);
-      const a=document.createElement('a'); a.download=name; a.href=off.toDataURL('image/png'); a.click();
+    // downloads (from animation canvas)
+    function downloadCanvasAsPNG(canvas, name){
+      const scale = 2;
+      const off = document.createElement('canvas');
+      off.width = canvas.width*scale; off.height = canvas.height*scale;
+      const ctx = off.getContext('2d');
+      if(!transparent.checked){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,off.width,off.height); }
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(canvas, 0, 0, off.width, off.height);
+      const a = document.createElement('a'); a.download = name; a.href = off.toDataURL('image/png'); a.click();
     }
-    function downloadCanvasAsSVG(canvas,name,transparentBg){
-      const pngData=canvas.toDataURL('image/png');
-      const bg=transparentBg?'':'<rect width="100%" height="100%" fill="#fff"/>';
-      const svg=`<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">${bg}<image href="${pngData}" width="100%" height="100%"/></svg>`;
-      const blob=new Blob([svg],{type:'image/svg+xml'});
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a'); a.href=url; a.download=name; a.click();
+    function downloadCanvasAsSVG(canvas, name, transparentBg){
+      const pngData = canvas.toDataURL('image/png');
+      const bg = transparentBg ? '' : '<rect width="100%" height="100%" fill="#fff"/>';
+      const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">${bg}<image href="${pngData}" width="100%" height="100%"/></svg>`;
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = name; a.click();
       URL.revokeObjectURL(url);
     }
 
-    // Cinematic (jak było)
-    function startCinematic(){ /* twój kod bez zmian */ }
+    // ----------------------------------------------
+    // Cinematic modal + usage gate
+    // ----------------------------------------------
+    function startCinematic(){
+      if(!qr || !qr._oQRCode){ render(); }
+      if(!qr || !qr._oQRCode){ alert(i18n('alert_generate_first')); return; }
 
-    // Cooldown UI (jak było)
-    function formatDHMS(ms){ const s=Math.max(0,Math.floor(ms/1000)); const d=Math.floor(s/86400); const h=Math.floor((s%86400)/3600); const m=Math.floor((s%3600)/60); const sec=s%60; return { d,h,m,s:sec }; }
-    let cooldownTimerId=null;
-    function showCooldownUI(resetMs){ /* twój kod bez zmian, usunięto tylko PayPal z UI powyżej */ }
+      const q = qr._oQRCode;
+      const modules = q.moduleCount;
+      const matrix  = q.modules || [];
+      const cell = 10;
+      const marginCells = clamp(parseInt(margin.value||2,10), 0, 16);
+      const quietPx = marginCells * cell;
+      const canvasSize = (modules + marginCells*2) * cell;
 
-    function ensureHomeGate(){
-      const ok=canGenerateNow();
-      const btn=document.querySelector('#generate');
-      if(btn){ btn.disabled=!ok; btn.setAttribute('aria-disabled', String(!ok)); btn.title=ok?'':(i18n('paywall_title')||'Free limit reached'); }
-      if(!ok){ showCooldownUI(Date.now()+remainingMs()); }
-      else {
-        const preview=document.querySelector('#sec-preview .preview');
-        if(preview && preview.querySelector('#cooldown-timer')){
-          preview.innerHTML='<div id="qr" class="qr-box"></div>';
-          render();
+      const dark = [];
+      for (let y = 0; y < modules; y++) for (let x = 0; x < modules; x++) if (matrix[y] && matrix[y][x]) dark.push([x,y]);
+      for (let i=dark.length-1; i>0; i--){ const j = Math.floor(Math.random()*(i+1)); [dark[i],dark[j]] = [dark[j],dark[i]]; }
+
+      const overlay = document.createElement('div'); overlay.className='syntri-overlay';
+      const modal = document.createElement('div'); modal.className='syntri-modal';
+      const closeBtn = document.createElement('div'); closeBtn.className='syntri-close'; closeBtn.textContent = i18n('btn_close');
+      closeBtn.onclick = ()=>{ overlay.style.opacity='0'; setTimeout(()=>overlay.remove(),200); };
+
+      const title = document.createElement('h2'); title.className='syntri-title'; title.textContent = i18n('modal_title');
+      const sub   = document.createElement('div'); sub.className='syntri-sub'; sub.textContent = i18n('modal_sub');
+      const grid  = document.createElement('div'); grid.className='syntri-grid';
+      const hint  = document.createElement('div'); hint.className='muted'; hint.id='cin-hint'; hint.textContent = i18n('modal_hint');
+
+      const cv = document.createElement('canvas'); cv.id='cin-canvas'; cv.width=canvasSize; cv.height=canvasSize;
+      const ctx = cv.getContext('2d', { alpha: true });
+      if (!$('#transparent')?.checked){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height); }
+
+      const actions = document.createElement('div'); actions.className='syntri-actions';
+      const btnPng = document.createElement('button'); btnPng.className='btn btn-ghost'; btnPng.textContent = i18n('btn_png'); btnPng.disabled = true;
+      const btnSvg = document.createElement('button'); btnSvg.className='btn btn-ghost'; btnSvg.textContent = i18n('btn_svg'); btnSvg.disabled = true;
+      actions.appendChild(btnPng); actions.appendChild(btnSvg);
+
+      grid.appendChild(cv);
+      modal.appendChild(closeBtn); modal.appendChild(title); modal.appendChild(sub);
+      modal.appendChild(grid); modal.appendChild(actions); modal.appendChild(hint);
+      overlay.appendChild(modal); document.body.appendChild(overlay);
+      requestAnimationFrame(()=>{ overlay.style.opacity='1'; });
+
+      const totalMs = 5000;
+      const t0 = performance.now();
+      const N = dark.length;
+      const fgColor = ($('#fg')?.value) || '#000000';
+      let lastDrawn = 0;
+
+      function frame(now){
+        const elapsed = Math.max(0, now - t0);
+        const t = Math.min(1, elapsed / totalMs);
+        const shouldDraw = (N === 0) ? 0 : Math.floor(N * t);
+
+        if (N > 0){
+          ctx.fillStyle = fgColor;
+          for (let i = lastDrawn; i < shouldDraw; i++){
+            const [x,y] = dark[i];
+            ctx.fillRect(quietPx + x*cell, quietPx + y*cell, cell, cell);
+          }
+          lastDrawn = shouldDraw;
+        }
+        const pct = Math.round(t*100);
+        hint.textContent = (t < 1) ? `${i18n('modal_hint')} ${pct}%` : '';
+
+        if (t < 1){
+          requestAnimationFrame(frame);
+        } else {
+          // ANIMATION DONE → usage gate
+          const gate = tryConsumeUsage();
+          if (!gate.ok){
+            // paywall
+            openModal('#paywallModal');
+            // keep buttons disabled
+          } else {
+            // enable downloads
+            document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions').forEach(el=>{ el.style.display='block'; });
+            btnPng.disabled = false; btnSvg.disabled = false;
+            btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
+            btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+          }
+          hint.textContent = '';
         }
       }
+      requestAnimationFrame(frame);
     }
 
-    function updateShareLink(){
-      const p=new URLSearchParams({t:text.value.trim(),s:size.value,e:ecc.value,m:margin.value,c:fg.value,bg: transparent.checked ? '1':'0'});
-      const url=location.origin+location.pathname+'?'+p.toString();
-      $('#shareLink').href=url;
-      $('#copyLink').onclick=async()=>{ try{ await navigator.clipboard.writeText(url); }catch{} };
+// ----------------------------------------------
+// Cooldown UI (zamiana preview na odliczanie + CTA)
+// ----------------------------------------------
+let cooldownTimerId = null;
+
+function formatDHMS(ms){
+  const s = Math.max(0, Math.floor(ms/1000));
+  const d = Math.floor(s/86400);
+  const h = Math.floor((s%86400)/3600);
+  const m = Math.floor((s%3600)/60);
+  const sec = s%60;
+  return { d, h, m, s:sec };
+}
+
+function showCooldownUI(resetMs){
+  const preview = document.querySelector('#sec-preview .preview');
+  if (!preview) return;
+
+  preview.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.style.textAlign='center';
+  wrap.style.padding='20px';
+
+  const h = document.createElement('h3');
+  h.textContent = i18n('paywall_title') || 'Free limit reached';
+  h.style.margin='0 0 6px 0';
+
+  const p = document.createElement('p');
+  p.className = 'muted';
+  p.style.margin='0 0 12px 0';
+  p.textContent = i18n('paywall_copy') || 'You used all free codes this month.';
+
+  const timer = document.createElement('div');
+  timer.style.fontWeight='800';
+  timer.style.fontSize='18px';
+  timer.style.margin='8px 0 12px 0';
+  timer.id = 'cooldown-timer';
+
+  const ctaRow = document.createElement('div');
+  ctaRow.style.display='flex';
+  ctaRow.style.gap='10px';
+  ctaRow.style.justifyContent='center';
+
+  const btnUpgrade1 = document.createElement('button');
+  btnUpgrade1.className='btn btn-primary';
+  btnUpgrade1.textContent='Upgrade – Stripe';
+  btnUpgrade1.onclick = ()=> alert('Stripe Checkout (stub). Podmień na realny endpoint.');
+
+  const btnUpgrade2 = document.createElement('button');
+  btnUpgrade2.className='btn btn-ghost';
+  btnUpgrade2.textContent='Upgrade – PayPal';
+  btnUpgrade2.onclick = ()=> alert('PayPal Subscriptions (stub). Podmień na realny endpoint.');
+
+  ctaRow.appendChild(btnUpgrade1);
+  ctaRow.appendChild(btnUpgrade2);
+
+  wrap.appendChild(h); wrap.appendChild(p); wrap.appendChild(timer); wrap.appendChild(ctaRow);
+  preview.appendChild(wrap);
+
+  if (cooldownTimerId) clearInterval(cooldownTimerId);
+  const tick = ()=>{
+    const ms = Math.max(0, resetMs - Date.now());
+    const {d,h,m,s} = formatDHMS(ms);
+    timer.textContent = (d>0 ? `${d}d ` : '') + `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (ms <= 0){
+      clearInterval(cooldownTimerId);
+      renderUsagePill();
+      // przywróć pusty preview z ramką QR
+      document.querySelector('#sec-preview .preview').innerHTML = '<div id="qr" class="qr-box"></div>';
+      render();
     }
+  };
+  tick();
+  cooldownTimerId = setInterval(tick, 1000);
+}
+    
+function ensureHomeGate(){
+  const ok = canGenerateNow();
+
+  // blokada guzika
+  const btn = document.querySelector('#generate');
+  if (btn) { 
+    btn.disabled = !ok; 
+    btn.setAttribute('aria-disabled', String(!ok));
+    btn.title = ok ? '' : (i18n('paywall_title') || 'Free limit reached'); 
+  }
+
+  if (!ok){
+    showCooldownUI(Date.now() + remainingMs());
+  } else {
+    const preview = document.querySelector('#sec-preview .preview');
+    if (preview && preview.querySelector('#cooldown-timer')) {
+      preview.innerHTML = '<div id="qr" class="qr-box"></div>';
+      render();
+    }
+  }
+}   
+
+    // ----------------------------------------------
+    // URL state / live events / init
+    // ----------------------------------------------
+    function updateShareLink(){
+      const p = new URLSearchParams({
+        t:text.value.trim(), s:size.value, e:ecc.value, m:margin.value, c:fg.value, bg: transparent.checked ? '1':'0'
+      });
+      const url = location.origin + location.pathname + '?' + p.toString();
+      $('#shareLink').href = url;
+      $('#copyLink').onclick = async ()=>{ try{ await navigator.clipboard.writeText(url); }catch{} };
+    }
+
     function syncFromURL(){
-      if(params.has('t')) text.value=decodeURIComponent(params.get('t'));
-      if(params.has('s')) size.value=params.get('s');
-      if(params.has('e')) ecc.value=params.get('e');
-      if(params.has('m')) margin.value=params.get('m');
-      if(params.has('c')) fg.value=params.get('c');
-      if(params.has('bg')) transparent.checked=params.get('bg')==='1';
+      if(params.has('t')) text.value = decodeURIComponent(params.get('t'));
+      if(params.has('s')) size.value = params.get('s');
+      if(params.has('e')) ecc.value = params.get('e');
+      if(params.has('m')) margin.value = params.get('m');
+      if(params.has('c')) fg.value = params.get('c');
+      if(params.has('bg')) transparent.checked = params.get('bg') === '1';
     }
     function restoreState(){
-      if(!params.has('t')) text.value = load('t', text.value);
-      if(!params.has('s')) size.value = load('s', size.value);
-      if(!params.has('e')) ecc.value  = load('e', ecc.value);
-      if(!params.has('m')) margin.value= load('m', margin.value);
-      if(!params.has('c')) fg.value   = load('c', fg.value);
+      if(!params.has('t')) text.value   = load('t', text.value);
+      if(!params.has('s')) size.value   = load('s', size.value);
+      if(!params.has('e')) ecc.value    = load('e', ecc.value);
+      if(!params.has('m')) margin.value = load('m', margin.value);
+      if(!params.has('c')) fg.value     = load('c', fg.value);
       if(!params.has('bg')) transparent.checked = (load('bg','0')==='1');
     }
     function saveState(){
@@ -362,19 +664,9 @@
       [text,size,ecc,margin,fg,transparent].forEach(el=> on(el, ev, liveRender));
     });
 
-    $('#generate').addEventListener('click', async () => {
-      if(!canGenerateNow()){ ensureHomeGate(); return; }
-      render(); updateShareLink(); saveState(); startCinematic();
-      try { await bumpQrCount(); } catch (err) { console.error("bumpQrCount error", err); }
-    });
+    $('#generate').addEventListener('click', async () => { if(!canGenerateNow()){ ensureHomeGate(); return; } render(); updateShareLink(); saveState(); startCinematic(); try { await bumpQrCount(); console.log("QR count incremented"); } catch (err) { console.error("bumpQrCount error", err); } });
     $('#clear').addEventListener('click', () => { text.value=''; render(); updateShareLink(); saveState(); });
-    document.addEventListener('keydown', async e => {
-      if ((e.ctrlKey||e.metaKey) && e.key==='Enter'){
-        if(!canGenerateNow()){ ensureHomeGate(); return; }
-        render(); updateShareLink(); saveState(); startCinematic();
-        try{ await bumpQrCount(); } catch (err){ console.error(err); }
-      }
-    });
+   document.addEventListener('keydown', async e => { if ((e.ctrlKey||e.metaKey) && e.key==='Enter'){ if(!canGenerateNow()){ ensureHomeGate(); return; } render(); updateShareLink(); saveState(); startCinematic(); try{ await bumpQrCount(); } catch (err){ console.error(err); } } });
 
     (function initWhenReady(){
       const start = Date.now();
@@ -385,7 +677,9 @@
       })();
     })();
 
+    // ----------------------------------------------
     // Language panel
+    // ----------------------------------------------
     const navLanguage = document.getElementById('nav-language');
     const langPanel   = document.getElementById('lang-panel');
     navLanguage?.addEventListener('click', (e)=>{
@@ -400,14 +694,21 @@
         langPanel.classList.remove('show'); langPanel.setAttribute('aria-hidden','true'); navLanguage.classList.remove('active');
       }
     });
+    document.getElementById('btn-pl')?.addEventListener('click', ()=>{ applyI18n('pl'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
+    document.getElementById('btn-en')?.addEventListener('click', ()=>{ applyI18n('en'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
 
-    // Modale
+    // ----------------------------------------------
+    // Login / Account / Paywall modals (mock)
+    // ----------------------------------------------
     function openModal(sel){ const m=$(sel); if(!m) return; m.classList.add('show'); m.setAttribute('aria-hidden','false'); }
     function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
 
+    // Login
     on($('#nav-login'),'click',(e)=>{ e.preventDefault(); openModal('#loginModal'); });
     on($('#loginCancel'),'click',()=> closeModal('#loginModal'));
+    
 
+    // Account
     on($('#nav-account'),'click',(e)=>{
       e.preventDefault();
       $('#accountEmail').textContent = AUTH.email();
@@ -415,72 +716,94 @@
       openModal('#accountModal');
     });
     on($('#accountClose'),'click',()=> closeModal('#accountModal'));
-
     on($('#openPortal'),'click',async ()=>{
+      // TODO: replace with call to your Cloud Function -> Stripe Customer Portal URL
       alert('Stripe Customer Portal (stub). Podmień na realny endpoint.');
     });
 
+    // Sign out
+    on($('#nav-signout'),'click',(e)=>{ e.preventDefault(); AUTH.logout(); });
+
     // Paywall
     on($('#paywallClose'),'click',()=> closeModal('#paywallModal'));
+    on($('#subscribeStripe'),'click',async ()=>{
+      // TODO: fetch('/billing/stripe/create-checkout', {method:'POST', credentials:'include'})
+      alert('Stripe Checkout (stub). Podmień na realny endpoint.');
+    });
+    on($('#subscribePayPal'),'click',async ()=>{
+      // TODO: fetch('/billing/paypal/create-subscription', {method:'POST', credentials:'include'})
+      alert('PayPal Subscriptions (stub). Podmień na realny endpoint.');
+    });
 
-    // DEV panel
-    (function setupDevPanel(){
-      const showDev = params.get('dev') === '1';
-      const panel = document.getElementById('dev-panel');
-      if (panel) panel.style.display = showDev ? 'flex' : 'none';
+// DEV panel – działa tylko z ?dev=1
+(function setupDevPanel(){
+  const showDev = params.get('dev') === '1';
+  const panel = document.getElementById('dev-panel');
+  if (panel) panel.style.display = showDev ? 'flex' : 'none';
 
-      on(document.getElementById('dev-exhaust'), 'click', () => {
-        localStorage.setItem('syntri.plan','Free');
-        const u = getUsage();
-        const exhausted = { ...u, used: u.quota, resetAt: Date.now() + 60_000 };
-        saveUsage(exhausted);
-        renderUsagePill();
-        alert('DEV: quota wyczerpana na 60s (Free plan).');
-      });
+  // DEV: wyczerp limit (ustawia plan Free, used=quota, reset za 60s)
+  on(document.getElementById('dev-exhaust'), 'click', () => {
+    localStorage.setItem('syntri.plan','Free'); // zapewnia skończoną quotę
+    const u = getUsage();                       // { used, quota, resetAt }
+    const exhausted = { ...u, used: u.quota, resetAt: Date.now() + 60_000 };
+    saveUsage(exhausted);
+    renderUsagePill();                          // odświeża pill + ensureHomeGate()
+    alert('DEV: quota wyczerpana na 60s (Free plan).');
+  });
 
-      on(document.getElementById('dev-reset'), 'click', () => {
-        const u = getUsage();
-        const reset = { ...u, used: 0, resetAt: monthResetAtMs() };
-        saveUsage(reset);
-        renderUsagePill();
-        alert('DEV: quota zresetowana.');
-      });
-    })();
-
+  // DEV: reset limitu (used=0, resetAt -> początek następnego miesiąca)
+  on(document.getElementById('dev-reset'), 'click', () => {
+    const u = getUsage();
+    const reset = { ...u, used: 0, resetAt: monthResetAtMs() };
+    saveUsage(reset);
+    renderUsagePill();
+    alert('DEV: quota zresetowana.');
+  });
+})();
+    
+    // ----------------------------------------------
     // i18n
+    // ----------------------------------------------
     const I18N = {
-      pl:{ title:'Syntri • Generator QR', nav_login:'Zaloguj', nav_account:'Konto', nav_signout:'Wyloguj', nav_language:'Język',
-           label_text:'Treść (URL / tekst)', label_size:'Rozmiar (px)', label_ecc:'Korekcja błędów', label_margin:'Margines',
-           label_color:'Kolor kodu', label_transparent:'Przezroczyste tło', btn_generate:'Generuj', btn_clear:'Wyczyść',
-           btn_png:'Pobierz PNG', btn_svg:'Pobierz SVG', btn_copy:'Kopiuj link', btn_close:'Zamknij', link_share:'Udostępnij',
-           note_offline:'Działa lokalnie w przeglądarce — żadne dane nie opuszczają urządzenia.',
-           hint_hotkey:'— szybkie generowanie', alert_generate_first:'Najpierw wygeneruj QR', copied:'Skopiowano',
-           modal_title:'It’s your QR code', modal_sub:'Generator by Syntri', modal_hint:'Budowanie pikseli…',
-           login_title:'Logowanie', login_email_label:'Email', btn_login:'Zaloguj', btn_cancel:'Anuluj',
-           account_title:'Konto', btn_manage_billing:'Zarządzaj subskrypcją',
-           paywall_title:'Wyczerpano limit darmowy',
-           paywall_copy:'Wykorzystałeś/aś wszystkie darmowe kody w tym miesiącu. Wybierz plan, aby kontynuować.' },
-      en:{ title:'Syntri • QR Generator', nav_login:'Login', nav_account:'Account', nav_signout:'Sign out', nav_language:'Language',
-           label_text:'Content (URL / text)', label_size:'Size (px)', label_ecc:'Error correction', label_margin:'Margin',
-           label_color:'Code color', label_transparent:'Transparent background', btn_generate:'Generate', btn_clear:'Clear',
-           btn_png:'Download PNG', btn_svg:'Download SVG', btn_copy:'Copy link', btn_close:'Close', link_share:'Share',
-           note_offline:'Runs locally in your browser — no data leaves your device.',
-           hint_hotkey:'— quick generate', alert_generate_first:'Generate the QR first', copied:'Copied',
-           modal_title:'It’s your QR code', modal_sub:'Generator by Syntri', modal_hint:'Building pixels…',
-           login_title:'Log in', login_email_label:'Email', btn_login:'Log in', btn_cancel:'Cancel',
-           account_title:'Account', btn_manage_billing:'Manage billing',
-           paywall_title:'Free limit reached',
-           paywall_copy:'You used all free codes this month. Choose a plan to continue.' }
+      pl: {
+        title:'Syntri • Generator QR',
+        nav_login:'Zaloguj', nav_account:'Konto', nav_signout:'Wyloguj', nav_language:'Język',
+        label_text:'Treść (URL / tekst)', label_size:'Rozmiar (px)', label_ecc:'Korekcja błędów',
+        label_margin:'Margines', label_color:'Kolor kodu', label_transparent:'Przezroczyste tło',
+        btn_generate:'Generuj', btn_clear:'Wyczyść', btn_png:'Pobierz PNG', btn_svg:'Pobierz SVG',
+        btn_copy:'Kopiuj link', btn_close:'Zamknij', link_share:'Udostępnij',
+        note_offline:'Działa lokalnie w przeglądarce — żadne dane nie opuszczają urządzenia.',
+        hint_hotkey:'— szybkie generowanie', alert_generate_first:'Najpierw wygeneruj QR', copied:'Skopiowano',
+        modal_title:'It’s your QR code', modal_sub:'Generator by Syntri', modal_hint:'Budowanie pikseli…',
+        login_title:'Logowanie', login_email_label:'Email', btn_login:'Zaloguj', btn_cancel:'Anuluj',
+        account_title:'Konto',
+        btn_manage_billing:'Zarządzaj subskrypcją',
+        paywall_title:'Wyczerpano limit darmowy',
+        paywall_copy:'Wykorzystałeś/aś wszystkie darmowe kody w tym miesiącu. Wybierz plan, aby kontynuować.'
+      },
+      en: {
+        title:'Syntri • QR Generator',
+        nav_login:'Login', nav_account:'Account', nav_signout:'Sign out', nav_language:'Language',
+        label_text:'Content (URL / text)', label_size:'Size (px)', label_ecc:'Error correction',
+        label_margin:'Margin', label_color:'Code color', label_transparent:'Transparent background',
+        btn_generate:'Generate', btn_clear:'Clear', btn_png:'Download PNG', btn_svg:'Download SVG',
+        btn_copy:'Copy link', btn_close:'Close', link_share:'Share',
+        note_offline:'Runs locally in your browser — no data leaves your device.',
+        hint_hotkey:'— quick generate', alert_generate_first:'Generate the QR first', copied:'Copied',
+        modal_title:'It’s your QR code', modal_sub:'Generator by Syntri', modal_hint:'Building pixels…',
+        login_title:'Log in', login_email_label:'Email', btn_login:'Log in', btn_cancel:'Cancel',
+        account_title:'Account',
+        btn_manage_billing:'Manage billing',
+        paywall_title:'Free limit reached',
+        paywall_copy:'You used all free codes this month. Choose a plan to continue.'
+      }
     };
-    function i18n(k){ const lang=localStorage.getItem('syntri.lang') || 'pl'; return (I18N[lang]||I18N.en)[k] || k; }
+    function i18n(k){ const lang = localStorage.getItem('syntri.lang') || 'pl'; return (I18N[lang]||I18N.en)[k] || k; }
     const userLang = localStorage.getItem('syntri.lang') || ((navigator.language || 'en').startsWith('pl') ? 'pl' : 'en');
     function applyI18n(lang){
       const dict = I18N[lang] || I18N.en;
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n'); if (dict[key]) el.textContent = dict[key];
-      });
-      const textInput = document.getElementById('text');
-      if (textInput) textInput.placeholder = lang==='pl' ? 'https://przyklad.pl' : 'https://example.com';
+      document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if (dict[key]) el.textContent = dict[key]; });
+      const textInput = document.getElementById('text'); if (textInput) textInput.placeholder = lang==='pl' ? 'https://przyklad.pl' : 'https://example.com';
       localStorage.setItem('syntri.lang', lang);
       renderAuthUI();
     }
@@ -488,80 +811,6 @@
     document.getElementById('btn-en')?.addEventListener('click', ()=>{ applyI18n('en'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
     applyI18n(userLang);
   </script>
-
-  <!-- Firebase Auth (Email Link + Google) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink,
-             signInWithEmailLink, signInWithPopup, GoogleAuthProvider, signOut,
-             onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-
-    // TODO: wstaw swoje dane projektu
-    const firebaseConfig = { apiKey:"YOUR_API_KEY", authDomain:"YOUR_AUTH_DOMAIN", projectId:"YOUR_PROJECT_ID", appId:"YOUR_APP_ID" };
-
-    const app  = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    // Pomocniczo: walidacja e-maila i aktywacja przycisku
-    const emailInput = document.getElementById('loginEmail');
-    const btnEmailLink = document.getElementById('loginEmailLink');
-    function emailValid(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
-    function refreshEmailBtn(){ if(btnEmailLink){ btnEmailLink.disabled = !emailValid((emailInput?.value||'').trim()); } }
-    emailInput?.addEventListener('input', refreshEmailBtn);
-    refreshEmailBtn();
-
-    // Otwórz modal logowania z nawigacji — już istnieje w app.js
-    // Zamknij modal (funkcja closeModal jest globalna z app.js)
-    function closeLoginModal(){ if (typeof closeModal === 'function') closeModal('#loginModal'); }
-
-    // Email Link
-    btnEmailLink?.addEventListener('click', async () => {
-      const email = (emailInput?.value || '').trim();
-      if (!emailValid(email)) { alert('Podaj poprawny e-mail'); return; }
-      const actionCodeSettings = { url: window.location.href, handleCodeInApp: true };
-      try{
-        await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-        localStorage.setItem('pendingEmail', email);
-        alert('Link logowania wysłany. Sprawdź skrzynkę.');
-      }catch(err){ console.error(err); alert('Nie udało się wysłać linku.'); }
-    });
-
-    // Complete Email Link
-    if (isSignInWithEmailLink(auth, window.location.href)) {
-      try{
-        const email = localStorage.getItem('pendingEmail') || prompt('Podaj e-mail:');
-        await signInWithEmailLink(auth, email, window.location.href);
-        localStorage.removeItem('pendingEmail');
-        closeLoginModal();
-      }catch(err){ console.error(err); alert('Logowanie linkiem nie powiodło się.'); }
-    }
-
-    // Google
-    document.getElementById('loginGoogle')?.addEventListener('click', async () => {
-      try{
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        closeLoginModal();
-      }catch(err){ console.error(err); alert('Logowanie Google nie powiodło się.'); }
-    });
-
-    // Sign out z nawigacji (prawdziwe signOut)
-    document.getElementById('nav-signout')?.addEventListener('click', async (e) => {
-      e.preventDefault();
-      try{ await signOut(auth); }catch(err){ console.error(err); }
-    });
-
-    // Aktualizacja UI po zmianie stanu Firebase + synchronizacja z AUTH/localStorage
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        localStorage.setItem('syntri.auth.uid', user.uid);
-        localStorage.setItem('syntri.auth.email', user.email || '');
-      } else {
-        localStorage.removeItem('syntri.auth.uid');
-        localStorage.removeItem('syntri.auth.email');
-      }
-      if (typeof renderAuthUI === 'function') renderAuthUI();
-    });
-  </script>
 </body>
 </html>
+
