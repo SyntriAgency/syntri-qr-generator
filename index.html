@@ -206,7 +206,6 @@
       <div class="modal-actions" style="justify-content:space-between">
         <div style="display:flex;gap:8px">
           <button class="btn btn-primary" type="button" id="subscribeStripe">Subscribe – Stripe</button>
-          <button class="btn btn-ghost" type="button" id="subscribePayPal">Subscribe – PayPal</button>
         </div>
         <button class="btn btn-ghost" type="button" id="paywallClose" data-i18n="btn_close">Close</button>
       </div>
@@ -595,17 +594,11 @@
       const btnUpgrade1 = document.createElement('button');
       btnUpgrade1.className='btn btn-primary';
       btnUpgrade1.type='button';
-      btnUpgrade1.textContent='Upgrade – Stripe';
+      btnUpgrade1.textContent='Subscribe;
       btnUpgrade1.onclick = ()=> alert('Stripe Checkout (stub). Podmień na realny endpoint.');
 
-      const btnUpgrade2 = document.createElement('button');
-      btnUpgrade2.className='btn btn-ghost';
-      btnUpgrade2.type='button';
-      btnUpgrade2.textContent='Upgrade – PayPal';
-      btnUpgrade2.onclick = ()=> alert('PayPal Subscriptions (stub). Podmień na realny endpoint.');
-
       ctaRow.appendChild(btnUpgrade1);
-      ctaRow.appendChild(btnUpgrade2);
+
 
       wrap.appendChild(h); wrap.appendChild(p); wrap.appendChild(timer); wrap.appendChild(ctaRow);
       preview.appendChild(wrap);
@@ -783,10 +776,7 @@
       // TODO: fetch('/billing/stripe/create-checkout', {method:'POST', credentials:'include'})
       alert('Stripe Checkout (stub). Podmień na realny endpoint.');
     });
-    on($('#subscribePayPal'),'click',async ()=>{
-      // TODO: fetch('/billing/paypal/create-subscription', {method:'POST', credentials:'include'})
-      alert('PayPal Subscriptions (stub). Podmień na realny endpoint.');
-    });
+  
 
     // DEV panel – działa tylko z ?dev=1
     (function setupDevPanel(){
