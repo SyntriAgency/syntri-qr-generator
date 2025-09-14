@@ -794,7 +794,7 @@ function ensureHomeGate(){
     document.getElementById('btn-en')?.addEventListener('click', ()=>{ applyI18n('en'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
     applyI18n(userLang);
   </script>
-  <script type="module">
+ <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getAuth,
@@ -807,7 +807,7 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-// --- KONFIGURACJA ---
+// --- KONFIGURACJA Firebase ---
 const firebaseConfig = {
   apiKey: "AIzaSyCN4mFs-l3SVfLGSiqOeSObenSPgQlx2XU",
   authDomain: "syntri-qr-generator.firebaseapp.com",
@@ -821,10 +821,10 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// --- WAŻNE: ustaw stały URL zwrotny – musi być w „Authorized domains” w Firebase console ---
-// Jeśli testujesz lokalnie np. na Live Server:
-const RETURN_URL = "http://localhost:5500/";          // <-- zmień jeśli używasz innego portu
-// Jeśli wdrożysz na Hosting Firebase wybierz np.:
+// --- Stały URL zwrotny – musi być na liście „Authorized domains” w Firebase ---
+// ✅ Jeśli testujesz lokalnie (Live Server itp.):
+const RETURN_URL = "http://localhost:5500/";
+// 🔹 Po wdrożeniu zmień np. na:
 // const RETURN_URL = "https://syntri-qr-generator.web.app/";
 // const RETURN_URL = "https://syntri-qr-generator.firebaseapp.com/";
 
@@ -834,7 +834,7 @@ document.getElementById('loginEmailLink')?.addEventListener('click', async () =>
   if (!email) { alert('Wpisz email'); return; }
   try {
     const actionCodeSettings = {
-      url: RETURN_URL,        // <–– używamy stałego, autoryzowanego adresu
+      url: RETURN_URL,           // używamy autoryzowanego adresu
       handleCodeInApp: true
     };
     await sendSignInLinkToEmail(auth, email, actionCodeSettings);
