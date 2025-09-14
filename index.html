@@ -690,13 +690,7 @@ function ensureHomeGate(){
     // Login
     on($('#nav-login'),'click',(e)=>{ e.preventDefault(); openModal('#loginModal'); });
     on($('#loginCancel'),'click',()=> closeModal('#loginModal'));
-    on($('#loginConfirm'),'click',()=>{
-      const email = ($('#loginEmail').value || '').trim();
-      if(!email){ alert('Wpisz email'); return; }
-      // TODO: podmień na Firebase Auth (email link / OAuth). Po sukcesie:
-      AUTH.loginMock(email);
-      closeModal('#loginModal');
-    });
+    
 
     // Account
     on($('#nav-account'),'click',(e)=>{
