@@ -834,8 +834,17 @@ document.getElementById('nav-signout')?.addEventListener('click', async (e) => {
   await signOut(auth);
 });
 
-// Aktualizacja UI po zmianie stanu
-onAuthStateChanged(auth, () => {
+// Aktualizacja UI po zmianie stanu Firebase + synchronizacja z AUTH
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    // zapisujemy identyfikator i email w tym samym miejscu,
+    // z którego korzysta Twój istniejący obiekt AUTH
+    localStorage.setItem('syntri.auth.uid', user.uid);
+    localStorage.setItem('syntri.auth.email', user.email || '');
+  } else {
+    localStorage.removeItem('syntri.auth.uid');
+    localStorage.removeItem('syntri.auth.email');
+  }
   if (typeof renderAuthUI === 'function') renderAuthUI();
 });
 </script>
