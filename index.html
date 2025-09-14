@@ -796,10 +796,18 @@ function ensureHomeGate(){
   </script>
   <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink,
-         signInWithEmailLink, signInWithPopup, GoogleAuthProvider, signOut,
-         onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import {
+  getAuth,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
+// --- KONFIGURACJA ---
 const firebaseConfig = {
   apiKey: "AIzaSyCN4mFs-l3SVfLGSiqOeSObenSPgQlx2XU",
   authDomain: "syntri-qr-generator.firebaseapp.com",
@@ -813,13 +821,20 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Email Link – wyślij link
+// --- WAŻNE: ustaw stały URL zwrotny – musi być w „Authorized domains” w Firebase console ---
+// Jeśli testujesz lokalnie np. na Live Server:
+const RETURN_URL = "http://localhost:5500/";          // <-- zmień jeśli używasz innego portu
+// Jeśli wdrożysz na Hosting Firebase wybierz np.:
+// const RETURN_URL = "https://syntri-qr-generator.web.app/";
+// const RETURN_URL = "https://syntri-qr-generator.firebaseapp.com/";
+
+// --- Logowanie linkiem e-mail ---
 document.getElementById('loginEmailLink')?.addEventListener('click', async () => {
   const email = (document.getElementById('loginEmail')?.value || '').trim();
   if (!email) { alert('Wpisz email'); return; }
   try {
     const actionCodeSettings = {
-      url: location.origin + location.pathname,  // wróć na tę samą stronę
+      url: RETURN_URL,        // <–– używamy stałego, autoryzowanego adresu
       handleCodeInApp: true
     };
     await sendSignInLinkToEmail(auth, email, actionCodeSettings);
@@ -831,7 +846,7 @@ document.getElementById('loginEmailLink')?.addEventListener('click', async () =>
   }
 });
 
-// Email Link – dokończ logowanie po kliknięciu w mailu
+// --- Dokończenie logowania po kliknięciu w link z maila ---
 if (isSignInWithEmailLink(auth, location.href)) {
   const email = localStorage.getItem('pendingEmail') || prompt('Podaj e-mail:');
   try {
@@ -846,7 +861,7 @@ if (isSignInWithEmailLink(auth, location.href)) {
   }
 }
 
-// Google Sign-In
+// --- Google Sign-In ---
 document.getElementById('loginGoogle')?.addEventListener('click', async () => {
   try {
     await signInWithPopup(auth, new GoogleAuthProvider());
@@ -858,14 +873,14 @@ document.getElementById('loginGoogle')?.addEventListener('click', async () => {
   }
 });
 
-// Wylogowanie (z Twojego istniejącego menu)
+// --- Wylogowanie ---
 document.getElementById('nav-signout')?.addEventListener('click', async (e) => {
   e.preventDefault();
-  try { await signOut(auth); } 
+  try { await signOut(auth); }
   catch (err) { console.error(err); alert('Błąd wylogowania: ' + (err?.message || err)); }
 });
 
-// Synchronizacja stanu z Twoim istniejącym AUTH/ UI
+// --- Synchronizacja stanu z istniejącym UI ---
 onAuthStateChanged(auth, (user) => {
   if (user) {
     localStorage.setItem('syntri.auth.uid', user.uid);
@@ -877,7 +892,6 @@ onAuthStateChanged(auth, (user) => {
   if (typeof renderAuthUI === 'function') renderAuthUI();
 });
 </script>
-
 </body>
 </html>
 
