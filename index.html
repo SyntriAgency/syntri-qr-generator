@@ -170,19 +170,31 @@
   </div>
 
   <!-- Login modal -->
-  <div id="loginModal" class="modal" aria-hidden="true">
-    <div class="modal-card">
-      <h3 data-i18n="login_title">Log in</h3>
-      <div class="field-row">
-        <label for="loginEmail" class="muted" data-i18n="login_email_label">Email</label>
-        <input id="loginEmail" type="email" placeholder="you@domain.com" />
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="loginCancel" data-i18n="btn_cancel">Cancel</button>
-        <button class="btn btn-primary" id="loginConfirm" data-i18n="btn_login">Log in</button>
-      </div>
-    </div>
+  <div class="modal-card">
+  <h3 data-i18n="login_title">Log in</h3>
+
+  <!-- E-mail input (do Email Link) -->
+  <div class="field-row">
+    <label for="loginEmail" class="muted" data-i18n="login_email_label">Email</label>
+    <input id="loginEmail" type="email" placeholder="you@domain.com" />
   </div>
+
+  <!-- Nowe opcje logowania -->
+  <div class="field-row" style="margin-top:12px;">
+    <button id="loginEmailLink" class="btn btn-primary" type="button">
+      Sign in via Email Link
+    </button>
+    <button id="loginGoogle" class="btn btn-ghost" type="button">
+      Sign in with Google
+    </button>
+  </div>
+
+  <!-- Stare przyciski, jeśli chcesz zachować klasyczny login -->
+  <div class="modal-actions">
+    <button class="btn btn-ghost" id="loginCancel" data-i18n="btn_cancel">Cancel</button>
+    <button class="btn btn-primary" id="loginConfirm" data-i18n="btn_login">Log in</button>
+  </div>
+</div>
 
   <!-- Account modal -->
   <div id="accountModal" class="modal" aria-hidden="true">
@@ -783,6 +795,50 @@ function ensureHomeGate(){
     document.getElementById('btn-en')?.addEventListener('click', ()=>{ applyI18n('en'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
     applyI18n(userLang);
   </script>
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink,
+         signInWithEmailLink, signInWithPopup, GoogleAuthProvider, signOut,
+         onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+const firebaseConfig = { apiKey:"…", authDomain:"…", projectId:"…", appId:"…" };
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Email Link
+document.getElementById('loginEmailLink')?.addEventListener('click', async () => {
+  const email = (document.getElementById('loginEmail')?.value || '').trim();
+  if (!email) { alert('Wpisz email'); return; }
+  const actionCodeSettings = { url: window.location.href, handleCodeInApp: true };
+  await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+  localStorage.setItem('pendingEmail', email);
+  alert('Link logowania wysłany. Sprawdź skrzynkę.');
+});
+
+// Complete Email Link
+if (isSignInWithEmailLink(auth, window.location.href)) {
+  const email = localStorage.getItem('pendingEmail') || prompt('Podaj e-mail:');
+  await signInWithEmailLink(auth, email, window.location.href);
+  localStorage.removeItem('pendingEmail');
+}
+
+// Google
+document.getElementById('loginGoogle')?.addEventListener('click', async () => {
+  const provider = new GoogleAuthProvider();
+  await signInWithPopup(auth, provider);
+});
+
+// Logout (spięcie z istniejącym UI)
+document.getElementById('nav-signout')?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  await signOut(auth);
+});
+
+// Aktualizacja UI po zmianie stanu
+onAuthStateChanged(auth, () => {
+  if (typeof renderAuthUI === 'function') renderAuthUI();
+});
+</script>
 </body>
 </html>
 
