@@ -647,10 +647,23 @@ function ensureHomeGate(){
       [text,size,ecc,margin,fg,transparent].forEach(el=> on(el, ev, liveRender));
     });
 
-    $('#generate').addEventListener('click', async () => { if(!canGenerateNow()){ ensureHomeGate(); return; } render(); updateShareLink(); saveState(); startCinematic(); try { await bumpQrCount(); console.log("QR count incremented"); } catch (err) { console.error("bumpQrCount error", err); } });
-    $('#clear').addEventListener('click', () => { text.value=''; render(); updateShareLink(); saveState(); });
-   document.addEventListener('keydown', async e => { if ((e.ctrlKey||e.metaKey) && e.key==='Enter'){ if(!canGenerateNow()){ ensureHomeGate(); return; } render(); updateShareLink(); saveState(); startCinematic(); try{ await bumpQrCount(); } catch (err){ console.error(err); } } });
+    $('#generate').addEventListener('click', async () => {
+  render(); updateShareLink(); saveState(); startCinematic();
+  try { await bumpQrCount(); console.log("QR count incremented"); } 
+  catch (err) { console.error("bumpQrCount error", err); }
+});
 
+$('#clear').addEventListener('click', () => {
+  text.value=''; render(); updateShareLink(); saveState();
+});
+
+document.addEventListener('keydown', async e => {
+  if ((e.ctrlKey||e.metaKey) && e.key==='Enter'){
+    render(); updateShareLink(); saveState(); startCinematic();
+    try { await bumpQrCount(); } 
+    catch (err){ console.error(err); }
+  }
+});
     (function initWhenReady(){
       const start = Date.now();
       (function check(){
@@ -823,7 +836,7 @@ const auth = getAuth(app);
 
 // --- Stały URL zwrotny – musi być na liście „Authorized domains” w Firebase ---
 // ✅ Jeśli testujesz lokalnie (Live Server itp.):
-const RETURN_URL = "http://localhost:5500/";
+const RETURN_URL = "https://syntri-qr-generator.web.app/";
 // 🔹 Po wdrożeniu zmień np. na:
 // const RETURN_URL = "https://syntri-qr-generator.web.app/";
 // const RETURN_URL = "https://syntri-qr-generator.firebaseapp.com/";
