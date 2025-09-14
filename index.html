@@ -169,31 +169,36 @@
     </div>
   </div>
 
- <!-- Login modal -->
+ <!-- Login / Register modal (Email + Password) -->
 <div id="loginModal" class="modal" aria-hidden="true">
   <div class="modal-card">
-    <h3 data-i18n="login_title">Log in</h3>
+    <h3 data-i18n="login_title">Account</h3>
 
-    <!-- E-mail input (Email Link) -->
     <div class="field-row">
       <label for="loginEmail" class="muted" data-i18n="login_email_label">Email</label>
-      <input id="loginEmail"
-             type="email"
-             placeholder="you@domain.com"
-             required
-             autocomplete="email"
-             inputmode="email" />
+      <input id="loginEmail" type="email" placeholder="you@domain.com"
+             required autocomplete="email" inputmode="email" />
     </div>
 
-    <!-- Metody logowania -->
-    <div class="field-row" style="margin-top:12px;">
-      <button id="loginEmailLink" class="btn btn-primary" type="button">
-        Sign in via Email Link
-      </button>
+    <div class="field-row">
+      <label for="loginPass" class="muted">Hasło</label>
+      <input id="loginPass" type="password" placeholder="min. 6 znaków"
+             required autocomplete="current-password" />
+    </div>
+
+    <div class="field-row" style="margin-top:12px;display:flex;gap:8px;">
+      <button id="btnRegister" class="btn btn-primary" type="button">Zarejestruj</button>
+      <button id="btnLogin"    class="btn btn-ghost"   type="button">Zaloguj</button>
+    </div>
+
+    <!-- Opcjonalnie Google, jeśli chcesz dodać później -->
+    <!--
+    <div class="field-row" style="margin-top:6px;">
       <button id="loginGoogle" class="btn btn-ghost" type="button">
         Sign in with Google
       </button>
     </div>
+    -->
 
     <div class="modal-actions">
       <button class="btn btn-ghost" id="loginCancel" data-i18n="btn_cancel" type="button">Cancel</button>
@@ -811,16 +816,17 @@ document.addEventListener('keydown', async e => {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import {
   getAuth,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
-  signInWithPopup,
-  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  // opcjonalnie:
+  // signInWithPopup, GoogleAuthProvider,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  updateProfile
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-// --- KONFIGURACJA Firebase ---
+/* 1) KONFIG: wklej dokładnie TĘ samą konfigurację projektu,
+      którego używasz (ta, która NIE zgłasza "api-key-invalid"). */
 const firebaseConfig = {
   apiKey: "AIzaSyCN4mFs-l3SVfLGSiqOeSObenSPgQlx2XU",
   authDomain: "syntri-qr-generator.firebaseapp.com",
@@ -834,69 +840,70 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// --- Stały URL zwrotny – musi być na liście „Authorized domains” w Firebase ---
-// ✅ Jeśli testujesz lokalnie (Live Server itp.):
-const RETURN_URL = "http://localhost:5500/";
-// 🔹 Po wdrożeniu zmień np. na:
-// const RETURN_URL = "https://syntri-qr-generator.web.app/";
-// const RETURN_URL = "https://syntri-qr-generator.firebaseapp.com/";
+/* 2) Pomoce */
+const $ = (s) => document.querySelector(s);
+function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
 
-// --- Logowanie linkiem e-mail ---
-document.getElementById('loginEmailLink')?.addEventListener('click', async () => {
-  const email = (document.getElementById('loginEmail')?.value || '').trim();
-  if (!email) { alert('Wpisz email'); return; }
+/* 3) Zarejestruj (createUserWithEmailAndPassword) */
+$('#btnRegister')?.addEventListener('click', async () => {
+  const email = ($('#loginEmail')?.value || '').trim();
+  const pass  = ($('#loginPass')?.value  || '').trim();
+  if (!email || !pass) { alert('Podaj email i hasło.'); return; }
+  if (pass.length < 6) { alert('Hasło musi mieć min. 6 znaków.'); return; }
+
   try {
-    const actionCodeSettings = {
-      url: RETURN_URL,           // używamy autoryzowanego adresu
-      handleCodeInApp: true
-    };
-    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-    localStorage.setItem('pendingEmail', email);
-    alert('Link logowania wysłany. Sprawdź skrzynkę.');
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    // (opcjonalnie) ustaw displayName = fragment z emaila
+    const name = email.split('@')[0].slice(0,32);
+    try { await updateProfile(cred.user, { displayName: name }); } catch {}
+    alert('Konto utworzone i zalogowano: ' + (cred.user.email || email));
+    closeModal('#loginModal');
   } catch (err) {
     console.error(err);
-    alert('Nie udało się wysłać linku: ' + (err?.message || err));
+    // Najczęstsze: auth/email-already-in-use, auth/invalid-email, auth/weak-password
+    alert('Rejestracja nieudana: ' + (err?.code || err?.message || err));
   }
 });
 
-// --- Dokończenie logowania po kliknięciu w link z maila ---
-if (isSignInWithEmailLink(auth, location.href)) {
-  const email = localStorage.getItem('pendingEmail') || prompt('Podaj e-mail:');
+/* 4) Zaloguj (signInWithEmailAndPassword) */
+$('#btnLogin')?.addEventListener('click', async () => {
+  const email = ($('#loginEmail')?.value || '').trim();
+  const pass  = ($('#loginPass')?.value  || '').trim();
+  if (!email || !pass) { alert('Podaj email i hasło.'); return; }
   try {
-    await signInWithEmailLink(auth, email, location.href);
-    localStorage.removeItem('pendingEmail');
-    alert('Zalogowano jako: ' + (auth.currentUser?.email || email));
-    document.getElementById('loginModal')?.classList.remove('show');
-    if (typeof renderAuthUI === 'function') renderAuthUI();
+    const cred = await signInWithEmailAndPassword(auth, email, pass);
+    alert('Zalogowano jako: ' + (cred.user.email || email));
+    closeModal('#loginModal');
   } catch (err) {
     console.error(err);
-    alert('Błąd logowania linkiem: ' + (err?.message || err));
-  }
-}
-
-// --- Google Sign-In ---
-document.getElementById('loginGoogle')?.addEventListener('click', async () => {
-  try {
-    await signInWithPopup(auth, new GoogleAuthProvider());
-    document.getElementById('loginModal')?.classList.remove('show');
-    if (typeof renderAuthUI === 'function') renderAuthUI();
-  } catch (err) {
-    console.error(err);
-    alert('Google Sign-In error: ' + (err?.message || err));
+    // Najczęstsze: auth/user-not-found, auth/wrong-password
+    alert('Logowanie nieudane: ' + (err?.code || err?.message || err));
   }
 });
 
-// --- Wylogowanie ---
-document.getElementById('nav-signout')?.addEventListener('click', async (e) => {
+/* 5) (opcjonalnie) Google — jeśli chcesz, włącz i dodaj Authorized Domains
+// const provider = new GoogleAuthProvider();
+// $('#loginGoogle')?.addEventListener('click', async () => {
+//   try {
+//     await signInWithPopup(auth, provider);
+//     closeModal('#loginModal');
+//   } catch (err) {
+//     alert('Google Sign-In error: ' + (err?.code || err?.message || err));
+//   }
+// });
+*/
+
+/* 6) Wylogowanie (z Twojego istniejącego menu) */
+$('#nav-signout')?.addEventListener('click', async (e) => {
   e.preventDefault();
   try { await signOut(auth); }
-  catch (err) { console.error(err); alert('Błąd wylogowania: ' + (err?.message || err)); }
+  catch (err) { alert('Błąd wylogowania: ' + (err?.code || err?.message || err)); }
 });
 
-// --- Synchronizacja stanu z istniejącym UI ---
+/* 7) Synchronizacja z istniejącym UI (AUTH mock → localStorage) */
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    localStorage.setItem('syntri.auth.uid', user.uid);
+    localStorage.setItem('syntri.auth.uid',   user.uid);
     localStorage.setItem('syntri.auth.email', user.email || '');
   } else {
     localStorage.removeItem('syntri.auth.uid');
