@@ -892,19 +892,30 @@ $('#btnLogin')?.addEventListener('click', async () => {
   }
 });
 
-/* === 5) Reset hasła (Forgot password) === */
+/* === 5) Reset hasła (Forgot password) – z własną stroną resetu === */
 $('#btnForgot')?.addEventListener('click', async () => {
   const btn   = $('#btnForgot');
   const email = ($('#loginEmail')?.value || '').trim();
-  if (!email){ alert('Podaj adres e-mail, aby zresetować hasło.'); return; }
+  if (!email) {
+    alert('Podaj adres e-mail, aby zresetować hasło.');
+    return;
+  }
 
   try {
     setBusy(btn, true);
-    await sendPasswordResetEmail(auth, email);
+
+    // >>> TU podaj adres swojej strony resetu hasła:
+    // Plik reset.html musi być wdrożony w Firebase Hosting
+    const actionCodeSettings = {
+      url: 'https://syntri-qr-generator.web.app/reset.html',
+      handleCodeInApp: true
+    };
+
+    await sendPasswordResetEmail(auth, email, actionCodeSettings);
     alert('Wysłaliśmy link resetu hasła na: ' + email);
   } catch (err) {
     console.error(err);
-    // Np. auth/user-not-found, auth/invalid-email
+    // Typowe błędy: auth/user-not-found, auth/invalid-email
     alert('Nie udało się wysłać resetu: ' + (err?.code || err?.message || err));
   } finally {
     setBusy(btn, false);
