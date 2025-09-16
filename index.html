@@ -71,6 +71,65 @@
     .modal-card h3{margin:0 0 8px 0;font-size:16px}
     .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
     .field-row{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+/* === Syntri UI – Login Card override === */
+#loginModal .modal-card{
+  width:min(520px,92vw);
+  background:#fff; color:#111827;
+  border:1px solid #e5e7eb; border-radius:12px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+  padding:24px 28px;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal .modal-card{
+    background:#0f1720; color:#e5e7eb;
+    border-color:#1f2937; box-shadow:0 6px 20px rgba(0,0,0,.35);
+  }
+}
+#loginModal .modal-card h3{
+  margin:0 0 6px; font-weight:600; font-size:1.4rem; text-align:center;
+}
+#loginModal .field-row label{
+  font-size:.95rem; color:#111827;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal .field-row label{ color:#e5e7eb; }
+}
+#loginModal input[type="email"],
+#loginModal input[type="password"]{
+  width:100%; padding:10px 12px; margin-top:6px;
+  font-size:1rem; border-radius:8px; box-sizing:border-box;
+  background:transparent; outline:none;
+  border:1px solid #d1d5db; color:#111827;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal input[type="email"],
+  #loginModal input[type="password"]{
+    border-color:#334155; color:#e5e7eb;
+  }
+}
+#loginModal .btn-primary{
+  background:#111827; color:#fff; border:0;
+  border-radius:8px; padding:12px 16px; font-weight:600; font-size:1rem;
+  transition:background .15s ease, transform .02s ease-in;
+}
+#loginModal .btn-primary:hover{ background:#1f2937; }
+#loginModal .btn-primary:active{ transform:translateY(1px); }
+@media (prefers-color-scheme: dark){
+  #loginModal .btn-primary{
+    background:#e5e7eb; color:#111827;
+  }
+  #loginModal .btn-primary:hover{ background:#d1d5db; }
+}
+#loginModal .btn-ghost{
+  background:transparent; color:inherit;
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:8px; padding:10px 14px; font-weight:600;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal .btn-ghost{ border-color:#334155; }
+}
+
+    
   </style>
 </head>
 <body>
