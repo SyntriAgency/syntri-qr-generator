@@ -1188,7 +1188,10 @@ $('#btnLogin')?.addEventListener('click', async () => {
   const email = ($('#loginEmail')?.value || '').trim();
   const pass  = ($('#loginPass')?.value  || '').trim();
 
-  if (!email || !pass){ alert('Podaj email i hasło.'); return; }
+  if (!email || !pass) { 
+    alert('Podaj email i hasło.'); 
+    return; 
+  }
 
   try {
     setBusy(btn, true);
@@ -1197,8 +1200,24 @@ $('#btnLogin')?.addEventListener('click', async () => {
     closeModal('#loginModal');
   } catch (err) {
     console.error(err);
-    // Najczęstsze: auth/user-not-found, auth/wrong-password
-    alert('Logowanie nieudane: ' + (err?.code || err?.message || err));
+    let msg;
+
+    switch (err.code) {
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential': // w Firebase v11 często taki kod
+        msg = 'Nieprawidłowe hasło – spróbuj ponownie.';
+        break;
+      case 'auth/user-not-found':
+        msg = 'Użytkownik o podanym adresie nie istnieje.';
+        break;
+      case 'auth/invalid-email':
+        msg = 'Nieprawidłowy format adresu e-mail.';
+        break;
+      default:
+        msg = 'Logowanie nieudane: ' + (err?.message || err);
+    }
+
+    alert(msg);
   } finally {
     setBusy(btn, false);
   }
