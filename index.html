@@ -272,10 +272,6 @@
     </div>
   </div>
 
-<!-- Account modal -->
-  <div id="accountModal" class="modal" aria-hidden="true">
-    …
-  </div>
 
   <!-- Settings modal -->
   <div id="settingsModal" class="modal" aria-hidden="true">
@@ -857,43 +853,128 @@ on($('#deleteAccount'),'click',async ()=>{
   });
 })();
     
-    // ----------------------------------------------
-    // i18n
-    // ----------------------------------------------
-    const I18N = {
-      pl: {
-        title:'Syntri • Generator QR',
-        nav_login:'Zaloguj', nav_account:'Konto', nav_signout:'Wyloguj', nav_language:'Język',
-        label_text:'Treść (URL / tekst)', label_size:'Rozmiar (px)', label_ecc:'Korekcja błędów',
-        label_margin:'Margines', label_color:'Kolor kodu', label_transparent:'Przezroczyste tło',
-        btn_generate:'Generuj', btn_clear:'Wyczyść', btn_png:'Pobierz PNG', btn_svg:'Pobierz SVG',
-        btn_copy:'Kopiuj link', btn_close:'Zamknij', link_share:'Udostępnij',
-        note_offline:'Działa lokalnie w przeglądarce — żadne dane nie opuszczają urządzenia.',
-        hint_hotkey:'— szybkie generowanie', alert_generate_first:'Najpierw wygeneruj QR', copied:'Skopiowano',
-        modal_title:'It’s your QR code', modal_sub:'Generator by Syntri', modal_hint:'Budowanie pikseli…',
-        login_title:'Logowanie', login_email_label:'Email', btn_login:'Zaloguj', btn_cancel:'Anuluj',
-        account_title:'Konto',
-        btn_manage_billing:'Zarządzaj subskrypcją',
-        paywall_title:'Wyczerpano limit darmowy',
-        paywall_copy:'Wykorzystałeś/aś wszystkie darmowe kody w tym miesiącu. Wybierz plan, aby kontynuować.'
-      },
-      en: {
-        title:'Syntri • QR Generator',
-        nav_login:'Login', nav_account:'Account', nav_signout:'Sign out', nav_language:'Language',
-        label_text:'Content (URL / text)', label_size:'Size (px)', label_ecc:'Error correction',
-        label_margin:'Margin', label_color:'Code color', label_transparent:'Transparent background',
-        btn_generate:'Generate', btn_clear:'Clear', btn_png:'Download PNG', btn_svg:'Download SVG',
-        btn_copy:'Copy link', btn_close:'Close', link_share:'Share',
-        note_offline:'Runs locally in your browser — no data leaves your device.',
-        hint_hotkey:'— quick generate', alert_generate_first:'Generate the QR first', copied:'Copied',
-        modal_title:'It’s your QR code', modal_sub:'Generator by Syntri', modal_hint:'Building pixels…',
-        login_title:'Log in', login_email_label:'Email', btn_login:'Log in', btn_cancel:'Cancel',
-        account_title:'Account',
-        btn_manage_billing:'Manage billing',
-        paywall_title:'Free limit reached',
-        paywall_copy:'You used all free codes this month. Choose a plan to continue.'
-      }
-    };
+   // ----------------------------------------------
+// i18n (PL / EN) – pogrupowane klucze
+// ----------------------------------------------
+const I18N = {
+  pl: {
+    // --- NAV ---
+    nav_login: 'Zaloguj',
+    nav_account: 'Konto',
+    nav_settings: 'Ustawienia',
+    nav_signout: 'Wyloguj',
+    nav_language: 'Język',
+
+    // --- STRONA / POLA ---
+    title: 'Syntri • Generator QR',
+    label_text: 'Treść (URL / tekst)',
+    label_size: 'Rozmiar (px)',
+    label_ecc: 'Korekcja błędów',
+    label_margin: 'Margines',
+    label_color: 'Kolor kodu',
+    label_transparent: 'Przezroczyste tło',
+    note_offline: 'Działa lokalnie w przeglądarce — żadne dane nie opuszczają urządzenia.',
+    hint_hotkey: '— szybkie generowanie',
+
+    // --- PRZYCISKI ---
+    btn_generate: 'Generuj',
+    btn_clear: 'Wyczyść',
+    btn_png: 'Pobierz PNG',
+    btn_svg: 'Pobierz SVG',
+    btn_copy: 'Kopiuj link',
+    btn_close: 'Zamknij',
+    btn_login: 'Zaloguj',
+    btn_cancel: 'Anuluj',
+    btn_manage_billing: 'Zarządzaj subskrypcją',
+    btn_delete_account: 'Usuń konto',
+    link_share: 'Udostępnij',
+
+    // --- KOMUNIKATY / HINTY ---
+    alert_generate_first: 'Najpierw wygeneruj QR',
+    copied: 'Skopiowano',
+
+    // --- MODAL: CINEMATIC ---
+    modal_title: 'To Twój kod QR',
+    modal_sub: 'Generator Syntri',
+    modal_hint: 'Budowanie pikseli…',
+
+    // --- MODAL: LOGIN ---
+    login_title: 'Logowanie',
+    login_email_label: 'Email',
+
+    // --- MODAL: ACCOUNT ---
+    account_title: 'Konto',
+
+    // --- MODAL: SETTINGS ---
+    settings_title: 'Ustawienia',
+    settings_email_label: 'Email',
+    settings_plan_label: 'Plan',
+
+    // --- PAYWALL ---
+    paywall_title: 'Wyczerpano limit darmowy',
+    paywall_copy:
+      'Wykorzystałeś/aś wszystkie darmowe kody w tym miesiącu. Wybierz plan, aby kontynuować.'
+  },
+
+  en: {
+    // --- NAV ---
+    nav_login: 'Login',
+    nav_account: 'Account',
+    nav_settings: 'Settings',
+    nav_signout: 'Sign out',
+    nav_language: 'Language',
+
+    // --- PAGE / FIELDS ---
+    title: 'Syntri • QR Generator',
+    label_text: 'Content (URL / text)',
+    label_size: 'Size (px)',
+    label_ecc: 'Error correction',
+    label_margin: 'Margin',
+    label_color: 'Code color',
+    label_transparent: 'Transparent background',
+    note_offline: 'Runs locally in your browser — no data leaves your device.',
+    hint_hotkey: '— quick generate',
+
+    // --- BUTTONS ---
+    btn_generate: 'Generate',
+    btn_clear: 'Clear',
+    btn_png: 'Download PNG',
+    btn_svg: 'Download SVG',
+    btn_copy: 'Copy link',
+    btn_close: 'Close',
+    btn_login: 'Log in',
+    btn_cancel: 'Cancel',
+    btn_manage_billing: 'Manage billing',
+    btn_delete_account: 'Delete account',
+    link_share: 'Share',
+
+    // --- MESSAGES / HINTS ---
+    alert_generate_first: 'Generate the QR first',
+    copied: 'Copied',
+
+    // --- MODAL: CINEMATIC ---
+    modal_title: "It's your QR code",
+    modal_sub: 'Generator by Syntri',
+    modal_hint: 'Building pixels…',
+
+    // --- MODAL: LOGIN ---
+    login_title: 'Log in',
+    login_email_label: 'Email',
+
+    // --- MODAL: ACCOUNT ---
+    account_title: 'Account',
+
+    // --- MODAL: SETTINGS ---
+    settings_title: 'Settings',
+    settings_email_label: 'Email',
+    settings_plan_label: 'Plan',
+
+    // --- PAYWALL ---
+    paywall_title: 'Free limit reached',
+    paywall_copy:
+      'You used all free codes this month. Choose a plan to continue.'
+  }
+};
     function i18n(k){ const lang = localStorage.getItem('syntri.lang') || 'pl'; return (I18N[lang]||I18N.en)[k] || k; }
     const userLang = localStorage.getItem('syntri.lang') || ((navigator.language || 'en').startsWith('pl') ? 'pl' : 'en');
     function applyI18n(lang){
