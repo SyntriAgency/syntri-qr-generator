@@ -129,25 +129,55 @@
 @media (prefers-color-scheme: dark){
   #loginModal .btn-ghost{ border-color:#334155; }
 }
-/* === Syntri UI – Settings Card override === */
-#settingsModal .modal-card{
-  width:min(520px,92vw);
+/* === Syntri UI – Settings Split Layout === */
+#settingsModal .modal-card.settings-split{
+  width:min(720px,92vw);
+  display:grid;
+  grid-template-columns:180px 1fr;
   background:#fff; color:#111827;
   border:1px solid #e5e7eb; border-radius:12px;
   box-shadow:0 6px 20px rgba(0,0,0,.06);
-  padding:24px 28px;
 }
 @media (prefers-color-scheme: dark){
-  #settingsModal .modal-card{
+  #settingsModal .modal-card.settings-split{
     background:#0f1720; color:#e5e7eb;
     border-color:#1f2937; box-shadow:0 6px 20px rgba(0,0,0,.35);
   }
 }
-#settingsModal .modal-card h3{
-  margin:0 0 6px;
+#settingsModal .settings-nav{
+  display:flex;
+  flex-direction:column;
+  border-right:1px solid rgba(0,0,0,.1);
+}
+@media (prefers-color-scheme: dark){
+  #settingsModal .settings-nav{
+    border-right-color:#334155;
+  }
+}
+#settingsModal .settings-nav button{
+  background:transparent;
+  border:0;
+  padding:12px 16px;
+  text-align:left;
   font-weight:600;
-  font-size:1.4rem;
-  text-align:center;
+  cursor:pointer;
+}
+#settingsModal .settings-nav button.active{
+  background:rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  #settingsModal .settings-nav button.active{
+    background:rgba(255,255,255,.05);
+  }
+}
+#settingsModal .settings-content{
+  padding:24px;
+}
+#settingsModal .settings-content .tab{
+  display:none;
+}
+#settingsModal .settings-content .tab.active{
+  display:block;
 }
     
   </style>
@@ -292,27 +322,44 @@
   </div>
 
 
-  <!-- Settings modal -->
-  <div id="settingsModal" class="modal" aria-hidden="true">
-    <div class="modal-card">
-      <h3>Settings</h3>
+ <div id="settingsModal" class="modal" aria-hidden="true">
+  <div class="modal-card settings-split">
+    <aside class="settings-nav">
+      <button data-tab="account">Account</button>
+      <button data-tab="policy">Policy</button>
+      <button data-tab="subscription">Subscription</button>
+      <button data-tab="support">Support</button>
+    </aside>
 
-      <div class="field-row">
-        <label>Email</label>
-        <p id="settingsEmail" class="muted"></p>
+    <section class="settings-content">
+      <div class="tab account">
+        <!-- Account content -->
+        <p>Current email: <span id="accEmail"></span></p>
+        <button id="btnChangeEmail">Change email</button>
+        <button id="btnChangePass">Change password</button>
+        <button id="btnDeleteAcc">Delete account</button>
       </div>
 
-      <div class="field-row">
-        <label>Plan</label>
-        <p id="settingsPlan" class="muted"></p>
+      <div class="tab policy">
+        <!-- Policy / rules -->
+        <h4>Privacy & Rules</h4>
+        <p>…your policy text…</p>
       </div>
 
-      <div class="modal-actions" style="justify-content:space-between;margin-top:16px;">
-        <button id="deleteAccount" class="btn btn-ghost">Delete account</button>
-        <button id="settingsClose"  class="btn btn-primary">Close</button>
+      <div class="tab subscription">
+        <!-- Subscription info -->
+        <p>Plan: <span id="planName"></span></p>
+        <button id="btnManageSub">Manage subscription</button>
       </div>
-    </div>
+
+      <div class="tab support">
+        <!-- Support contacts -->
+        <p>Email: support@syntri.app</p>
+      </div>
+    </section>
   </div>
+</div>
+
   
   <!-- Paywall modal -->
   <div id="paywallModal" class="modal" aria-hidden="true">
@@ -846,6 +893,20 @@ on($('#deleteAccount'),'click',async ()=>{
   alert('Delete account (stub) – tu wywołaj deleteUser(auth.currentUser)');
 });
 
+// Settings – przełączanie zakładek
+document.querySelectorAll('#settingsModal .settings-nav button')
+  .forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const tab = btn.dataset.tab;
+      document
+        .querySelectorAll('#settingsModal .settings-nav button')
+        .forEach(b=>b.classList.toggle('active', b===btn));
+      document
+        .querySelectorAll('#settingsModal .settings-content .tab')
+        .forEach(t=>t.classList.toggle('active', t.classList.contains(tab)));
+    });
+  });
+
 // DEV panel – działa tylko z ?dev=1
 (function setupDevPanel(){
   const showDev = params.get('dev') === '1';
@@ -929,6 +990,30 @@ const I18N = {
     settings_email_label: 'Email',
     settings_plan_label: 'Plan',
 
+    // --- SETTINGS SPLIT ---
+    settings_nav_account:      'Konto',
+    settings_nav_policy:       'Polityka',
+    settings_nav_subscription: 'Subskrypcja',
+    settings_nav_support:      'Wsparcie',
+
+    // --- SETTINGS / ACCOUNT TAB ---
+    settings_acc_current_email: 'Bieżący e-mail',
+    settings_acc_change_email:  'Zmień e-mail',
+    settings_acc_change_pass:   'Zmień hasło',
+    settings_acc_delete_acc:    'Usuń konto',
+    settings_acc_delete_confirm:'Czy na pewno chcesz usunąć konto?',
+
+    // --- SETTINGS / POLICY TAB ---
+    settings_policy_title: 'Prywatność i zasady',
+
+    // --- SETTINGS / SUBSCRIPTION TAB ---
+    settings_sub_plan:        'Plan',
+    settings_sub_manage:      'Zarządzaj subskrypcją',
+
+    // --- SETTINGS / SUPPORT TAB ---
+    settings_support_title:   'Wsparcie',
+    settings_support_contact: 'Kontakt: support@syntri.app'
+
     // --- PAYWALL ---
     paywall_title: 'Wyczerpano limit darmowy',
     paywall_copy:
@@ -987,6 +1072,30 @@ const I18N = {
     settings_title: 'Settings',
     settings_email_label: 'Email',
     settings_plan_label: 'Plan',
+
+    // --- SETTINGS SPLIT ---
+    settings_nav_account:      'Account',
+    settings_nav_policy:       'Policy',
+    settings_nav_subscription: 'Subscription',
+    settings_nav_support:      'Support',
+
+    // --- SETTINGS / ACCOUNT TAB ---
+    settings_acc_current_email: 'Current email',
+    settings_acc_change_email:  'Change email',
+    settings_acc_change_pass:   'Change password',
+    settings_acc_delete_acc:    'Delete account',
+    settings_acc_delete_confirm:'Are you sure you want to delete the account?',
+
+    // --- SETTINGS / POLICY TAB ---
+    settings_policy_title: 'Privacy & Rules',
+
+    // --- SETTINGS / SUBSCRIPTION TAB ---
+    settings_sub_plan:        'Plan',
+    settings_sub_manage:      'Manage subscription',
+
+    // --- SETTINGS / SUPPORT TAB ---
+    settings_support_title:   'Support',
+    settings_support_contact: 'Contact: support@syntri.app'
 
     // --- PAYWALL ---
     paywall_title: 'Free limit reached',
