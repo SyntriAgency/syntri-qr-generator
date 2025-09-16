@@ -938,6 +938,17 @@ on($('#btnChangeEmail'), ()=> alert('Change email (stub)'));
 on($('#btnChangePass'),  ()=> alert('Change password (stub)'));
 on($('#btnManageSub'),   ()=> alert('Manage subscription (stub)'));
 
+// zamykanie X-em
+on($('#settingsClose'), 'click', () => closeModal('#settingsModal'));
+
+// opcjonalnie: ESC zamyka Settings
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.querySelector('#settingsModal.show')) {
+    closeModal('#settingsModal');
+  }
+  });
+    
+
 // DEV panel – działa tylko z ?dev=1
 (function setupDevPanel(){
   const showDev = params.get('dev') === '1';
