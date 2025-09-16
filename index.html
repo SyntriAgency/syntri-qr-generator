@@ -912,11 +912,37 @@ on($('#nav-settings'),'click',(e)=>{
   openModal('#settingsModal');
 });
 
+// delete account
+    
 on($('#btnDeleteAcc'),'click', async ()=>{
   const ok = confirm(i18n('settings_acc_delete_confirm') || 'Are you sure?');
   if (!ok) return;
-  // TODO: realne usuwanie w Firebase
-  alert('Delete account (stub) – tu wywołaj deleteUser(auth.currentUser)');
+
+  const user = auth.currentUser;
+  if (!user) { alert('Brak zalogowanego użytkownika.'); return; }
+
+  // pobierz hasło z prompta
+  const pass = prompt('Podaj swoje hasło, aby potwierdzić usunięcie:');
+  if (!pass) { alert('Anulowano.'); return; }
+
+  try {
+    // re-autoryzacja
+    const cred = EmailAuthProvider.credential(user.email, pass);
+    await reauthenticateWithCredential(user, cred);
+
+    // faktyczne usunięcie
+    await deleteUser(user);
+
+    alert('Konto zostało usunięte.');
+    localStorage.removeItem('syntri.auth.uid');
+    localStorage.removeItem('syntri.auth.email');
+    renderAuthUI();
+    closeModal('#settingsModal');
+  } catch(err){
+    console.error(err);
+    // typowe błędy: auth/wrong-password, auth/too-many-requests
+    alert('Nie udało się usunąć konta: ' + (err.code || err.message));
+  }
 });
 
 // tab w nawigacji settings
@@ -1181,7 +1207,10 @@ import {
   sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  deleteUser,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
 /* === 1) KONFIGURACJA Firebase (ta sama co w konsoli projektu) === */
