@@ -879,21 +879,37 @@ document.addEventListener('keydown', async e => {
       alert('PayPal Subscriptions (stub). Podmień na realny endpoint.');
     });
 
-    // Settings
+// === Settings modal ===
+function activateSettingsTab(tab='account'){
+  document.querySelectorAll('#settingsModal .settings-nav button')
+    .forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('#settingsModal .settings-content .tab')
+    .forEach(t => t.classList.toggle('active', t.classList.contains(tab)));
+}
+
 on($('#nav-settings'),'click',(e)=>{
   e.preventDefault();
-  // wypełnij dane w modal-u settings (np. email, plan)
-  $('#settingsEmail').textContent = AUTH.email();
-  $('#settingsPlan').textContent  = AUTH.isLoggedIn() ? 'Plan: Pro (mock)' : 'Plan: Free';
+
+  // fill up dane w split settings
+  const email = AUTH.email();
+  const plan  = AUTH.isLoggedIn() ? 'Pro (mock)' : 'Free';
+  const accEmail = $('#accEmail'); if (accEmail) accEmail.textContent = email || '—';
+  const planName = $('#planName'); if (planName) planName.textContent = plan;
+
+  // show startowo tab „Account”
+  activateSettingsTab('account');
+
   openModal('#settingsModal');
 });
-on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
-on($('#deleteAccount'),'click',async ()=>{
-  // TODO: podmień na realne usuwanie konta (Firebase)
+
+on($('#btnDeleteAcc'),'click', async ()=>{
+  const ok = confirm(i18n('settings_acc_delete_confirm') || 'Are you sure?');
+  if (!ok) return;
+  // TODO: realne usuwanie w Firebase
   alert('Delete account (stub) – tu wywołaj deleteUser(auth.currentUser)');
 });
 
-// Settings – przełączanie zakładek
+// tab w nawigacji settings
 document.querySelectorAll('#settingsModal .settings-nav button')
   .forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -907,6 +923,11 @@ document.querySelectorAll('#settingsModal .settings-nav button')
     });
   });
 
+// akcje w tabs – stuby
+on($('#btnChangeEmail'), ()=> alert('Change email (stub)'));
+on($('#btnChangePass'),  ()=> alert('Change password (stub)'));
+on($('#btnManageSub'),   ()=> alert('Manage subscription (stub)'));
+
 // DEV panel – działa tylko z ?dev=1
 (function setupDevPanel(){
   const showDev = params.get('dev') === '1';
@@ -915,11 +936,11 @@ document.querySelectorAll('#settingsModal .settings-nav button')
 
   // DEV: wyczerp limit (ustawia plan Free, used=quota, reset za 60s)
   on(document.getElementById('dev-exhaust'), 'click', () => {
-    localStorage.setItem('syntri.plan','Free'); // zapewnia skończoną quotę
+    localStorage.setItem('syntri.plan','Free'); // zapewnia finish quotę
     const u = getUsage();                       // { used, quota, resetAt }
     const exhausted = { ...u, used: u.quota, resetAt: Date.now() + 60_000 };
     saveUsage(exhausted);
-    renderUsagePill();                          // odświeża pill + ensureHomeGate()
+    renderUsagePill();                          // refresh pill + ensureHomeGate()
     alert('DEV: quota wyczerpana na 60s (Free plan).');
   });
 
