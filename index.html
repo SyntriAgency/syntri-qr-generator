@@ -145,6 +145,7 @@
       <nav class="subnav" aria-label="App navigation">
         <a href="#" id="nav-login" data-i18n="nav_login">Login</a>
         <a href="#" id="nav-account" style="display:none" data-i18n="nav_account">Account</a>
+        <a href="#" id="nav-settings" style="display:none" data-i18n="nav_settings">Settings</a>
         <a href="#" id="nav-signout" style="display:none" data-i18n="nav_signout">Sign out</a>
         <a href="#" id="nav-language" data-i18n="nav_language" style="margin-left:auto">Language</a>
       </nav>
@@ -271,6 +272,33 @@
     </div>
   </div>
 
+<!-- Account modal -->
+  <div id="accountModal" class="modal" aria-hidden="true">
+    …
+  </div>
+
+  <!-- Settings modal -->
+  <div id="settingsModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <h3>Settings</h3>
+
+      <div class="field-row">
+        <label>Email</label>
+        <p id="settingsEmail" class="muted"></p>
+      </div>
+
+      <div class="field-row">
+        <label>Plan</label>
+        <p id="settingsPlan" class="muted"></p>
+      </div>
+
+      <div class="modal-actions" style="justify-content:space-between;margin-top:16px;">
+        <button id="deleteAccount" class="btn btn-ghost">Delete account</button>
+        <button id="settingsClose"  class="btn btn-primary">Close</button>
+      </div>
+    </div>
+  </div>
+  
   <!-- Paywall modal -->
   <div id="paywallModal" class="modal" aria-hidden="true">
     <div class="modal-card">
@@ -341,6 +369,7 @@
       const logged = AUTH.isLoggedIn();
       $('#nav-login').style.display   = logged ? 'none' : 'inline-block';
       $('#nav-account').style.display = logged ? 'inline-block' : 'none';
+      $('#nav-settings').style.display = logged ? 'inline-block' : 'none';
       $('#nav-signout').style.display = logged ? 'inline-block' : 'none';
       // logged → liczenie usage na serwerze (tu: unlimited until backend)
       renderUsagePill();
@@ -787,6 +816,20 @@ document.addEventListener('keydown', async e => {
       // TODO: fetch('/billing/paypal/create-subscription', {method:'POST', credentials:'include'})
       alert('PayPal Subscriptions (stub). Podmień na realny endpoint.');
     });
+
+    // Settings
+on($('#nav-settings'),'click',(e)=>{
+  e.preventDefault();
+  // wypełnij dane w modal-u settings (np. email, plan)
+  $('#settingsEmail').textContent = AUTH.email();
+  $('#settingsPlan').textContent  = AUTH.isLoggedIn() ? 'Plan: Pro (mock)' : 'Plan: Free';
+  openModal('#settingsModal');
+});
+on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
+on($('#deleteAccount'),'click',async ()=>{
+  // TODO: podmień na realne usuwanie konta (Firebase)
+  alert('Delete account (stub) – tu wywołaj deleteUser(auth.currentUser)');
+});
 
 // DEV panel – działa tylko z ?dev=1
 (function setupDevPanel(){
