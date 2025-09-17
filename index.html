@@ -252,28 +252,26 @@
 
 <!-- Change Password modal -->
 <div id="changePassModal" class="modal" aria-hidden="true">
-  <div class="modal-card">
-    <h3 style="text-align:center;margin:0 0 10px;">Change password</h3>
+  <div class="syntri-wrap"><!-- center wrapper -->
+    <article class="syntri-card">
+      <h2>Change password</h2>
+      <p class="syntri-status">Enter your current and new password</p>
 
-    <div class="field-row">
-      <label for="cpCurrent" class="muted">Current password</label>
-      <input id="cpCurrent" type="password" placeholder="your current password" autocomplete="current-password" />
-    </div>
+      <label class="syntri-label">Current password
+        <input id="cpCurrent" class="syntri-input" type="password" autocomplete="current-password">
+      </label>
 
-    <div class="field-row">
-      <label for="cpNew" class="muted">New password</label>
-      <input id="cpNew" type="password" placeholder="min. 6 characters" autocomplete="new-password" />
-    </div>
+      <label class="syntri-label">New password
+        <input id="cpNew" class="syntri-input" type="password" autocomplete="new-password">
+      </label>
 
-    <div class="field-row">
-      <label for="cpNew2" class="muted">Repeat new password</label>
-      <input id="cpNew2" type="password" placeholder="repeat new password" autocomplete="new-password" />
-    </div>
+      <label class="syntri-label">Repeat new password
+        <input id="cpNew2" class="syntri-input" type="password" autocomplete="new-password">
+      </label>
 
-    <div class="modal-actions" style="margin-top:14px">
-      <button class="btn btn-ghost" id="cpCancel">Cancel</button>
-      <button class="btn btn-primary" id="cpSave">Save</button>
-    </div>
+      <button class="syntri-btn" id="cpSave">Save</button>
+      <button class="syntri-btn" style="margin-top:10px;background:transparent;border:1px solid var(--syntri-card-border);color:var(--syntri-text);" id="cpCancel">Cancel</button>
+    </article>
   </div>
 </div>
 
