@@ -180,6 +180,7 @@
 #settingsModal .settings-content .tab.active{
   display:block;
 }
+
     
   </style>
 </head>
@@ -249,6 +250,34 @@
             <span id="usagePill" class="usage-pill" title="Free monthly quota">10 / 10</span>
           </div>
 
+<!-- Change Password modal -->
+<div id="changePassModal" class="modal" aria-hidden="true">
+  <div class="modal-card">
+    <h3 style="text-align:center;margin:0 0 10px;">Change password</h3>
+
+    <div class="field-row">
+      <label for="cpCurrent" class="muted">Current password</label>
+      <input id="cpCurrent" type="password" placeholder="your current password" autocomplete="current-password" />
+    </div>
+
+    <div class="field-row">
+      <label for="cpNew" class="muted">New password</label>
+      <input id="cpNew" type="password" placeholder="min. 6 characters" autocomplete="new-password" />
+    </div>
+
+    <div class="field-row">
+      <label for="cpNew2" class="muted">Repeat new password</label>
+      <input id="cpNew2" type="password" placeholder="repeat new password" autocomplete="new-password" />
+    </div>
+
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn btn-ghost" id="cpCancel">Cancel</button>
+      <button class="btn btn-primary" id="cpSave">Save</button>
+    </div>
+  </div>
+</div>
+
+          
 <!-- DEV panel – widoczny tylko z ?dev=1 -->
 <div id="dev-panel" style="display:none; margin-top:8px; display:flex; gap:8px;">
   <button id="dev-exhaust" class="btn btn-ghost">DEV: Max limit</button>
@@ -416,9 +445,14 @@
     function filename(ext){
       const raw = text.value.trim() || 'syntri';
       const slug = raw.replace(/^https?:\/\//,'').slice(0,64).replace(/[^a-z0-9\-_.]+/gi,'-').replace(/-+/g,'-').replace(/(^-|-$)/g,'');
-      return `syntri-qr-${slug || 'code'}.${ext}`;
-    }
 
+    // --- openModal/closeModal + on(...) dla ChangePass ---
+    function openModal(sel){ … }
+    function closeModal(sel){ … }
+    on($('#btnChangePass'), () => openModal('#changePassModal'));
+    on($('#cpCancel'), () => closeModal('#changePassModal'));
+      
+  
     // ----------------------------------------------
     // Auth (mock) – podmień na Firebase Auth
     // ----------------------------------------------
@@ -1371,57 +1405,6 @@ btnDeleteAcc?.addEventListener('click', async () => {
   }
 });
 
-  // === 10) Change password (reauth + update) ===
-const btnChangePass = document.getElementById('btnChangePass');
-
-btnChangePass?.addEventListener('click', async () => {
-  const user = auth.currentUser;
-  if (!user?.email) { alert('Nie jesteś zalogowany/a.'); return; }
-
-  // proste UI na promptach — możesz kiedyś podmienić na ładny modal
-  const current = prompt('Podaj OBECNE hasło:');
-  if (current === null) return; // Cancel
-  if (!current.trim()) { alert('Hasło nie może być puste.'); return; }
-
-  const next1 = prompt('Nowe hasło (min. 6 znaków):');
-  if (next1 === null) return;
-  if (!next1 || next1.length < 6) { alert('Hasło musi mieć min. 6 znaków.'); return; }
-
-  const next2 = prompt('Powtórz nowe hasło:');
-  if (next2 === null) return;
-  if (next1 !== next2) { alert('Hasła nie są takie same.'); return; }
-
-  try {
-    setBusy?.(btnChangePass, true);
-
-    // reauth wymagany do wrażliwych operacji
-    const cred = EmailAuthProvider.credential(user.email, current);
-    await reauthenticateWithCredential(user, cred);
-
-    // zmiana hasła
-    await updatePassword(user, next1);
-    alert('Hasło zostało zmienione.');
-  } catch (err) {
-    console.error('[ChangePass] ERROR', err);
-    let msg = 'Nie udało się zmienić hasła. ';
-    switch (err?.code) {
-      case 'auth/wrong-password':
-      case 'auth/invalid-credential':
-        msg += 'Obecne hasło jest nieprawidłowe.'; break;
-      case 'auth/weak-password':
-        msg += 'Nowe hasło jest zbyt słabe (min. 6 znaków).'; break;
-      case 'auth/requires-recent-login':
-        msg += 'Wymagana ponowna autoryzacja – zaloguj się ponownie i spróbuj jeszcze raz.'; break;
-      case 'auth/network-request-failed':
-        msg += 'Problem z siecią – spróbuj ponownie.'; break;
-      default:
-        msg += (err?.message || String(err));
-    }
-    alert(msg);
-  } finally {
-    setBusy?.(btnChangePass, false);
-  }
-});
 </script>
 
 </body>
