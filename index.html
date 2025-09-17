@@ -451,7 +451,6 @@
       <div class="tab account">
         <!-- Account content -->
         <p>Current email: <span id="accEmail"></span></p>
-        <button id="btnChangeEmail">Change email</button>
         <button id="btnChangePass">Change password</button>
         <button id="btnDeleteAcc">Delete account</button>
       </div>
@@ -1068,7 +1067,6 @@ document.querySelectorAll('#settingsModal .settings-nav button')
   });
 
 // akcje w tabs – stuby
-on($('#btnChangeEmail'), ()=> alert('Change email (stub)'));
 
 on($('#btnManageSub'),   ()=> alert('Manage subscription (stub)'));
 
@@ -1174,7 +1172,6 @@ const I18N = {
 
     // --- SETTINGS / ACCOUNT TAB ---
     settings_acc_current_email: 'Bieżący e-mail',
-    settings_acc_change_email:  'Zmień e-mail',
     settings_acc_change_pass:   'Zmień hasło',
     settings_acc_delete_acc:    'Usuń konto',
     settings_acc_delete_confirm:'Czy na pewno chcesz usunąć konto?',
@@ -1264,7 +1261,6 @@ const I18N = {
 
     // --- SETTINGS / ACCOUNT TAB ---
     settings_acc_current_email: 'Current email',
-    settings_acc_change_email:  'Change email',
     settings_acc_change_pass:   'Change password',
     settings_acc_delete_acc:    'Delete account',
     settings_acc_delete_confirm:'Are you sure you want to delete the account?',
