@@ -462,10 +462,19 @@
       </div>
 
       <div class="tab subscription">
-        <!-- Subscription info -->
-        <p>Plan: <span id="planName"></span></p>
-        <button id="btnManageSub">Manage subscription</button>
-      </div>
+  <p><span data-i18n="plan_label">Plan:</span> <span id="planName"></span></p>
+
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px">
+    <button id="btnUpgradeBasic" class="btn btn-ghost" data-i18n="sub_upgrade_basic">Upgrade → Basic</button>
+    <button id="btnUpgradePro"   class="btn btn-primary" data-i18n="sub_upgrade_pro">Upgrade → Pro</button>
+    <button id="btnDowngradeFree" class="btn btn-ghost" data-i18n="sub_downgrade_free">Downgrade → Free</button>
+    <button id="btnManageSub"     class="btn btn-ghost" data-i18n="sub_manage">Manage subscription</button>
+  </div>
+
+  <p class="muted" style="margin-top:10px" data-i18n="sub_mock_note">
+    Mock: zapis w localStorage, bez realnej płatności.
+  </p>
+</div>
 
       <div class="tab support">
         <!-- Support contacts -->
@@ -1038,11 +1047,18 @@ function activateSettingsTab(tab='account'){
 on($('#nav-settings'),'click',(e)=>{
   e.preventDefault();
 
-  // fill up dane w split settings
-  const email = AUTH.email();
-  const plan  = AUTH.isLoggedIn() ? 'Pro (mock)' : 'Free';
-  const accEmail = $('#accEmail'); if (accEmail) accEmail.textContent = email || '—';
-  const planName = $('#planName'); if (planName) planName.textContent = plan;
+ // fill up dane w split settings
+const email = AUTH.email();
+// najpierw spróbuj odczytać zapisany plan z localStorage
+const planStored = localStorage.getItem('syntri.plan')
+                 || (AUTH.isLoggedIn() ? 'Free' : 'Free');
+
+const accEmail = $('#accEmail');
+if (accEmail) accEmail.textContent = email || '—';
+
+const planName = $('#planName');
+if (planName) planName.textContent =
+    planStored + (planStored === 'Pro' ? ' (mock)' : '');
 
   // show startowo tab „Account”
   activateSettingsTab('account');
@@ -1069,6 +1085,41 @@ document.querySelectorAll('#settingsModal .settings-nav button')
 // akcje w tabs – stuby
 
 on($('#btnManageSub'),   ()=> alert('Manage subscription (stub)'));
+
+    // --- SUBSCRIPTION: zmiana planu (mock) ---
+const setPlan = (plan) => {
+  localStorage.setItem('syntri.plan', plan);
+  renderUsagePill(); // przelicza quota i odświeża pill + gate
+  // zaktualizuj label w Settings
+  const planName = document.getElementById('planName');
+  if (planName) planName.textContent = plan + (plan === 'Pro' ? ' (mock)' : '');
+};
+
+// Przyciski w zakładce Subscription
+on($('#btnUpgradeBasic'), () => {
+  setPlan('Basic');
+  alert('Plan ustawiony na Basic (mock).');
+});
+on($('#btnUpgradePro'), () => {
+  setPlan('Pro');
+  alert('Plan ustawiony na Pro (mock).');
+});
+on($('#btnDowngradeFree'), () => {
+  setPlan('Free');
+  alert('Plan ustawiony na Free (mock).');
+});
+
+// (opcjonalnie) integracja paywalla z upgradem
+on($('#subscribeStripe'), () => {
+  setPlan('Pro');
+  closeModal('#paywallModal');
+  alert('Subskrypcja Pro (mock).');
+});
+on($('#subscribePayPal'), () => {
+  setPlan('Basic');
+  closeModal('#paywallModal');
+  alert('Subskrypcja Basic (mock).');
+});
 
 // zamykanie X-em
 on($('#settingsClose'), 'click', () => closeModal('#settingsModal'));
@@ -1194,6 +1245,16 @@ const I18N = {
     login_missing_fields: 'Podaj email i hasło.',
     login_failed_generic: 'Logowanie nieudane. Spróbuj ponownie.',
 
+  // --- MODAL: SUBSCRIPTION ---
+    plan_label: 'Plan:',
+    sub_manage: 'Zarządzaj subskrypcją',
+    sub_current_plan: 'Twój bieżący plan to:',
+    sub_upgrade_basic: 'Ulepsz do planu Basic',
+    sub_upgrade_pro: 'Ulepsz do planu Pro',
+    sub_downgrade_free: 'Przejdź na plan Free',
+    sub_mock_note: 'Mock: zapis w localStorage, bez realnej płatności.'
+
+    
     // --- PAYWALL ---
     paywall_title: 'Wyczerpano limit darmowy',
     paywall_copy:
@@ -1282,6 +1343,15 @@ const I18N = {
     err_invalid_email: 'Invalid email format.',
     login_missing_fields: 'Please enter email and password.',
     login_failed_generic: 'Login failed. Please try again.',
+
+   // --- MODAL: SUBSCRIPTION ---
+    plan_label: 'Plan:',
+    sub_manage: 'Manage subscription',
+    sub_current_plan: 'Your current plan is:',
+    sub_upgrade_basic: 'Upgrade to Basic plan',
+    sub_upgrade_pro: 'Upgrade to Pro plan',
+    sub_downgrade_free: 'Downgrade to Free plan',
+    sub_mock_note: 'Mock: stored in localStorage, no real payment.',
 
     // --- PAYWALL ---
     paywall_title: 'Free limit reached',
