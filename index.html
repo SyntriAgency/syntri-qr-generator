@@ -1398,6 +1398,55 @@ onAuthStateChanged(auth, (user) => {
   }
   if (typeof renderAuthUI === 'function') renderAuthUI();
 });
+  
+//* === 8) Delete account with re-auth (inside the module script) ===
+const btnDeleteAcc = document.getElementById('btnDeleteAcc');
+
+btnDeleteAcc?.addEventListener('click', async () => {
+  const user = auth.currentUser;
+  if (!user?.email) { alert('Nie jesteś zalogowany/a.'); return; }
+
+  const confirmTxt = i18n('settings_acc_delete_confirm') || 'Are you sure you want to delete the account?';
+  if (!confirm(confirmTxt)) return;
+
+  const pass = prompt('Aby potwierdzić, wpisz hasło do konta:');
+  if (!pass) return;
+
+  setBusy?.(btnDeleteAcc, true);
+  try {
+    console.log('[DeleteAcc] Reauth start for', user.email);
+    const cred = EmailAuthProvider.credential(user.email, pass);
+    await reauthenticateWithCredential(user, cred);
+    console.log('[DeleteAcc] Reauth OK');
+
+    console.log('[DeleteAcc] Deleting user…');
+    await deleteUser(user);
+    console.log('[DeleteAcc] Delete OK');
+
+    try { await signOut(auth); } catch {}
+    localStorage.removeItem('syntri.auth.uid');
+    localStorage.removeItem('syntri.auth.email');
+    if (typeof renderAuthUI === 'function') renderAuthUI();
+    closeModal('#settingsModal');
+
+    alert('Konto zostało usunięte.');
+  } catch (err) {
+    console.error('[DeleteAcc] ERROR', err);
+    let msg = 'Nie udało się usunąć konta. ';
+    switch (err?.code) {
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':  msg += 'Błędne hasło.'; break;
+      case 'auth/requires-recent-login': msg += 'Wymagana ponowna autoryzacja – zaloguj się ponownie i spróbuj jeszcze raz.'; break;
+      case 'auth/user-not-found':      msg += 'Użytkownik nie istnieje.'; break;
+      case 'auth/network-request-failed': msg += 'Problem z siecią – sprawdź połączenie.'; break;
+      default: msg += (err?.message || String(err));
+    }
+    alert(msg);
+  } finally {
+    setBusy?.(btnDeleteAcc, false);
+  }
+});
+  
 </script>
 
 </body>
