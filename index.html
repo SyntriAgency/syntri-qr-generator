@@ -442,9 +442,18 @@
    }
     
     function clamp(n, min, max){ return Math.min(Math.max(n, min), max); }
+
     function filename(ext){
-      const raw = text.value.trim() || 'syntri';
-      const slug = raw.replace(/^https?:\/\//,'').slice(0,64).replace(/[^a-z0-9\-_.]+/gi,'-').replace(/-+/g,'-').replace(/(^-|-$)/g,'');
+    const raw = (text?.value || '').trim() || 'syntri';
+    const slug = raw
+    .replace(/^https?:\/\//,'')
+    .slice(0,64)
+    .replace(/[^a-z0-9\-_.]+/gi,'-')
+    .replace(/-+/g,'-')
+    .replace(/(^-|-$)/g,'');
+    return `syntri-qr-${slug || 'code'}.${ext}`;
+}
+
 
     // --- openModal/closeModal + on(...) dla ChangePass ---
     function openModal(sel){ … }
