@@ -471,8 +471,14 @@ function closeModal(sel){
 }
 
 // --- Change-password modal ---
-on($('#btnChangePass'), 'click', () => openModal('#changePassModal'));
-on($('#cpCancel'),      'click', () => closeModal('#changePassModal'));
+on($('#btnChangePass'), 'click', () => {
+  // najpierw zamknij ustawienia
+  closeModal('#settingsModal');
+  // a dopiero potem pokaż modal zmiany hasła
+  openModal('#changePassModal');
+});
+
+on($('#cpCancel'), 'click', () => closeModal('#changePassModal'));
       
   
     // ----------------------------------------------
