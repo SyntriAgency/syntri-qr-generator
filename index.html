@@ -1398,43 +1398,19 @@ onAuthStateChanged(auth, (user) => {
   }
   if (typeof renderAuthUI === 'function') renderAuthUI();
 });
-
-// --- 8) Quiet UI switches ---
-const POPUPS = false; // true => używa alert/confirm/prompt; false => ciche logi i blokada akcji
-const UI = {
-  alert(msg){ if (POPUPS) window.alert(msg); else console.info('[UI]', msg); },
-  // Bezpieczne domyślne: gdy pop-upy OFF, confirm zwraca false (nie kasujemy przez przypadek)
-  confirm(msg){ return POPUPS ? window.confirm(msg) : false; },
-  // Gdy pop-upy OFF, prompt zwraca null -> traktuj jak "anuluj"
-  prompt(msg){ return POPUPS ? window.prompt(msg) : null; }
-};
-
-//* === 9) Delete account with re-auth (inside the module script) ===
+  
+//* === 8) Delete account with re-auth (inside the module script) ===
 const btnDeleteAcc = document.getElementById('btnDeleteAcc');
 
 btnDeleteAcc?.addEventListener('click', async () => {
   const user = auth.currentUser;
-  if (!user?.email) { UI.alert(i18n('login_missing_fields') || 'Nie jesteś zalogowany/a.'); return; }
+  if (!user?.email) { alert('Nie jesteś zalogowany/a.'); return; }
 
   const confirmTxt = i18n('settings_acc_delete_confirm') || 'Are you sure you want to delete the account?';
-  if (!UI.confirm(confirmTxt)) {
-    // Tu możesz dodać własny toast/info zamiast pop-upu
-    console.info('[DeleteAcc] Canceled by user or popups disabled');
-    return;
-  }
+  if (!confirm(confirmTxt)) return;
 
-  const pass = UI.prompt(
-    (localStorage.getItem('syntri.lang')||'pl')==='pl'
-      ? `Aby usunąć konto ${user.email}, wpisz hasło:`
-      : `To delete account ${user.email}, please enter your password:`
-  );
-  if (pass === null) { console.info('[DeleteAcc] Reauth canceled (no prompt)'); return; }
-  if (!String(pass).trim()) {
-    UI.alert((localStorage.getItem('syntri.lang')||'pl')==='pl'
-      ? 'Hasło nie może być puste.'
-      : 'Password cannot be empty.');
-    return;
-  }
+  const pass = prompt('Aby potwierdzić, wpisz hasło do konta:');
+  if (!pass) return;
 
   setBusy?.(btnDeleteAcc, true);
   try {
@@ -1451,27 +1427,21 @@ btnDeleteAcc?.addEventListener('click', async () => {
     localStorage.removeItem('syntri.auth.uid');
     localStorage.removeItem('syntri.auth.email');
     if (typeof renderAuthUI === 'function') renderAuthUI();
-    closeModal?.('#settingsModal');
+    closeModal('#settingsModal');
 
-    UI.alert((localStorage.getItem('syntri.lang')||'pl')==='pl'
-      ? 'Konto zostało usunięte.'
-      : 'Your account has been deleted.');
+    alert('Konto zostało usunięte.');
   } catch (err) {
     console.error('[DeleteAcc] ERROR', err);
-    let msg = (localStorage.getItem('syntri.lang')||'pl')==='pl'
-      ? 'Nie udało się usunąć konta. '
-      : 'Failed to delete account. ';
+    let msg = 'Nie udało się usunąć konta. ';
     switch (err?.code) {
       case 'auth/wrong-password':
-      case 'auth/invalid-credential':  msg += (localStorage.getItem('syntri.lang')||'pl')==='pl' ? 'Błędne hasło.' : 'Wrong password.'; break;
-      case 'auth/requires-recent-login': msg += (localStorage.getItem('syntri.lang')||'pl')==='pl'
-        ? 'Wymagana ponowna autoryzacja – zaloguj się ponownie i spróbuj jeszcze raz.'
-        : 'Requires recent login – sign in again and retry.'; break;
-      case 'auth/user-not-found':      msg += (localStorage.getItem('syntri.lang')||'pl')==='pl' ? 'Użytkownik nie istnieje.' : 'User not found.'; break;
-      case 'auth/network-request-failed': msg += (localStorage.getItem('syntri.lang')||'pl')==='pl' ? 'Problem z siecią.' : 'Network error.'; break;
+      case 'auth/invalid-credential':  msg += 'Błędne hasło.'; break;
+      case 'auth/requires-recent-login': msg += 'Wymagana ponowna autoryzacja – zaloguj się ponownie i spróbuj jeszcze raz.'; break;
+      case 'auth/user-not-found':      msg += 'Użytkownik nie istnieje.'; break;
+      case 'auth/network-request-failed': msg += 'Problem z siecią – sprawdź połączenie.'; break;
       default: msg += (err?.message || String(err));
     }
-    UI.alert(msg);
+    alert(msg);
   } finally {
     setBusy?.(btnDeleteAcc, false);
   }
