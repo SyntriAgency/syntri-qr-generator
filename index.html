@@ -930,7 +930,7 @@ document.querySelectorAll('#settingsModal .settings-nav button')
 
 // akcje w tabs – stuby
 on($('#btnChangeEmail'), ()=> alert('Change email (stub)'));
-on($('#btnChangePass'),  ()=> alert('Change password (stub)'));
+
 on($('#btnManageSub'),   ()=> alert('Manage subscription (stub)'));
 
 // zamykanie X-em
@@ -1180,6 +1180,7 @@ import {
   deleteUser,
   reauthenticateWithCredential,
   EmailAuthProvider
+  updatePassword  
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
 /* === 1) KONFIGURACJA Firebase (ta sama co w konsoli projektu) === */
@@ -1369,7 +1370,58 @@ btnDeleteAcc?.addEventListener('click', async () => {
     setBusy?.(btnDeleteAcc, false);
   }
 });
-  
+
+  // === 10) Change password (reauth + update) ===
+const btnChangePass = document.getElementById('btnChangePass');
+
+btnChangePass?.addEventListener('click', async () => {
+  const user = auth.currentUser;
+  if (!user?.email) { alert('Nie jesteś zalogowany/a.'); return; }
+
+  // proste UI na promptach — możesz kiedyś podmienić na ładny modal
+  const current = prompt('Podaj OBECNE hasło:');
+  if (current === null) return; // Cancel
+  if (!current.trim()) { alert('Hasło nie może być puste.'); return; }
+
+  const next1 = prompt('Nowe hasło (min. 6 znaków):');
+  if (next1 === null) return;
+  if (!next1 || next1.length < 6) { alert('Hasło musi mieć min. 6 znaków.'); return; }
+
+  const next2 = prompt('Powtórz nowe hasło:');
+  if (next2 === null) return;
+  if (next1 !== next2) { alert('Hasła nie są takie same.'); return; }
+
+  try {
+    setBusy?.(btnChangePass, true);
+
+    // reauth wymagany do wrażliwych operacji
+    const cred = EmailAuthProvider.credential(user.email, current);
+    await reauthenticateWithCredential(user, cred);
+
+    // zmiana hasła
+    await updatePassword(user, next1);
+    alert('Hasło zostało zmienione.');
+  } catch (err) {
+    console.error('[ChangePass] ERROR', err);
+    let msg = 'Nie udało się zmienić hasła. ';
+    switch (err?.code) {
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+        msg += 'Obecne hasło jest nieprawidłowe.'; break;
+      case 'auth/weak-password':
+        msg += 'Nowe hasło jest zbyt słabe (min. 6 znaków).'; break;
+      case 'auth/requires-recent-login':
+        msg += 'Wymagana ponowna autoryzacja – zaloguj się ponownie i spróbuj jeszcze raz.'; break;
+      case 'auth/network-request-failed':
+        msg += 'Problem z siecią – spróbuj ponownie.'; break;
+      default:
+        msg += (err?.message || String(err));
+    }
+    alert(msg);
+  } finally {
+    setBusy?.(btnChangePass, false);
+  }
+});
 </script>
 
 </body>
