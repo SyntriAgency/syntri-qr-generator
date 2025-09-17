@@ -1509,7 +1509,58 @@ btnDeleteAcc?.addEventListener('click', async () => {
     setBusy?.(btnDeleteAcc, false);
   }
 });
+  
+// === 9) Change Password: zapisz nowe hasło (delegacja click) ===
+document.addEventListener('click', async (e) => {
+  if (e.target?.id !== 'cpSave') return;   // reaguj tylko na przycisk Save
 
+  console.log('[ChangePass] Save clicked');
+  const user = auth.currentUser;
+  if (!user?.email) { alert('Nie jesteś zalogowany/a.'); return; }
+
+  const cur = (document.getElementById('cpCurrent')?.value || '').trim();
+  const np1 = (document.getElementById('cpNew')?.value || '').trim();
+  const np2 = (document.getElementById('cpNew2')?.value || '').trim();
+
+  if (!cur || !np1 || !np2) { alert('Uzupełnij wszystkie pola.'); return; }
+  if (np1 !== np2)          { alert('Nowe hasła nie są takie same.'); return; }
+  if (np1.length < 6)       { alert('Nowe hasło musi mieć min. 6 znaków.'); return; }
+
+  e.target.disabled = true;
+  e.target.setAttribute('aria-busy','true');
+
+  try {
+    const cred = EmailAuthProvider.credential(user.email, cur);
+    await reauthenticateWithCredential(user, cred);
+    await updatePassword(user, np1);
+
+    ['cpCurrent','cpNew','cpNew2'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+
+    const m = document.getElementById('changePassModal');
+    if (m) { m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
+
+    alert('Hasło zostało zmienione.');
+  } catch (err) {
+    console.error('[ChangePass] ERROR', err);
+    let msg = 'Nie udało się zmienić hasła. ';
+    switch (err?.code) {
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential': msg += 'Obecne hasło jest nieprawidłowe.'; break;
+      case 'auth/weak-password':      msg += 'Nowe hasło jest zbyt słabe.'; break;
+      case 'auth/requires-recent-login': msg += 'Wymagane ponowne logowanie – zaloguj się i spróbuj ponownie.'; break;
+      case 'auth/too-many-requests':  msg += 'Za dużo prób. Spróbuj za chwilę.'; break;
+      default:                        msg += (err?.message || String(err));
+    }
+    alert(msg);
+  } finally {
+    e.target.disabled = false;
+    e.target.removeAttribute('aria-busy');
+  }
+});
+  
 </script>
 
 </body>
