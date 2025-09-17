@@ -875,6 +875,8 @@ document.addEventListener('keydown', async e => {
       alert('Stripe Customer Portal (stub). Podmień na realny endpoint.');
     });
 
+    // Sign out
+    on($('#nav-signout'),'click',(e)=>{ e.preventDefault(); AUTH.logout(); });
 
     // Paywall
     on($('#paywallClose'),'click',()=> closeModal('#paywallModal'));
@@ -910,8 +912,20 @@ on($('#nav-settings'),'click',(e)=>{
   openModal('#settingsModal');
 });
 
+// delete account
+    
+on($('#btnDeleteAcc'),'click', async ()=>{
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      alert('Nie jesteś zalogowany/a.');
+      console.warn('[DeleteAcc] Brak zalogowanego użytkownika');
+      return;
+    }
 
-  
+    // 1) Potwierdzenie akcji
+    const sure = confirm(i18n('settings_acc_delete_confirm') || 'Are you sure you want to delete the account?');
+    if (!sure) return;
 
     // 2) Pobranie hasła od użytkownika (prosty prompt; możesz to później zrobić ładnym modalem)
     const email = user.email || '';
