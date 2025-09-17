@@ -180,6 +180,82 @@
 #settingsModal .settings-content .tab.active{
   display:block;
 }
+/* === Change Password – te same style co login === */
+#loginModal .modal-card,
+#changePassModal .modal-card{
+  width:min(520px,92vw);
+  background:#fff; color:#111827;
+  border:1px solid #e5e7eb; border-radius:12px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+  padding:24px 28px;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal .modal-card,
+  #changePassModal .modal-card{
+    background:#0f1720; color:#e5e7eb;
+    border-color:#1f2937; box-shadow:0 6px 20px rgba(0,0,0,.35);
+  }
+}
+
+#loginModal .modal-card h3,
+#changePassModal .modal-card h3{
+  margin:0 0 6px; font-weight:600; font-size:1.4rem; text-align:center;
+}
+
+#loginModal .field-row label,
+#changePassModal .field-row label{
+  font-size:.95rem; color:#111827;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal .field-row label,
+  #changePassModal .field-row label{ color:#e5e7eb; }
+}
+
+#loginModal input[type="email"],
+#loginModal input[type="password"],
+#changePassModal input[type="password"]{
+  width:100%; padding:10px 12px; margin-top:6px;
+  font-size:1rem; border-radius:8px; box-sizing:border-box;
+  background:transparent; outline:none;
+  border:1px solid #d1d5db; color:#111827;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal input[type="email"],
+  #loginModal input[type="password"],
+  #changePassModal input[type="password"]{
+    border-color:#334155; color:#e5e7eb;
+  }
+}
+
+#loginModal .btn-primary,
+#changePassModal .btn-primary{
+  background:#111827; color:#fff; border:0;
+  border-radius:8px; padding:12px 16px; font-weight:600; font-size:1rem;
+  transition:background .15s ease, transform .02s ease-in;
+}
+#loginModal .btn-primary:hover,
+#changePassModal .btn-primary:hover{ background:#1f2937; }
+#loginModal .btn-primary:active,
+#changePassModal .btn-primary:active{ transform:translateY(1px); }
+@media (prefers-color-scheme: dark){
+  #loginModal .btn-primary,
+  #changePassModal .btn-primary{
+    background:#e5e7eb; color:#111827;
+  }
+  #loginModal .btn-primary:hover,
+  #changePassModal .btn-primary:hover{ background:#d1d5db; }
+}
+
+#loginModal .btn-ghost,
+#changePassModal .btn-ghost{
+  background:transparent; color:inherit;
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:8px; padding:10px 14px; font-weight:600;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal .btn-ghost,
+  #changePassModal .btn-ghost{ border-color:#334155; }
+}
 
     
   </style>
@@ -250,27 +326,27 @@
             <span id="usagePill" class="usage-pill" title="Free monthly quota">10 / 10</span>
           </div>
 
-<!-- Change Password modal -->
+<!-- Change Password modal (dopasowany do stylu login) -->
 <div id="changePassModal" class="modal" aria-hidden="true">
   <div class="modal-card">
     <h3>Change password</h3>
 
     <div class="field-row">
       <label class="muted">Current password</label>
-      <input id="cpCurrent" type="password" autocomplete="current-password" placeholder="••••••••">
+      <input id="cpCurrent" type="password" autocomplete="current-password" placeholder="your current password" />
     </div>
 
     <div class="field-row">
       <label class="muted">New password</label>
-      <input id="cpNew" type="password" autocomplete="new-password" placeholder="min. 6 characters">
+      <input id="cpNew" type="password" autocomplete="new-password" placeholder="min. 6 characters" />
     </div>
 
     <div class="field-row">
       <label class="muted">Repeat new password</label>
-      <input id="cpNew2" type="password" autocomplete="new-password" placeholder="repeat new password">
+      <input id="cpNew2" type="password" autocomplete="new-password" placeholder="repeat new password" />
     </div>
 
-    <div class="modal-actions" style="margin-top:14px">
+    <div class="modal-actions" style="justify-content:flex-end">
       <button class="btn btn-ghost" id="cpCancel">Cancel</button>
       <button class="btn btn-primary" id="cpSave">Save</button>
     </div>
