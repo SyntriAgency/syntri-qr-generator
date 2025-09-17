@@ -454,12 +454,25 @@
     return `syntri-qr-${slug || 'code'}.${ext}`;
 }
 
+  // ----------------------------------------------
+  // --- modal helpers (uniwersalne) ---
+  // ----------------------------------------------
+function openModal(sel){
+  const m = $(sel);
+  if (!m) return;
+  m.classList.add('show');
+  m.setAttribute('aria-hidden','false');
+}
+function closeModal(sel){
+  const m = $(sel);
+  if (!m) return;
+  m.classList.remove('show');
+  m.setAttribute('aria-hidden','true');
+}
 
-    // --- openModal/closeModal + on(...) dla ChangePass ---
-    function openModal(sel){ … }
-    function closeModal(sel){ … }
-    on($('#btnChangePass'), () => openModal('#changePassModal'));
-    on($('#cpCancel'), () => closeModal('#changePassModal'));
+// --- Change-password modal ---
+on($('#btnChangePass'), 'click', () => openModal('#changePassModal'));
+on($('#cpCancel'),      'click', () => closeModal('#changePassModal'));
       
   
     // ----------------------------------------------
