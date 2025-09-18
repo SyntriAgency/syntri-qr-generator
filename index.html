@@ -313,7 +313,42 @@
   margin-top:14px; font-size:.9rem; padding:10px 12px;
   border-radius:10px; background:rgba(255,255,255,.04);
 }
-    
+
+/* === Section header (jak w subs) === */
+.acc-wrap{padding:6px}
+.acc-header{text-align:center;margin:8px 0 14px}
+.acc-title{font-weight:800;font-size:18px;margin:0 0 6px}
+.acc-sub{color:var(--muted);font-weight:700;letter-spacing:.02em}
+
+/* === Info cards (spójne z .plan-card) === */
+.info-card{
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+  padding:14px 16px;
+}
+@media (prefers-color-scheme: light){
+  .info-card{ border-color:#e5e7eb; box-shadow:0 6px 18px rgba(0,0,0,.06); }
+}
+.info-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.info-title{font-weight:800}
+.badge{font-weight:700;opacity:.85;font-size:.95rem;border:1px solid rgba(255,255,255,.18);padding:2px 8px;border-radius:999px}
+@media (prefers-color-scheme: light){
+  .badge{border-color:#e5e7eb}
+}
+.info-list{margin:8px 0 12px;padding-left:18px}
+.info-list li{margin:4px 0}
+.action-row{display:flex;gap:10px}
+.btn-danger{
+  background:transparent;
+  color:inherit;
+  border:1px solid rgba(255,0,0,.35);
+  border-radius:12px;
+  padding:12px 14px;
+  font-weight:800;
+  cursor:pointer;
+}    
   </style>
 </head>
 <body>
@@ -505,11 +540,41 @@
 
     <section class="settings-content">
       <div class="tab account">
-        <!-- Account content -->
-        <p>Current email: <span id="accEmail"></span></p>
-        <button id="btnChangePass">Change password</button>
-        <button id="btnDeleteAcc">Delete account</button>
+  <div class="acc-wrap">
+    <div class="acc-header">
+      <h4 class="acc-title" data-i18n="account_title">Account</h4>
+      <div class="acc-sub" data-i18n="account_manage">Manage your profile & security</div>
+    </div>
+
+    <!-- Karta: Profil -->
+    <article class="info-card">
+      <div class="info-head">
+        <div class="info-title" data-i18n="account_profile">Profile</div>
+        <span class="badge" id="planName">Free</span>
       </div>
+      <ul class="info-list">
+        <li>Email: <strong id="accEmail">—</strong></li>
+        <li data-i18n="account_status">Status: Active</li>
+      </ul>
+      <div class="action-row">
+        <button id="btnChangePass" class="plan-btn secondary" data-i18n="account_change_password">Change password</button>
+      </div>
+    </article>
+
+    <!-- Karta: Bezpieczeństwo -->
+    <article class="info-card" style="margin-top:12px">
+      <div class="info-head">
+        <div class="info-title" data-i18n="account_security">Security</div>
+      </div>
+      <ul class="info-list">
+        <li data-i18n="account_security_hint">Use a strong, unique password.</li>
+      </ul>
+      <div class="action-row">
+        <button id="btnDeleteAcc" class="btn-danger" data-i18n="account_delete">Delete account</button>
+      </div>
+    </article>
+  </div>
+</div>
 
       <div class="tab policy">
         <!-- Policy / rules -->
