@@ -1166,10 +1166,31 @@ on($('#btnManageSub'),   ()=> alert('Manage subscription (stub)'));
 // --- SUBSCRIPTION: zmiana planu (mock) ---
 const setPlan = (plan) => {
   localStorage.setItem('syntri.plan', plan);
-  renderUsagePill();
+  renderUsagePill(); // przelicza quota i odświeża pill + gate
   const planName = document.getElementById('planName');
   if (planName) planName.textContent = plan + (plan === 'Pro' ? ' (mock)' : '');
 };
+
+// === Subscription helpers ===
+function highlightSelectedPlan(){
+  const cur = localStorage.getItem('syntri.plan') || 'Free';
+  document.querySelectorAll('.plan-card').forEach(card=>{
+    card.classList.toggle('selected', card.dataset.plan === cur);
+  });
+}
+
+function wirePlanButtons(){
+  document.querySelectorAll('.plan-btn[data-action="choose"]').forEach(btn=>{
+    btn.onclick = () => {
+      const plan = btn.dataset.plan;
+      setPlan(plan);
+      highlightSelectedPlan();
+      alert(plan === 'Pro'
+        ? 'Subskrypcja Pro (mock).'
+        : `Ustawiono ${plan} (mock).`);
+    };
+  });
+}
 
 // Paywall → zawsze ustawia Pro
 on($('#subscribeStripe'), () => {
