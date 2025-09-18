@@ -296,6 +296,23 @@
   margin-top:14px; font-size:.9rem; padding:10px 12px;
   border-radius:10px; background:rgba(255,255,255,.04);
 }
+/* Niewybrany plan z secondary → czarny guzik */
+.plan-card:not(.selected) .plan-btn.secondary{
+  background:#111827;
+  color:#fff;
+  border:0;
+}
+@media (prefers-color-scheme: dark){
+  .plan-card:not(.selected) .plan-btn.secondary{
+    background:#e5e7eb;
+    color:#111827;
+  }
+}
+
+.subs-footer{
+  margin-top:14px; font-size:.9rem; padding:10px 12px;
+  border-radius:10px; background:rgba(255,255,255,.04);
+}
     
   </style>
 </head>
