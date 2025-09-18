@@ -1152,6 +1152,7 @@ if (planName) planName.textContent =
   openModal('#settingsModal');
   highlightSelectedPlan();
   wirePlanButtons();
+  updateSubFooter();
 });
 
     
@@ -1186,10 +1187,35 @@ const setPlan = (plan) => {
 function highlightSelectedPlan(){
   const cur = localStorage.getItem('syntri.plan') || 'Free';
   document.querySelectorAll('.plan-card').forEach(card=>{
-    card.classList.toggle('selected', card.dataset.plan === cur);
+    const selected = card.dataset.plan === cur;
+    card.classList.toggle('selected', selected);
+
+    // blokuj przycisk, jeśli plan już wybrany
+    const btn = card.querySelector('.plan-btn');
+    if (btn){
+      btn.disabled = selected;
+      btn.setAttribute('aria-disabled', String(selected));
+    }
   });
 }
 
+// --- Stopka z datą wygaśnięcia planu ---
+function updateSubFooter(){
+  const expEl = document.getElementById('subExpires');
+  const leftEl = document.getElementById('subDaysLeft');
+  const exp = Number(localStorage.getItem('syntri.sub.expireAt') || 0);
+
+  if (!exp) {
+    expEl.textContent = '—';
+    leftEl.textContent = '';
+    return;
+  }
+  const date = new Date(exp);
+  const days = Math.max(0, Math.ceil((exp - Date.now()) / (1000*60*60*24)));
+  expEl.textContent = date.toLocaleDateString();
+  leftEl.textContent = `(${days} days left)`;
+}    
+    
 function wirePlanButtons(){
   document.querySelectorAll('.plan-btn[data-action="choose"]').forEach(btn=>{
     btn.onclick = () => {
