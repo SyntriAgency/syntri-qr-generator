@@ -679,9 +679,8 @@ on($('#cpCancel'), 'click', () => closeModal('#changePassModal'));
 // Plan (mock). Na razie trzymany w localStorage; gdy podepniesz backend, zwracaj realny plan.
 // Ustaw ręcznie w konsoli np.: localStorage.setItem('syntri.plan','Free'|'Basic'|'Pro')
 function getPlan(){
-  return AUTH.isLoggedIn() ? (localStorage.getItem('syntri.plan') || 'Free') : 'Free';
+  return localStorage.getItem('syntri.plan') || 'Free';
 }
-
 // Reset miesięczny: 1. dzień następnego miesiąca, 00:00
 function monthResetAtMs(){
   const d = new Date();
@@ -695,11 +694,13 @@ function usageKey(){
   return `syntri.qr.usage.${ym}`;
 }
 
-// Quoty per plan
+// Quota per plan – miesięczne limity
 function planQuota(plan){
-  if (plan === 'Pro') return Infinity;
-  if (plan === 'Basic') return 100;
-  return 15; // Free
+  switch (plan) {
+    case 'Pro':   return Infinity; // brak limitu
+    case 'Basic': return 100;      // 100 / mies.
+    default:      return 15;       // Free – 15 / mies.
+  }
 }
 
 // Zwraca {used, quota, resetAt}
@@ -1088,16 +1089,24 @@ document.addEventListener('keydown', async e => {
 
     // Account
     on($('#nav-account'),'click',(e)=>{
-      e.preventDefault();
-      $('#accountEmail').textContent = AUTH.email();
-      $('#accountPlan').textContent = AUTH.isLoggedIn() ? 'Plan: Pro (mock)' : 'Plan: Free';
-      openModal('#accountModal');
+    e.preventDefault();
+    $('#accountEmail').textContent = AUTH.email() || '—';
+    $('#accountPlan').textContent  = 'Plan: ' + SUBS.getPlan();
+    openModal('#accountModal');
     });
+    
     on($('#accountClose'),'click',()=> closeModal('#accountModal'));
-    on($('#openPortal'),'click',async ()=>{
-      // TODO: replace with call to your Cloud Function -> Stripe Customer Portal URL
-      alert('Stripe Customer Portal (stub). Podmień na realny endpoint.');
-    });
+    
+    on($('#openPortal'),'click', async ()=>{
+  try {
+    const resp = await fetch('/create-stripe-portal'); // Twój endpoint
+    const {url} = await resp.json();
+    window.location.href = url;
+  } catch (err) {
+    console.error(err);
+    alert('Nie udało się otworzyć portalu Stripe.');
+  }
+});
 
     // Sign out
     on($('#nav-signout'),'click',(e)=>{ e.preventDefault(); AUTH.logout(); });
