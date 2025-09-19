@@ -577,10 +577,42 @@
 </div>
 
       <div class="tab policy">
-        <!-- Policy / rules -->
-        <h4>Privacy & Rules</h4>
-        <p>…your policy text…</p>
-      </div>
+  <h4 data-i18n="policy_title">Privacy Policy</h4>
+  <p class="muted" data-i18n="policy_updated">Last update: 18 Sep 2025</p>
+
+  <h5 data-i18n="policy_scope_h">Scope</h5>
+  <p data-i18n="policy_scope_p">The app generates QR codes locally in your browser. By default, we do not send the content you enter to any server.</p>
+
+  <h5 data-i18n="policy_data_h">Data we process</h5>
+  <ul>
+    <li data-i18n="policy_data_local">In-browser (localStorage): settings, usage counter, language, optional mock flags.</li>
+    <li data-i18n="policy_data_no_server">We do not store QR contents or settings on our servers.</li>
+  </ul>
+
+  <h5 data-i18n="policy_account_h">Account & login</h5>
+  <p data-i18n="policy_account_p">Current version uses mock-auth (local only). If we enable real login (e.g., Firebase Auth), we will update this policy accordingly.</p>
+
+  <h5 data-i18n="policy_payments_h">Payments & subscriptions</h5>
+  <p data-i18n="policy_payments_p">UI contains mock Stripe/PayPal buttons. If we enable real payments, Stripe/PayPal will process payment data; this policy will be updated.</p>
+
+  <h5 data-i18n="policy_legal_h">Legal bases & retention</h5>
+  <ul>
+    <li data-i18n="policy_legal_gdpr">GDPR legal bases: legitimate interest; consent for optional features.</li>
+    <li data-i18n="policy_retention_local">localStorage stays on your device until you clear it.</li>
+  </ul>
+
+  <h5 data-i18n="policy_rights_h">Your rights</h5>
+  <p data-i18n="policy_rights_p">Access, rectification, erasure, restriction, portability, objection (where applicable). For local data, clear your browser storage.</p>
+
+  <h5 data-i18n="policy_security_h">Security</h5>
+  <p data-i18n="policy_security_p">Served over HTTPS. Client-side processing. Future providers will meet security standards.</p>
+
+  <h5 data-i18n="policy_children_h">Children</h5>
+  <p data-i18n="policy_children_p">Service intended for adults; no data knowingly collected from children.</p>
+
+  <h5 data-i18n="policy_contact_h">Contact</h5>
+  <p><a class="link" href="mailto:support@syntri.app">support@syntri.app</a></p>
+</div>
 
  <!-- === Subscription cards styl -->
       <div class="tab subscription">
@@ -1473,7 +1505,31 @@ const I18N = {
     // --- PAYWALL ---
     paywall_title: 'Wyczerpano limit darmowy',
     paywall_copy:
-      'Wykorzystałeś/aś wszystkie darmowe kody w tym miesiącu. Wybierz plan, aby kontynuować.'
+      'Wykorzystałeś/aś wszystkie darmowe kody w tym miesiącu. Wybierz plan, aby kontynuować.',
+
+    // --- Policy ---
+    policy_title: 'Polityka prywatności',
+    policy_updated: 'Ostatnia aktualizacja: 18.09.2025',
+    policy_scope_h: 'Zakres działania',
+    policy_scope_p: 'Aplikacja generuje kody QR lokalnie w przeglądarce. Domyślnie nie wysyłamy wprowadzonych treści na serwer.',
+    policy_data_h: 'Jakie dane przetwarzamy',
+    policy_data_local: 'W przeglądarce (localStorage): ustawienia generatora, licznik użycia, język, opcjonalne flagi mock.',
+    policy_data_no_server: 'Nie zapisujemy treści QR ani ustawień na serwerach.',
+    policy_account_h: 'Konto i logowanie',
+    policy_account_p: 'Obecnie używamy mock-auth (lokalnie). Po wdrożeniu rzeczywistego logowania (np. Firebase) zaktualizujemy politykę.',
+    policy_payments_h: 'Płatności i subskrypcje',
+    policy_payments_p: 'Przyciski Stripe/PayPal są makietą. Po uruchomieniu realnych płatności to Stripe/PayPal będą przetwarzać dane płatnicze.',
+    policy_legal_h: 'Podstawy prawne i retencja',
+    policy_legal_gdpr: 'RODO: uzasadniony interes; zgoda dla funkcji opcjonalnych.',
+    policy_retention_local: 'localStorage pozostaje na urządzeniu do czasu wyczyszczenia.',
+    policy_rights_h: 'Twoje prawa',
+    policy_rights_p: 'Dostęp, sprostowanie, usunięcie, ograniczenie, przenoszenie, sprzeciw (w zakresie danych po naszej stronie). Dla danych lokalnych wyczyść pamięć przeglądarki.',
+    policy_security_h: 'Bezpieczeństwo',
+    policy_security_p: 'Serwis po HTTPS. Przetwarzanie po stronie klienta. Dostawcy zewnętrzni będą spełniać standardy bezpieczeństwa.',
+    policy_children_h: 'Dzieci',
+    policy_children_p: 'Usługa dla dorosłych; nie zbieramy danych dzieci.',
+    policy_contact_h: 'Kontakt'
+        
   },
 
   en: {
@@ -1584,7 +1640,31 @@ const I18N = {
     // --- PAYWALL ---
     paywall_title: 'Free limit reached',
     paywall_copy:
-      'You used all free codes this month. Choose a plan to continue.'
+      'You used all free codes this month. Choose a plan to continue.',
+
+    // --- Policy ---
+    policy_title: 'Privacy Policy',
+    policy_updated: 'Last update: 18 Sep 2025',
+    policy_scope_h: 'Scope',
+    policy_scope_p: 'The app generates QR codes locally in your browser. By default, we do not send entered content to any server.',
+    policy_data_h: 'Data we process',
+    policy_data_local: 'In-browser (localStorage): generator settings, usage counter, language, optional mock flags.',
+    policy_data_no_server: 'We do not store QR contents or settings on servers.',
+    policy_account_h: 'Account & login',
+    policy_account_p: 'We use mock-auth (local only). If real login (e.g., Firebase) is enabled, this policy will be updated.',
+    policy_payments_h: 'Payments & subscriptions',
+    policy_payments_p: 'Stripe/PayPal buttons are mock. If we enable real payments, Stripe/PayPal will process payment data.',
+    policy_legal_h: 'Legal bases & retention',
+    policy_legal_gdpr: 'GDPR: legitimate interest; consent for optional features.',
+    policy_retention_local: 'localStorage remains on your device until cleared.',
+    policy_rights_h: 'Your rights',
+    policy_rights_p: 'Access, rectification, erasure, restriction, portability, objection (where applicable). For local data, clear your browser storage.',
+    policy_security_h: 'Security',
+    policy_security_p: 'Served over HTTPS. Client-side processing. External providers will meet security standards.',
+    policy_children_h: 'Children',
+    policy_children_p: 'Service intended for adults; no data knowingly collected from children.',
+    policy_contact_h: 'Contact'
+    
   }
 };
     function i18n(k){ const lang = localStorage.getItem('syntri.lang') || 'pl'; return (I18N[lang]||I18N.en)[k] || k; }
