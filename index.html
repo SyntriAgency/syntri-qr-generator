@@ -16,6 +16,9 @@
       document.head.appendChild(s);
     }
   </script>
+  
+<!-- Stripe v3 (musi być w <head> lub przed użyciem Stripe) -->
+<script src="https://js.stripe.com/v3"></script>
 
   <style>
     :root{--bg:#0b0f14;--panel:#111722;--muted:#90a3b3;--text:#e8eef6;--accent:#7dd3fc;--accent-2:#22d3ee;}
@@ -856,6 +859,35 @@ function renderUsagePill(){
   ensureHomeGate();
 }
 
+// === STRIPE CONFIG ===
+const STRIPE_PK = 'pk_test_xxxxxxxxxxxxx';    // <- Twój publishable key
+const PRICE = { Pro: 'price_XXXXXXXXXXXX' };  // <- Twój priceId
+
+const stripe = Stripe(STRIPE_PK);
+let stripeInFlight = false;
+
+async function startCheckoutByPlan(plan){
+  const priceId = PRICE[plan];
+  if (!priceId) { alert('Brak priceId dla '+plan); return; }
+  if (stripeInFlight) return;
+  stripeInFlight = true;
+  try {
+    const r = await fetch('/api/create-checkout-session', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ priceId })
+    });
+    const { url, error } = await r.json();
+    if (error || !url) throw new Error(error || 'No checkout URL');
+    window.location.href = url;
+  } catch(e){
+    console.error('[Stripe] checkout failed', e);
+    alert('Checkout error – spróbuj ponownie.');
+  } finally {
+    setTimeout(()=> stripeInFlight=false, 8000);
+  }
+}    
+    
 // Konsumpcja: { ok, remaining, resetMs }
 function tryConsumeUsage(){
   const u = getUsage();
@@ -1230,6 +1262,9 @@ document.addEventListener('keydown', async e => {
   }
 });
 
+    // === Stripe checkout button ===
+    on($('#subscribeStripe'),'click', ()=> startCheckoutByPlan('Pro'));
+    
     // Sign out
     on($('#nav-signout'),'click',(e)=>{ e.preventDefault(); AUTH.logout(); });
 
