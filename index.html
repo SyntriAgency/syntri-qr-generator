@@ -1224,7 +1224,7 @@ document.addEventListener('keydown', async e => {
     on($('#nav-account'),'click',(e)=>{
     e.preventDefault();
     $('#accountEmail').textContent = AUTH.email() || '—';
-    $('#accountPlan').textContent  = 'Plan: ' + SUBS.getPlan();
+    $('#accountPlan').textContent  = 'Plan: ' + getPlan();
     openModal('#accountModal');
     });
     
@@ -1307,7 +1307,7 @@ const setPlan = (plan) => {
   localStorage.setItem('syntri.plan', plan);
   renderUsagePill(); // przelicza quota i odświeża pill + gate
   const planName = document.getElementById('planName');
-  if (planName) planName.textContent = plan + (plan === 'Pro' ? ' (mock)' : '');
+  if (planName) planName.textContent = plan;
 };
 
 // === Subscription helpers ===
@@ -1358,17 +1358,6 @@ function wirePlanButtons(){
   });
 }
 
-// Paywall → zawsze ustawia Pro
-on($('#subscribeStripe'), () => {
-  setPlan('Pro');
-  closeModal('#paywallModal');
-  alert('Subskrypcja Pro (mock).');
-});
-on($('#subscribePayPal'), () => {
-  setPlan('Pro');
-  closeModal('#paywallModal');
-  alert('Subskrypcja Pro (mock).');
-});
 
 // zamykanie X-em
 on($('#settingsClose'), 'click', () => closeModal('#settingsModal'));
