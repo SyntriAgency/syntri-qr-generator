@@ -691,7 +691,6 @@
       <div class="modal-actions" style="justify-content:space-between">
         <div style="display:flex;gap:8px">
           <button class="btn btn-primary" id="subscribeStripe">Subscribe – Stripe</button>
-          <button class="btn btn-ghost" id="subscribePayPal">Subscribe – PayPal</button>
         </div>
         <button class="btn btn-ghost" id="paywallClose" data-i18n="btn_close">Close</button>
       </div>
@@ -1071,13 +1070,8 @@ function showCooldownUI(resetMs){
   btnUpgrade1.textContent='Upgrade – Stripe';
   btnUpgrade1.onclick = () => openCheckout();
 
-  const btnUpgrade2 = document.createElement('button');
-  btnUpgrade2.className='btn btn-ghost';
-  btnUpgrade2.textContent='Upgrade – PayPal';
-  btnUpgrade2.onclick = ()=> alert('PayPal Subscriptions (stub). Podmień na realny endpoint.');
 
   ctaRow.appendChild(btnUpgrade1);
-  ctaRow.appendChild(btnUpgrade2);
 
   wrap.appendChild(h); wrap.appendChild(p); wrap.appendChild(timer); wrap.appendChild(ctaRow);
   preview.appendChild(wrap);
