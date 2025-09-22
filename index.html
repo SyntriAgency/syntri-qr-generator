@@ -17,8 +17,6 @@
     }
   </script>
   
-<!-- Stripe v3 (musi być w <head> lub przed użyciem Stripe) -->
-<script src="https://js.stripe.com/v3"></script>
 
   <style>
     :root{--bg:#0b0f14;--panel:#111722;--muted:#90a3b3;--text:#e8eef6;--accent:#7dd3fc;--accent-2:#22d3ee;}
@@ -744,18 +742,6 @@
   // ----------------------------------------------
   // --- modal helpers (uniwersalne) ---
   // ----------------------------------------------
-function openModal(sel){
-  const m = $(sel);
-  if (!m) return;
-  m.classList.add('show');
-  m.setAttribute('aria-hidden','false');
-}
-function closeModal(sel){
-  const m = $(sel);
-  if (!m) return;
-  m.classList.remove('show');
-  m.setAttribute('aria-hidden','true');
-}
 
 // --- Change-password modal ---
 on($('#btnChangePass'), 'click', () => {
@@ -858,35 +844,28 @@ function renderUsagePill(){
   usagePill.title = (u.quota===Infinity) ? 'Paid plan' : 'Monthly quota';
   ensureHomeGate();
 }
-
-// === STRIPE CONFIG ===
-const STRIPE_PK = 'pk_test_xxxxxxxxxxxxx';    // <- Twój publishable key
-const PRICE = { Pro: 'price_XXXXXXXXXXXX' };  // <- Twój priceId
-
-const stripe = Stripe(STRIPE_PK);
-let stripeInFlight = false;
-
-async function startCheckoutByPlan(plan){
-  const priceId = PRICE[plan];
-  if (!priceId) { alert('Brak priceId dla '+plan); return; }
-  if (stripeInFlight) return;
-  stripeInFlight = true;
+// --- Stripe: openCheckout (redirect-based) ---
+async function openCheckout() {
+  const btn = document.activeElement;
+  if (btn) { btn.disabled = true; btn.setAttribute('aria-busy','true'); }
   try {
-    const r = await fetch('/api/create-checkout-session', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ priceId })
+    // względny endpoint pod Firebase Hosting rewrites
+    const res = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'subscription' }) // nic więcej nie wysyłamy
     });
-    const { url, error } = await r.json();
-    if (error || !url) throw new Error(error || 'No checkout URL');
-    window.location.href = url;
-  } catch(e){
-    console.error('[Stripe] checkout failed', e);
-    alert('Checkout error – spróbuj ponownie.');
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok || !data?.url) throw new Error(data?.error || `HTTP ${res.status}`);
+    window.location.href = data.url; // Stripe Checkout
+  } catch (e) {
+    console.error('Checkout error:', e);
+    alert('Could not start checkout. Please try again.');
   } finally {
-    setTimeout(()=> stripeInFlight=false, 8000);
+    if (btn) { btn.disabled = false; btn.removeAttribute('aria-busy'); }
   }
-}    
+}
+
     
 // Konsumpcja: { ok, remaining, resetMs }
 function tryConsumeUsage(){
@@ -1092,7 +1071,7 @@ function showCooldownUI(resetMs){
   const btnUpgrade1 = document.createElement('button');
   btnUpgrade1.className='btn btn-primary';
   btnUpgrade1.textContent='Upgrade – Stripe';
-  btnUpgrade1.onclick = ()=> alert('Stripe Checkout (stub). Podmień na realny endpoint.');
+  btnUpgrade1.onclick = () => openCheckout();
 
   const btnUpgrade2 = document.createElement('button');
   btnUpgrade2.className='btn btn-ghost';
@@ -1253,7 +1232,7 @@ document.addEventListener('keydown', async e => {
     
     on($('#openPortal'),'click', async ()=>{
   try {
-    const resp = await fetch('/create-stripe-portal'); // Twój endpoint
+    const resp = await fetch('/api/create-stripe-portal');
     const {url} = await resp.json();
     window.location.href = url;
   } catch (err) {
@@ -1262,22 +1241,14 @@ document.addEventListener('keydown', async e => {
   }
 });
 
-    // === Stripe checkout button ===
-    on($('#subscribeStripe'),'click', ()=> startCheckoutByPlan('Pro'));
     
     // Sign out
     on($('#nav-signout'),'click',(e)=>{ e.preventDefault(); AUTH.logout(); });
 
     // Paywall
     on($('#paywallClose'),'click',()=> closeModal('#paywallModal'));
-    on($('#subscribeStripe'),'click',async ()=>{
-      // TODO: fetch('/billing/stripe/create-checkout', {method:'POST', credentials:'include'})
-      alert('Stripe Checkout (stub). Podmień na realny endpoint.');
-    });
-    on($('#subscribePayPal'),'click',async ()=>{
-      // TODO: fetch('/billing/paypal/create-subscription', {method:'POST', credentials:'include'})
-      alert('PayPal Subscriptions (stub). Podmień na realny endpoint.');
-    });
+    on($('#subscribeStripe'),'click', () => openCheckout());
+    
 
 // === Settings modal ===
 function activateSettingsTab(tab='account'){
@@ -1300,8 +1271,7 @@ const accEmail = $('#accEmail');
 if (accEmail) accEmail.textContent = email || '—';
 
 const planName = $('#planName');
-if (planName) planName.textContent =
-    planStored + (planStored === 'Pro' ? ' (mock)' : '');
+if (planName) planName.textContent = planStored;
 
   // show startowo tab „Account”
   activateSettingsTab('account');
@@ -1377,11 +1347,13 @@ function wirePlanButtons(){
   document.querySelectorAll('.plan-btn[data-action="choose"]').forEach(btn=>{
     btn.onclick = () => {
       const plan = btn.dataset.plan;
-      setPlan(plan);
-      highlightSelectedPlan();
-      alert(plan === 'Pro'
-        ? 'Subskrypcja Pro (mock).'
-        : `Ustawiono ${plan} (mock).`);
+      if (plan === 'Pro') {
+        openCheckout();      // real Stripe Checkout
+      } else {
+        setPlan(plan);       // Free/Basic pozostaje lokalnie (mock)
+        highlightSelectedPlan();
+        alert(`Ustawiono ${plan} (mock).`);
+      }
     };
   });
 }
