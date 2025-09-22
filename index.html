@@ -1234,9 +1234,7 @@ document.addEventListener('keydown', async e => {
 });
 
     
-    // Sign out
-    on($('#nav-signout'),'click',(e)=>{ e.preventDefault(); AUTH.logout(); });
-
+  
     // Paywall
     on($('#paywallClose'),'click',()=> closeModal('#paywallModal'));
     on($('#subscribeStripe'),'click', () => openCheckout());
