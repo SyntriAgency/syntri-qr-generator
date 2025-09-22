@@ -846,15 +846,14 @@ async function openCheckout() {
   const btn = document.activeElement;
   if (btn) { btn.disabled = true; btn.setAttribute('aria-busy','true'); }
   try {
-    // względny endpoint pod Firebase Hosting rewrites
-    const res = await fetch('/createCheckoutSession', {
+    const res = await fetch('/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ priceId: 'price_1S91J0BStxMVTLoU91FQfnUw' }) 
+      body: JSON.stringify({})
     });
-    const data = await res.json().catch(()=>({}));
+    const data = await res.json();
     if (!res.ok || !data?.url) throw new Error(data?.error || `HTTP ${res.status}`);
-    window.location.href = data.url; // Stripe Checkout
+    window.location.href = data.url;
   } catch (e) {
     console.error('Checkout error:', e);
     alert('Could not start checkout. Please try again.');
@@ -1224,12 +1223,12 @@ document.addEventListener('keydown', async e => {
     
     on($('#openPortal'),'click', async ()=>{
   try {
-    const resp = await fetch('/api/create-stripe-portal', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ customerId: 'cus_XXXX' })
-});
-    const {url} = await resp.json();
+    const email = AUTH.email(); // zalogowany email
+    if (!email) { alert('Najpierw się zaloguj.'); return; }
+
+    const resp = await fetch(`/api/create-stripe-portal?email=${encodeURIComponent(email)}`);
+    const { url } = await resp.json();
+    if (!url) throw new Error('No portal URL');
     window.location.href = url;
   } catch (err) {
     console.error(err);
@@ -1338,30 +1337,43 @@ function updateSubFooter(){
 }    
     
 function wirePlanButtons(){
-  document.querySelectorAll('.plan-btn[data-action="choose"]').forEach(btn=>{
+  // Otwarcie Stripe Checkout dla planu Pro
+  async function openCheckout() {
+    const btn = document.activeElement;
+    if (btn) { btn.disabled = true; btn.setAttribute('aria-busy','true'); }
+    try {
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}) // backend ma domyślny PRICE_PRO
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error || `HTTP ${res.status}`);
+      }
+      window.location.href = data.url;
+    } catch (e) {
+      console.error('Checkout error:', e);
+      alert('Could not start checkout. Please try again.');
+    } finally {
+      if (btn) { btn.disabled = false; btn.removeAttribute('aria-busy'); }
+    }
+  }
+
+  // Podpięcie guzików wyboru planu
+  document.querySelectorAll('.plan-btn[data-action="choose"]').forEach(btn => {
     btn.onclick = () => {
       const plan = btn.dataset.plan;
       if (plan === 'Pro') {
-        openCheckout();      // real Stripe Checkout
+        openCheckout();              // prawdziwy Stripe Checkout
       } else {
-        setPlan(plan);       // Free/Basic pozostaje lokalnie (mock)
+        setPlan(plan);               // Free/Basic (mock lokalny)
         highlightSelectedPlan();
         alert(`Ustawiono ${plan} (mock).`);
       }
     };
   });
 }
-
-
-// zamykanie X-em
-on($('#settingsClose'), 'click', () => closeModal('#settingsModal'));
-
-// opcjonalnie: ESC zamyka Settings
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && document.querySelector('#settingsModal.show')) {
-    closeModal('#settingsModal');
-  }
-  });
     
 
 // DEV panel – działa tylko z ?dev=1
