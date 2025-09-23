@@ -1963,6 +1963,25 @@ document.addEventListener('click', async (e) => {
     e.target.removeAttribute('aria-busy');
   }
 });
+
+
+
+  // === 10) Esc: zamknij najwyższy widoczny modal ===
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const openModals = Array.from(document.querySelectorAll('.modal.show'));
+    if (!openModals.length) return;
+    const top = openModals[openModals.length - 1];
+    const id = '#' + top.id;
+    closeModal(id);
+  });
+ // === 11)Delegacja dla wszystkich przycisków .modal-close ===
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.modal-close');
+    if (!btn) return;
+    const target = btn.getAttribute('data-target');
+    if (target) closeModal(target);
+  });
   
 </script>
 
