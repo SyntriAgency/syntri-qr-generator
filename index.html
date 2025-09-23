@@ -428,22 +428,34 @@
 
 <!-- Change Password modal (dopasowany do stylu login) -->
 <div id="changePassModal" class="modal" aria-hidden="true">
-  <div class="modal-card">
+  <div class="modal-card" style="position:relative">
+    <!-- X close button -->
+    <button id="cpClose" type="button" aria-label="Close"
+            style="position:absolute;top:12px;right:16px;
+                   background:none;border:0;font-size:24px;
+                   font-weight:700;line-height:1;cursor:pointer;
+                   color:var(--muted)">
+      ×
+    </button>
+
     <h3>Change password</h3>
 
     <div class="field-row">
       <label class="muted">Current password</label>
-      <input id="cpCurrent" type="password" autocomplete="current-password" placeholder="your current password" />
+      <input id="cpCurrent" type="password" autocomplete="current-password"
+             placeholder="your current password" />
     </div>
 
     <div class="field-row">
       <label class="muted">New password</label>
-      <input id="cpNew" type="password" autocomplete="new-password" placeholder="min. 6 characters" />
+      <input id="cpNew" type="password" autocomplete="new-password"
+             placeholder="min. 6 characters" />
     </div>
 
     <div class="field-row">
       <label class="muted">Repeat new password</label>
-      <input id="cpNew2" type="password" autocomplete="new-password" placeholder="repeat new password" />
+      <input id="cpNew2" type="password" autocomplete="new-password"
+             placeholder="repeat new password" />
     </div>
 
     <div class="modal-actions" style="justify-content:flex-end">
@@ -749,6 +761,13 @@ on($('#btnChangePass'), 'click', () => {
 });
 
 on($('#cpCancel'), 'click', () => closeModal('#changePassModal'));
+
+// JS – obsługa zamykania
+on($('#cpClose'),  'click', () => closeModal('#changePassModal'));
+on($('#cpCancel'), 'click', () => closeModal('#changePassModal'));
+
+// setting - zamykanie ustawien
+on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
       
   
     // ----------------------------------------------
@@ -1966,24 +1985,22 @@ document.addEventListener('click', async (e) => {
 
 
 
-  // === 10) Esc: zamknij najwyższy widoczny modal ===
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    const openModals = Array.from(document.querySelectorAll('.modal.show'));
-    if (!openModals.length) return;
-    const top = openModals[openModals.length - 1];
-    const id = '#' + top.id;
-    closeModal(id);
-  });
+// === 10) Delegacja dla wszystkich przycisków oznaczonych .modal-close ===
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.modal-close');
+  if (!btn) return;
+  const target = btn.getAttribute('data-target');
+  if (target) closeModal(target);
+});
 
-  
- // === 11)Delegacja dla wszystkich przycisków .modal-close ===
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.modal-close');
-    if (!btn) return;
-    const target = btn.getAttribute('data-target');
-    if (target) closeModal(target);
-  });
+//  === 11) Esc: zamknij najwyższy widoczny modal ===
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const open = Array.from(document.querySelectorAll('.modal.show'));
+  if (!open.length) return;
+  const top = open[open.length - 1];
+  closeModal('#' + top.id);
+});
   
 </script>
 
