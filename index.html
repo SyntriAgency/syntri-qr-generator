@@ -1282,7 +1282,7 @@ on($('#openPortal'),'click', async ()=>{
     const email = AUTH.email();
     if (!email) { alert('Najpierw się zaloguj.'); return; }
 
-    const resp = await fetch(`${API_BASE}/create-stripe-portal?email=${encodeURIComponent(email)}`);
+    const resp = await fetch(`${API_BASE_PUBLIC}/create-stripe-portal?email=${encodeURIComponent(email)}`);
     const ct = resp.headers.get('content-type') || '';
     const data = ct.includes('application/json') ? await resp.json() : null;
 
@@ -1397,7 +1397,7 @@ function updateSubFooter(){
 
   // Otwarcie Stripe Checkout dla planu Pro
   // strona na GitHub Pages → używamy pełnego URL do Functions
-  const API_BASE = 'https://us-central1-syntri-qr-generator.cloudfunctions.net/api';
+  
 
   function wirePlanButtons(){
     async function openCheckout() {
@@ -1413,12 +1413,12 @@ function updateSubFooter(){
     const idToken = await user.getIdToken();
     const deviceId = localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID());
 
-    const res = await fetch(`${API_BASE}/create-checkout-session`, {
+    const res = await fetch(`${API_BASE_PROT}/create-checkout-session`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`
-      },
+     headers: {
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${token}` 
+},
       body: JSON.stringify({ deviceId })
     });
 
