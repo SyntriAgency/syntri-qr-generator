@@ -709,19 +709,24 @@
     </div>
   </div>
 
-   <!-- --- Firebase init (musi być przed twoim kodem) --- -->
-    <script src="https://www.gstatic.com/firebasejs/10.x.x/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.x.x/firebase-auth.js"></script>
-    <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyCN4mFs-l3SVfLGSiqOeSObenSPgQlx2XU",
-        authDomain: "syntri-qr-generator.firebaseapp.com",
-        projectId: "syntri-qr-generator",
-        // …reszta pól z konsoli Firebase
-      };
-      firebase.initializeApp(firebaseConfig);
-      window.auth = firebase.auth();
-    </script>  
+   <!-- Firebase compat build – działa w zwykłym <script> -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCN4mFs-l3SVfLGSiqOeSObenSPgQlx2XU",
+    authDomain: "syntri-qr-generator.firebaseapp.com",
+    projectId: "syntri-qr-generator",
+    storageBucket: "syntri-qr-generator.appspot.com",   // 👈 popraw host!
+    messagingSenderId: "535838079759",
+    appId: "1:535838079759:web:865ddfaee615280b645c7a",
+    measurementId: "G-D1V72QVK11"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  window.auth = firebase.auth();   // teraz auth dostępny globalnie
+</script>
       
   <script>
     // ----------------------------------------------
