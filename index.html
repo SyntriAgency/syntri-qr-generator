@@ -727,6 +727,13 @@
   firebase.initializeApp(firebaseConfig);
   window.auth = firebase.auth();   // teraz auth dostępny globalnie
 </script>
+
+  <!-- ✅ Stałe z adresami API – tuż pod Firebase -->
+  <script>
+    const API_FN_ROOT     = 'https://us-central1-syntri-qr-generator.cloudfunctions.net/api';
+    const API_BASE_PUBLIC = API_FN_ROOT;          // publiczne (health, whoami, create-stripe-portal)
+    const API_BASE_PROT   = API_FN_ROOT + '/api';  // chronione (create-checkout-session)
+  </script>
       
   <script>
     // ----------------------------------------------
@@ -891,17 +898,14 @@ async function openCheckout() {
     // >>> POBIERZ ID TOKEN UŻYTKOWNIKA <<<
     const token = await auth.currentUser.getIdToken();
 
-    const res = await fetch(
-  'https://us-central1-syntri-qr-generator.cloudfunctions.net/api/api/create-checkout-session',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({})
-  }
-);
+    const res = await fetch(`${API_BASE_PROT}/create-checkout-session`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({})
+});
 
     const data = await res.json();
     if (!res.ok || !data?.url) throw new Error(data?.error || `HTTP ${res.status}`);
