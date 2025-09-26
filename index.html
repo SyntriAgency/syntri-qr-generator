@@ -892,7 +892,7 @@ async function openCheckout() {
     const token = await auth.currentUser.getIdToken();
 
     const res = await fetch(
-  'https://us-central1-syntri-qr-generator.cloudfunctions.net/api/create-checkout-session',
+  'https://us-central1-syntri-qr-generator.cloudfunctions.net/api/api/create-checkout-session',
   {
     method: 'POST',
     headers: {
