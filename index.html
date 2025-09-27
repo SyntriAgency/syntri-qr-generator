@@ -2123,6 +2123,41 @@ document.addEventListener('keydown', (e) => {
   const top = open[open.length - 1];
   closeModal('#' + top.id);
 });
+
+  // === 14) aktualizuje etykiety w stopce ===
+function updateSubFooter(expiryMs) {
+  const expEl  = document.getElementById('subExpires');
+  const leftEl = document.getElementById('subDaysLeft');
+
+  if (!expiryMs) {
+    expEl.textContent  = '—';
+    leftEl.textContent = '';
+    return;
+  }
+
+  expEl.textContent = new Date(expiryMs).toLocaleDateString();
+
+  const days = Math.max(0, Math.ceil((expiryMs - Date.now()) / 86_400_000));
+  leftEl.textContent = days > 0
+    ? `(${ i18n('plan_pro_days_left').replace('{n}', days) })`
+    : `(${ i18n('plan_pro_expired') })`;
+}
+
+// nasłuch Firestore
+let unsubEnt = null;
+onAuthStateChanged(auth, (user) => {
+  if (unsubEnt) { unsubEnt(); unsubEnt = null; }
+
+  if (user) {
+    const ref = doc(db, 'entitlements', user.uid);
+    unsubEnt = onSnapshot(ref, snap => {
+      const expiry = Number(snap.data()?.expiryTimeMs || 0);
+      updateSubFooter(expiry);
+    });
+  } else {
+    updateSubFooter(0);
+  }
+});
   
 </script>
 
