@@ -1401,8 +1401,8 @@ function highlightSelectedPlan() {
 
     // napis przycisku planu Pro
     if (card.dataset.plan === 'Pro') {
-      btn.textContent = isPro ? 'Subscribed' : 'Subscribe £3.99';
-    }
+  btn.textContent = isPro ? i18n('btn_subscribed') : i18n('btn_subscribe_price');
+}
   });
 }
 
