@@ -1366,17 +1366,25 @@ const setPlan = (plan) => {
 };
 
 // === Subscription helpers ===
-function highlightSelectedPlan(){
+function highlightSelectedPlan() {
   const cur = localStorage.getItem('syntri.plan') || 'Free';
-  document.querySelectorAll('.plan-card').forEach(card=>{
+
+  document.querySelectorAll('.plan-card').forEach(card => {
     const selected = card.dataset.plan === cur;
     card.classList.toggle('selected', selected);
 
-    // blokuj przycisk, jeśli plan już wybrany
     const btn = card.querySelector('.plan-btn');
-    if (btn){
+    if (btn) {
+      // blokuj przycisk, jeśli ten plan jest już aktywny
       btn.disabled = selected;
       btn.setAttribute('aria-disabled', String(selected));
+
+      // jeśli to plan Pro – zmień napis
+      if (card.dataset.plan === 'Pro') {
+        btn.textContent = (cur === 'Pro')
+          ? 'Subscribed'
+          : 'Subscribe £3.99';
+      }
     }
   });
 }
@@ -1851,7 +1859,9 @@ onAuthStateChanged(auth, (user) => {
   const isPro =
     d.subActive === true ||
     (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
-
+      
+  /* lub window.syntriPlan = isPro ? 'pro' : 'free'; */   
+  window.SYNTRI_IS_PRO = !!isPro;  
   localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
 
   const planName = document.getElementById('planName');
