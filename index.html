@@ -1793,10 +1793,15 @@ import {
   deleteUser,
   reauthenticateWithCredential,
   EmailAuthProvider,
-  updatePassword  
+  updatePassword
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-/* === 1) KONFIGURACJA Firebase (ta sama co w konsoli projektu) === */
+/* === 1) KONFIG === */
 const firebaseConfig = {
   apiKey: "AIzaSyCN4mFs-l3SVfLGSiqOeSObenSPgQlx2XU",
   authDomain: "syntri-qr-generator.firebaseapp.com",
@@ -1807,24 +1812,59 @@ const firebaseConfig = {
   measurementId: "G-D1V72QVK11"
 };
 
+/* === 2) INIT === */
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db   = getFirestore(app);
+/* zgodność z resztą kodu (openCheckout itd.) */
+window.auth = auth;
 
-/* === 2) Pomocnicze === */
+/* === 3) UTIL === */
 const $ = (s) => document.querySelector(s);
-function closeModal(sel){
-  const m = $(sel);
-  if (!m) return;
-  m.classList.remove('show');
-  m.setAttribute('aria-hidden','true');
-}
-function setBusy(el, busy){
-  if (!el) return;
-  el.disabled = !!busy;
-  el.setAttribute('aria-busy', busy ? 'true':'false');
-}
+function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
+function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-busy', b?'true':'false'); }
 
-/* === 3) Rejestracja === */
+/* === 4) LIVE PLAN: users/{uid} → Free/Pro === */
+let unsubUserDoc = null;
+onAuthStateChanged(auth, (user) => {
+  // aktualizuj localStorage jak wcześniej
+  if (user) {
+    localStorage.setItem('syntri.auth.uid', user.uid);
+    localStorage.setItem('syntri.auth.email', user.email || '');
+  } else {
+    localStorage.removeItem('syntri.auth.uid');
+    localStorage.removeItem('syntri.auth.email');
+  }
+  if (typeof renderAuthUI === 'function') renderAuthUI();
+
+  // odpinaj poprzedni listener
+  if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
+
+  if (user) {
+    const ref = doc(db, 'users', user.uid);
+    unsubUserDoc = onSnapshot(ref, (snap) => {
+      const d = snap.data() || {};
+      const isPro = d.subActive === true ||
+        (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
+
+      localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
+
+      const planName = document.getElementById('planName');
+      if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
+
+      if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+      if (typeof renderUsagePill === 'function') renderUsagePill();
+    });
+  } else {
+    localStorage.setItem('syntri.plan', 'Free');
+    const planName = document.getElementById('planName');
+    if (planName) planName.textContent = 'Free';
+    if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+    if (typeof renderUsagePill === 'function') renderUsagePill();
+  }
+});
+
+/* === 6) Rejestracja === */
 $('#btnRegister')?.addEventListener('click', async () => {
   const btn   = $('#btnRegister');
   const email = ($('#loginEmail')?.value || '').trim();
@@ -1850,7 +1890,7 @@ $('#btnRegister')?.addEventListener('click', async () => {
   }
 });
 
-/* === 4) Logowanie === */
+/* === 7) Logowanie === */
 $('#btnLogin')?.addEventListener('click', async () => {
   const btn   = $('#btnLogin');
   const email = ($('#loginEmail')?.value || '').trim();
@@ -1878,7 +1918,7 @@ $('#btnLogin')?.addEventListener('click', async () => {
   }
 });
 
-/* === 5) Reset hasła (Forgot password) – z własną stroną resetu === */
+/* === 8) Reset hasła (Forgot password) – z własną stroną resetu === */
 $('#btnForgot')?.addEventListener('click', async () => {
   const btn   = $('#btnForgot');
   const email = ($('#loginEmail')?.value || '').trim();
@@ -1908,7 +1948,7 @@ $('#btnForgot')?.addEventListener('click', async () => {
   }
 });
 
-/* === 6) Wylogowanie (link w nawigacji) === */
+/* === 9) Wylogowanie (link w nawigacji) === */
 $('#nav-signout')?.addEventListener('click', async (e) => {
   e.preventDefault();
   const link = $('#nav-signout');
@@ -1924,19 +1964,8 @@ $('#nav-signout')?.addEventListener('click', async (e) => {
   }
 });
 
-/* === 7) Synchronizacja z Twoim istniejącym UI / localStorage === */
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    localStorage.setItem('syntri.auth.uid',   user.uid);
-    localStorage.setItem('syntri.auth.email', user.email || '');
-  } else {
-    localStorage.removeItem('syntri.auth.uid');
-    localStorage.removeItem('syntri.auth.email');
-  }
-  if (typeof renderAuthUI === 'function') renderAuthUI();
-});
   
-//* === 8) Delete account with re-auth (inside the module script) ===
+//* === 10) Delete account with re-auth (inside the module script) ===
 const btnDeleteAcc = document.getElementById('btnDeleteAcc');
 
 btnDeleteAcc?.addEventListener('click', async () => {
@@ -1984,7 +2013,7 @@ btnDeleteAcc?.addEventListener('click', async () => {
   }
 });
   
-// === 9) Change Password: zapisz nowe hasło (delegacja click) ===
+// === 11) Change Password: zapisz nowe hasło (delegacja click) ===
 document.addEventListener('click', async (e) => {
   if (e.target?.id !== 'cpSave') return;   // reaguj tylko na przycisk Save
 
@@ -2037,7 +2066,7 @@ document.addEventListener('click', async (e) => {
 
 
 
-// === 10) Delegacja dla wszystkich przycisków oznaczonych .modal-close ===
+// === 12) Delegacja dla wszystkich przycisków oznaczonych .modal-close ===
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('.modal-close');
   if (!btn) return;
@@ -2045,7 +2074,7 @@ document.addEventListener('click', (e) => {
   if (target) closeModal(target);
 });
 
-//  === 11) Esc: zamknij najwyższy widoczny modal ===
+//  === 13) Esc: zamknij najwyższy widoczny modal ===
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   const open = Array.from(document.querySelectorAll('.modal.show'));
