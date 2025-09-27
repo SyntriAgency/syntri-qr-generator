@@ -1367,24 +1367,28 @@ const setPlan = (plan) => {
 
 // === Subscription helpers ===
 function highlightSelectedPlan() {
-  const cur = localStorage.getItem('syntri.plan') || 'Free';
+  const cur   = localStorage.getItem('syntri.plan') || 'Free';
+  const isPro = (cur === 'Pro');
 
   document.querySelectorAll('.plan-card').forEach(card => {
     const selected = card.dataset.plan === cur;
     card.classList.toggle('selected', selected);
 
     const btn = card.querySelector('.plan-btn');
-    if (btn) {
-      // blokuj przycisk, jeśli ten plan jest już aktywny
-      btn.disabled = selected;
-      btn.setAttribute('aria-disabled', String(selected));
+    if (!btn) return;
 
-      // jeśli to plan Pro – zmień napis
-      if (card.dataset.plan === 'Pro') {
-        btn.textContent = (cur === 'Pro')
-          ? 'Subscribed'
-          : 'Subscribe £3.99';
-      }
+    // 🔒 blokuj: wybrany plan + (jeżeli Pro) również przycisk Free
+    let disable = selected;
+    if (isPro && card.dataset.plan === 'Free') {
+      disable = true;
+    }
+
+    btn.disabled = disable;
+    btn.setAttribute('aria-disabled', String(disable));
+
+    // jeśli to karta Pro – zmień napis
+    if (card.dataset.plan === 'Pro') {
+      btn.textContent = isPro ? 'Subscribed' : 'Subscribe £3.99';
     }
   });
 }
