@@ -1843,25 +1843,35 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     const ref = doc(db, 'users', user.uid);
     unsubUserDoc = onSnapshot(ref, (snap) => {
-      const d = snap.data() || {};
-      const isPro = d.subActive === true ||
-        (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
+  const d = snap.data() || {};
+  const isPro =
+    d.subActive === true ||
+    (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
 
-      localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
+  localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
 
-      const planName = document.getElementById('planName');
-      if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
+  const planName = document.getElementById('planName');
+  if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
 
-      if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
-      if (typeof renderUsagePill === 'function') renderUsagePill();
-    });
-  } else {
-    localStorage.setItem('syntri.plan', 'Free');
-    const planName = document.getElementById('planName');
-    if (planName) planName.textContent = 'Free';
-    if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
-    if (typeof renderUsagePill === 'function') renderUsagePill();
-  }
+  /* 👇 NEW: zmiana napisu przycisku planu Pro */
+  const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
+  if (btnPro) btnPro.textContent = isPro ? 'Subscribed' : 'Subscribe £3.99';
+
+  if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+  if (typeof renderUsagePill === 'function') renderUsagePill();
+});
+} else {
+  localStorage.setItem('syntri.plan', 'Free');
+  const planName = document.getElementById('planName');
+  if (planName) planName.textContent = 'Free';
+
+  /* 👇 NEW: również przy wylogowaniu wróć do domyślnego napisu */
+  const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
+  if (btnPro) btnPro.textContent = 'Subscribe £3.99';
+
+  if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+  if (typeof renderUsagePill === 'function') renderUsagePill();
+}
 });
 
 /* === 6) Rejestracja === */
