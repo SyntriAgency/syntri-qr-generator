@@ -1377,7 +1377,9 @@ function highlightSelectedPlan() {
     const btn = card.querySelector('.plan-btn');
     if (!btn) return;
 
-    // 🔒 blokuj: wybrany plan + (jeżeli Pro) również przycisk Free
+    // 🔒 blokuj kliknięcie:
+    // – plan już wybrany
+    // – jeśli Pro, dodatkowo blokuj Free
     let disable = selected;
     if (isPro && card.dataset.plan === 'Free') {
       disable = true;
@@ -1386,7 +1388,18 @@ function highlightSelectedPlan() {
     btn.disabled = disable;
     btn.setAttribute('aria-disabled', String(disable));
 
-    // jeśli to karta Pro – zmień napis
+    // 👉 zachowaj normalny wygląd mimo disabled
+    if (disable) {
+      btn.style.pointerEvents = 'none';   // brak reakcji
+      btn.style.opacity = '1';            // pełna widoczność
+      btn.style.cursor = 'default';       // brak „rączki”
+    } else {
+      btn.style.pointerEvents = '';
+      btn.style.opacity = '';
+      btn.style.cursor = '';
+    }
+
+    // napis przycisku planu Pro
     if (card.dataset.plan === 'Pro') {
       btn.textContent = isPro ? 'Subscribed' : 'Subscribe £3.99';
     }
