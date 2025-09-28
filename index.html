@@ -1430,7 +1430,47 @@ function highlightSelectedPlan() {
   });
 }
 
+    // Cancel at period end
+document.getElementById('btnCancelSub')?.addEventListener('click', async () => {
+  const btn = document.getElementById('btnCancelSub');
 
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      alert('Musisz być zalogowany.');
+      return;
+    }
+
+    // potwierdzenie
+    if (!confirm('Anulować subskrypcję na koniec bieżącego okresu?')) return;
+
+    // blokuj guzik
+    if (btn) { btn.disabled = true; btn.setAttribute('aria-busy', 'true'); }
+
+    const token = await user.getIdToken();
+
+    const r = await fetch(`${API_BASE_PROT}/cancel-subscription`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!r.ok) {
+      const msg = (await r.text()).slice(0, 500);
+      throw new Error(msg || 'Cancel failed');
+    }
+
+    alert('Subskrypcja zostanie anulowana z końcem okresu rozliczeniowego.');
+
+    // ukryj guzik (status zmieni się też po onSnapshot z Firestore)
+    if (btn) btn.style.display = 'none';
+
+  } catch (err) {
+    console.error('[CancelSub] error:', err);
+    alert('Nie udało się anulować: ' + (err?.message || String(err)));
+  } finally {
+    if (btn) { btn.disabled = false; btn.removeAttribute('aria-busy'); }
+  }
+});
     
 
   // Otwarcie Stripe Checkout dla planu Pro
@@ -2182,17 +2222,31 @@ onAuthStateChanged(auth, (user) => {
     unsubEnt = onSnapshot(ref, snap => {
       console.log('[entitlements]', snap.exists(), snap.data());
 
-      const rawEnd   = snap.data()?.expiryTimeMs;
-      const rawStart = snap.data()?.startTimeMs;
+      const data = snap.data() || {};
+
+      const rawEnd   = data.expiryTimeMs;
+      const rawStart = data.startTimeMs;
 
       const endMs   = (typeof rawEnd   === 'number') ? rawEnd   : Number(rawEnd   || 0);
       const startMs = (typeof rawStart === 'number') ? rawStart : Number(rawStart || 0);
 
-      // teraz przekazujemy obie wartości
+      // aktualizacja stopki
       updateSubFooter(endMs, startMs);
+
+      // pokaż/ukryj guzik anulowania
+      const cancelBtn = document.getElementById('btnCancelSub');
+      if (cancelBtn) {
+        if (data.status === 'ACTIVE') {
+          cancelBtn.style.display = 'inline-block';   // widoczny
+        } else {
+          cancelBtn.style.display = 'none';           // ukryty
+        }
+      }
     });
   } else {
     updateSubFooter(0, 0);
+    const cancelBtn = document.getElementById('btnCancelSub');
+    if (cancelBtn) cancelBtn.style.display = 'none';
   }
 });
   
