@@ -814,6 +814,9 @@ on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
       }
     };
 
+// zapamiętuje ostatnią wartość expiryTimeMs z Firestore
+let lastExpiryMs = 0;   // zapamiętamy ostatnią wartość
+    
 function renderAuthUI() {
   const logged = AUTH.isLoggedIn();
   $('#nav-login').style.display   = logged ? 'none' : 'inline-block';
@@ -2132,8 +2135,8 @@ document.addEventListener('keydown', (e) => {
   closeModal('#' + top.id);
 });
 
+  
   // === 14) aktualizuje etykiety w stopce ===
-let lastExpiryMs = 0;   // zapamiętamy ostatnią wartość
 
 function updateSubFooter(expiryMs) {
   lastExpiryMs = expiryMs; // zawsze zapamiętaj
