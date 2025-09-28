@@ -1341,7 +1341,9 @@ if (planName) planName.textContent = planStored;
   openModal('#settingsModal');
   highlightSelectedPlan();
   wirePlanButtons();
-  updateSubFooter();
+  if (typeof lastExpiryMs === 'number' && lastExpiryMs > 0) {
+  updateSubFooter(lastExpiryMs);
+}
 });
 
     
