@@ -710,7 +710,7 @@
   </div>
 
    <!-- Firebase compat build – działa w zwykłym <script> -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
 <script>
@@ -2155,7 +2155,9 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     const ref = doc(db, 'entitlements', user.uid);
     unsubEnt = onSnapshot(ref, snap => {
-      const expiry = Number(snap.data()?.expiryTimeMs || 0);
+      console.log('[entitlements]', snap.exists(), snap.data()); // <- debug
+      const raw = snap.data()?.expiryTimeMs;
+      const expiry = (typeof raw === 'number') ? raw : Number(raw || 0);
       updateSubFooter(expiry);
     });
   } else {
