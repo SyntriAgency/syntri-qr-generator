@@ -814,17 +814,21 @@ on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
       }
     };
 
-    function renderAuthUI(){
-      const logged = AUTH.isLoggedIn();
-      $('#nav-login').style.display   = logged ? 'none' : 'inline-block';
-      $('#nav-account').style.display = logged ? 'inline-block' : 'none';
-      $('#nav-settings').style.display = logged ? 'inline-block' : 'none';
-      $('#nav-signout').style.display = logged ? 'inline-block' : 'none';
-      // logged → liczenie usage na serwerze (tu: unlimited until backend)
-      renderUsagePill();
-      ensureHomeGate();  
-    }
+function renderAuthUI() {
+  const logged = AUTH.isLoggedIn();
+  $('#nav-login').style.display   = logged ? 'none' : 'inline-block';
+  $('#nav-account').style.display = logged ? 'inline-block' : 'none';
+  $('#nav-settings').style.display = logged ? 'inline-block' : 'none';
+  $('#nav-signout').style.display = logged ? 'inline-block' : 'none';
+  // logged → liczenie usage na serwerze (tu: unlimited until backend)
+  renderUsagePill();
+  ensureHomeGate();
 
+  // ✅ odśwież licznik „days left”, gdy menu/zakładka jest już w DOM
+  if (logged) {
+    updateSubFooter(lastExpiryMs);
+  }
+}
     // ----------------------------------------------
 // Usage & Plans (front-gate for anon + logged)
 // ----------------------------------------------
@@ -2129,11 +2133,17 @@ document.addEventListener('keydown', (e) => {
 });
 
   // === 14) aktualizuje etykiety w stopce ===
+let lastExpiryMs = 0;   // zapamiętamy ostatnią wartość
+
 function updateSubFooter(expiryMs) {
+  lastExpiryMs = expiryMs; // zawsze zapamiętaj
   const expEl  = document.getElementById('subExpires');
   const leftEl = document.getElementById('subDaysLeft');
 
-  if (!expiryMs) {
+  // jeżeli panel jeszcze nie został wstawiony – poczekaj
+  if (!expEl || !leftEl) return;
+
+  if (!expiryMs || !Number.isFinite(expiryMs)) {
     expEl.textContent  = '—';
     leftEl.textContent = '';
     return;
@@ -2147,7 +2157,7 @@ function updateSubFooter(expiryMs) {
     : `(${ i18n('plan_pro_expired') })`;
 }
 
-// nasłuch Firestore
+// nasłuch Firestore – bez zmian
 let unsubEnt = null;
 onAuthStateChanged(auth, (user) => {
   if (unsubEnt) { unsubEnt(); unsubEnt = null; }
@@ -2155,7 +2165,7 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     const ref = doc(db, 'entitlements', user.uid);
     unsubEnt = onSnapshot(ref, snap => {
-      console.log('[entitlements]', snap.exists(), snap.data()); // <- debug
+      console.log('[entitlements]', snap.exists(), snap.data());
       const raw = snap.data()?.expiryTimeMs;
       const expiry = (typeof raw === 'number') ? raw : Number(raw || 0);
       updateSubFooter(expiry);
