@@ -1421,6 +1421,10 @@ function updateSubFooter(){
   const leftEl = document.getElementById('subDaysLeft');
   const exp = Number(localStorage.getItem('syntri.sub.expireAt') || 0);
 
+  console.log('[updateSubFooter] expEl:', expEl);
+  console.log('[updateSubFooter] leftEl:', leftEl);
+  console.log('[updateSubFooter] exp (ms):', exp);  
+  
   if (!exp) {
     expEl.textContent = '—';
     leftEl.textContent = '';
@@ -1428,6 +1432,9 @@ function updateSubFooter(){
   }
   const date = new Date(exp);
   const days = Math.max(0, Math.ceil((exp - Date.now()) / (1000*60*60*24)));
+
+  console.log('[updateSubFooter] days left:', days);
+  
   expEl.textContent = date.toLocaleDateString();
   leftEl.textContent = `(${days} days left)`;
 }    
