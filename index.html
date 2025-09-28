@@ -676,11 +676,12 @@
     </div>
 
     <div class="subs-footer">
-      <span data-i18n="expires_label">Expiring:</span>
-      <strong id="subExpires">—</strong>
-      <span id="subDaysLeft" class="muted"></span>
-    </div>
-  </div>
+    <span data-i18n="started_label">Started:</span>
+    <strong id="subStarted">—</strong>
+    |
+    <span data-i18n="expires_label">Expiring:</span>
+    <strong id="subExpires">—</strong>
+    <span id="subDaysLeft" class="muted"></span>
 </div>
 
   
@@ -1585,7 +1586,8 @@ const I18N = {
     settings_sub_manage:      'Zarządzaj subskrypcją',
     plan_pro_days_left: '{n} dni pozostało',
     plan_pro_expired: 'wygasła',
-
+    started_label: 'Rozpoczęto:',
+    
     // --- SETTINGS / SUPPORT TAB ---
     settings_support_title:   'Wsparcie',
     settings_support_contact: 'Kontakt: support@syntri.app',
@@ -1730,7 +1732,8 @@ const I18N = {
     settings_sub_manage:      'Manage subscription',
     plan_pro_days_left: '{n} days left',
     plan_pro_expired: 'expired',
-
+    started_label: 'Started:',
+    
     // --- SETTINGS / SUPPORT TAB ---
     settings_support_title:   'Support',
     settings_support_contact: 'Contact: support@syntri.app',
@@ -2124,12 +2127,20 @@ document.addEventListener('keydown', (e) => {
   
   // === 14) aktualizuje etykiety w stopce ===
 
-function updateSubFooter(expiryMs) {
-  lastExpiryMs = expiryMs; // zawsze zapamiętaj
-  const expEl  = document.getElementById('subExpires');
-  const leftEl = document.getElementById('subDaysLeft');
+function updateSubFooter(expiryMs, startMs) {
+  lastExpiryMs = expiryMs;
+  const expEl    = document.getElementById('subExpires');
+  const leftEl   = document.getElementById('subDaysLeft');
+  const startEl  = document.getElementById('subStarted');
 
-  // jeżeli panel jeszcze nie został wstawiony – poczekaj
+  if (startEl) {
+  if (startMs && Number.isFinite(startMs)) {
+    startEl.textContent = new Date(startMs).toLocaleDateString();
+  } else {
+    startEl.textContent = '—';   // myślnik gdy brak danych
+  }
+}
+
   if (!expEl || !leftEl) return;
 
   if (!expiryMs || !Number.isFinite(expiryMs)) {
@@ -2139,14 +2150,13 @@ function updateSubFooter(expiryMs) {
   }
 
   expEl.textContent = new Date(expiryMs).toLocaleDateString();
-
   const days = Math.max(0, Math.ceil((expiryMs - Date.now()) / 86_400_000));
   leftEl.textContent = days > 0
     ? `(${ i18n('plan_pro_days_left').replace('{n}', days) })`
     : `(${ i18n('plan_pro_expired') })`;
 }
 
-// nasłuch Firestore – bez zmian
+// nasłuch Firestore – rozszerzony o startTimeMs
 let unsubEnt = null;
 onAuthStateChanged(auth, (user) => {
   if (unsubEnt) { unsubEnt(); unsubEnt = null; }
@@ -2155,12 +2165,18 @@ onAuthStateChanged(auth, (user) => {
     const ref = doc(db, 'entitlements', user.uid);
     unsubEnt = onSnapshot(ref, snap => {
       console.log('[entitlements]', snap.exists(), snap.data());
-      const raw = snap.data()?.expiryTimeMs;
-      const expiry = (typeof raw === 'number') ? raw : Number(raw || 0);
-      updateSubFooter(expiry);
+
+      const rawEnd   = snap.data()?.expiryTimeMs;
+      const rawStart = snap.data()?.startTimeMs;
+
+      const endMs   = (typeof rawEnd   === 'number') ? rawEnd   : Number(rawEnd   || 0);
+      const startMs = (typeof rawStart === 'number') ? rawStart : Number(rawStart || 0);
+
+      // teraz przekazujemy obie wartości
+      updateSubFooter(endMs, startMs);
     });
   } else {
-    updateSubFooter(0);
+    updateSubFooter(0, 0);
   }
 });
   
