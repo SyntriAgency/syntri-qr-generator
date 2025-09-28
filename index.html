@@ -1814,7 +1814,9 @@ const I18N = {
       document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if (dict[key]) el.textContent = dict[key]; });
       const textInput = document.getElementById('text'); if (textInput) textInput.placeholder = lang==='pl' ? 'https://przyklad.pl' : 'https://example.com';
       localStorage.setItem('syntri.lang', lang);
-      renderAuthUI();
+      renderAuthUI();   
+      if (typeof lastExpiryMs !== 'undefined') {
+    updateSubFooter(lastExpiryMs);
     }
     document.getElementById('btn-pl')?.addEventListener('click', ()=>{ applyI18n('pl'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
     document.getElementById('btn-en')?.addEventListener('click', ()=>{ applyI18n('en'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
