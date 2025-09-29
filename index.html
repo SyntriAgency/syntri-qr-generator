@@ -694,6 +694,7 @@
   <span id="subDaysLeft" class="muted"></span>
 </div>
 
+  <!-- 🔘 Cancel subscription button (start hidden) -->
 <div class="subs-footer-actions">
   <button id="btnCancelSub" class="btn btn-warning">
     <span data-i18n="cancel_sub">Cancel at period end</span>
@@ -1949,8 +1950,14 @@ onAuthStateChanged(auth, (user) => {
       if (btnPro) btnPro.textContent = isPro ? 'Subscribed' : 'Subscribe £3.99';
 
       /* 👇 NEW: pokaż / ukryj guzik „Cancel at period end” */
-      const cancelBtn = document.getElementById('btnCancelSub');
-      if (cancelBtn) cancelBtn.style.display = isPro ? 'inline-block' : 'none';
+const cancelBtn = document.getElementById('btnCancelSub');
+if (cancelBtn) {
+  const isPro =
+    d.subActive === true ||
+    (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
+
+  cancelBtn.style.display = isPro ? 'inline-block' : 'none';
+}
 
       if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
       if (typeof renderUsagePill === 'function') renderUsagePill();
