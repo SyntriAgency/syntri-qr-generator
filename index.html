@@ -555,6 +555,7 @@
       <button data-tab="account">Account</button>
       <button data-tab="policy">Policy</button>
       <button data-tab="subscription">Subscription</button>
+       <button data-tab="manage-sub">Manage subscription</button>
       <button data-tab="support">Support</button>
     
     </aside>
@@ -675,6 +676,8 @@
       </article>
     </div>
 
+    
+
 <!--
   ===== Subscription footer & actions =====
   • Wyświetla daty startu i końca subskrypcji
@@ -697,7 +700,46 @@
   </button>
 </div>
 
+<!-- TAB: Manage subscription -->
+<div class="tab manage-sub-tab" data-tab="manage-sub">
+  <h3 data-i18n="manage_subscription">Manage subscription</h3>
 
+  <div class="manage-sub card">
+    <div class="row">
+      <div class="col">
+        <div class="label" data-i18n="plan_label">Plan:</div>
+        <div id="msPlan">—</div>
+      </div>
+      <div class="col">
+        <div class="label" data-i18n="status_label">Status:</div>
+        <div id="msStatus" class="status-badge status-unknown">—</div>
+      </div>
+    </div>
+
+    <div class="row mt">
+      <div class="col">
+        <div class="label" data-i18n="started_label">Started:</div>
+        <div id="msStarted">—</div>
+      </div>
+      <div class="col">
+        <div class="label" data-i18n="expires_label">Expiring:</div>
+        <div>
+          <strong id="msExpires">—</strong>
+          <span id="msDaysLeft" class="muted"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions mt-lg">
+      <button id="btnPortal" class="btn">
+        <span data-i18n="manage_in_portal">Manage in billing portal</span>
+      </button>
+      <button id="btnCancelAtPeriodEnd" class="btn btn-warning" style="display:none">
+        <span data-i18n="cancel_sub">Cancel at period end</span>
+      </button>
+    </div>
+  </div>
+</div>
   
 <div class="tab support">
   <p>Masz pytania lub zgłoszenia błędów? Napisz do nas:</p>
@@ -1527,8 +1569,134 @@ document.getElementById('btnCancelSub')?.addEventListener('click', async () => {
       };
     });
   }
-    
 
+//Manage subscription
+    
+  <script>
+(() => {
+  // utils
+  const fmtDate = (ms) => ms ? new Date(ms).toLocaleDateString() : '—';
+  const daysLeft = (endMs) => Math.max(0, Math.ceil((endMs - Date.now())/86_400_000));
+
+  // elementy
+  const $ = (sel) => document.querySelector(sel);
+  const elPlan     = $('#msPlan');
+  const elStatus   = $('#msStatus');
+  const elStarted  = $('#msStarted');
+  const elExpires  = $('#msExpires');
+  const elDaysLeft = $('#msDaysLeft');
+  const btnPortal  = $('#btnPortal');
+  const btnCancel  = $('#btnCancelAtPeriodEnd');
+
+  // i18n fallback
+  const t = (k, def) => (typeof i18n === 'function' ? i18n(k) : def || k);
+
+  // otwarcie portalu billing (masz już endpoint /create-stripe-portal? jeśli tak – użyj go)
+  btnPortal?.addEventListener('click', async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return alert(t('must_login','You must be logged in.'));
+      const email = user.email || '';
+      const r = await fetch(`${API_BASE_PROT}/create-stripe-portal?email=${encodeURIComponent(email)}`);
+      if (!r.ok) throw new Error(await r.text());
+      const { url } = await r.json();
+      window.location.href = url;
+    } catch (e) {
+      console.error('[portal]', e);
+      alert('Cannot open billing portal.');
+    }
+  });
+
+  // cancel at period end
+  btnCancel?.addEventListener('click', async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return alert(t('must_login','You must be logged in.'));
+      if (!confirm(t('cancel_confirm','Cancel your subscription at period end?'))) return;
+
+      btnCancel.disabled = true; btnCancel.setAttribute('aria-busy','true');
+      const token = await user.getIdToken();
+      const r = await fetch(`${API_BASE_PROT}/cancel-subscription`, {
+        method:'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!r.ok) throw new Error(await r.text());
+      alert(t('cancel_success','Subscription will be cancelled at period end.'));
+      btnCancel.style.display = 'none'; // status i tak zaktualizuje onSnapshot
+    } catch (e) {
+      console.error('[cancel]', e);
+      alert('Cancel failed.');
+    } finally {
+      btnCancel.disabled = false; btnCancel.removeAttribute('aria-busy');
+    }
+  });
+
+  // live: users/{uid} → odczyt planu (Free/Pro)
+  let unsubUser = null, unsubEnt = null;
+
+  onAuthStateChanged(auth, (user) => {
+    if (unsubUser) { unsubUser(); unsubUser = null; }
+    if (unsubEnt)  { unsubEnt();  unsubEnt  = null; }
+
+    if (!user) {
+      // reset UI
+      elPlan && (elPlan.textContent = 'Free');
+      setStatus('unknown');
+      setDates(0,0);
+      btnCancel && (btnCancel.style.display = 'none');
+      return;
+    }
+
+    // users/{uid}: plan/subActive
+    unsubUser = onSnapshot(doc(db,'users',user.uid), (snap) => {
+      const d = snap.data() || {};
+      const isPro = d.subActive === true || String(d.plan||'').toLowerCase() === 'pro';
+      elPlan && (elPlan.textContent = isPro ? 'Pro' : 'Free');
+    });
+
+    // entitlements/{uid}: status + daty
+    unsubEnt = onSnapshot(doc(db,'entitlements',user.uid), (snap) => {
+      const data = snap.data() || {};
+      const status = String(data.status || '').toUpperCase() || 'UNKNOWN';
+      const startMs = Number(data.startTimeMs || 0);
+      const endMs   = Number(data.expiryTimeMs || 0);
+
+      setStatus(status);
+      setDates(startMs, endMs);
+
+      // guzik anulowania tylko przy ACTIVE i gdy koniec > teraz
+      if (btnCancel) {
+        const show = status === 'ACTIVE' && endMs > Date.now();
+        btnCancel.style.display = show ? 'inline-block' : 'none';
+      }
+    });
+  });
+
+  function setStatus(st) {
+    if (!elStatus) return;
+    elStatus.className = 'status-badge';
+    let cls = 'status-unknown', label = '—';
+    if (st === 'ACTIVE')   { cls='status-active';   label = t('active','Active'); }
+    else if (st === 'CANCELED') { cls='status-canceled'; label = t('canceled','Canceled'); }
+    else if (st === 'EXPIRED')  { cls='status-expired';  label = t('expired','Expired'); }
+    elStatus.classList.add(cls);
+    elStatus.textContent = label;
+  }
+
+  function setDates(startMs, endMs) {
+    if (elStarted) elStarted.textContent = fmtDate(startMs);
+    if (elExpires) elExpires.textContent = fmtDate(endMs);
+    if (elDaysLeft) {
+      if (!endMs) { elDaysLeft.textContent = ''; return; }
+      const d = daysLeft(endMs);
+      elDaysLeft.textContent = d > 0
+        ? ` (${ t('plan_pro_days_left','{n} days left').replace('{n}', d) })`
+        : ` (${ t('plan_pro_expired','expired') })`;
+    }
+  }
+})();
+</script>
+    
 // DEV panel – działa tylko z ?dev=1
 (function setupDevPanel(){
   const showDev = params.get('dev') === '1';
@@ -1614,6 +1782,17 @@ const I18N = {
     account_security_hint: 'Zmień hasło, aby chronić dostęp do konta',
     account_change_password: 'Zmień hasło',
     account_delete: 'Usuń konto',
+    manage_subscription: 'Zarządzaj subskrypcją',
+    plan_label: 'Plan:',
+    status_label: 'Status:',
+    manage_in_portal: 'Zarządzaj w panelu płatności',
+    cancel_sub: 'Anuluj z końcem okresu',
+    active: 'Aktywna',
+    canceled: 'Anulowana',
+    expired: 'Wygasła',
+    cancel_confirm: 'Czy na pewno chcesz anulować subskrypcję z końcem bieżącego okresu?',
+    cancel_success: 'Subskrypcja zostanie anulowana z końcem okresu rozliczeniowego.',
+    
 
     // --- MODAL: SETTINGS ---
     settings_title: 'Ustawienia',
@@ -1761,7 +1940,17 @@ const I18N = {
     account_security_hint: 'Change your password to protect account access',
     account_change_password: 'Change Password',
     account_delete: 'Delete Account',
-
+    manage_subscription: 'Manage subscription',
+    plan_label: 'Plan:',
+    status_label: 'Status:',
+    manage_in_portal: 'Manage in billing portal',
+    cancel_sub: 'Cancel at period end',
+    active: 'Active',
+    canceled: 'Canceled',
+    expired: 'Expired',
+    cancel_confirm: 'Do you really want to cancel your subscription at the end of the current period?',
+    cancel_success: 'Subscription will be cancelled at the end of the billing period.',
+    
     // --- MODAL: SETTINGS ---
     settings_title: 'Settings',
     settings_email_label: 'Email',
