@@ -1985,7 +1985,6 @@ function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('sho
 function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-busy', b?'true':'false'); }
 
 /* === 4) LIVE PLAN: users/{uid} → Free/Pro === */
-// na górze pliku/sekcji:
 let unsubUserDoc = null;
 
 onAuthStateChanged(auth, (user) => {
@@ -1994,6 +1993,13 @@ onAuthStateChanged(auth, (user) => {
   if (unsubEnt)     { unsubEnt();     unsubEnt     = null; }
 
   if (user) {
+    // zapisz identyfikatory zalogowanego (UI: Login/Account/Sign out)
+    try {
+      localStorage.setItem('syntri.auth.uid',   user.uid);
+      localStorage.setItem('syntri.auth.email', user.email || '');
+    } catch {}
+    if (typeof renderAuthUI === 'function') renderAuthUI();
+
     // === users/{uid} → tylko plan / UI ogólne
     const ref = doc(db, 'users', user.uid);
     unsubUserDoc = onSnapshot(ref, (snap) => {
@@ -2003,16 +2009,17 @@ onAuthStateChanged(auth, (user) => {
         (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
 
       window.SYNTRI_IS_PRO = !!isPro;
-      localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
+      try { localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free'); } catch {}
 
       const planName = document.getElementById('planName');
       if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
 
       const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
-      if (btnPro) btnPro.textContent = isPro ? 'Subscribed' : 'Subscribe £3.99';
+      if (btnPro) btnPro.textContent = isPro ? (i18n?.('btn_subscribed') || 'Subscribed')
+                                             : (i18n?.('btn_subscribe_price') || 'Subscribe £3.99');
 
       if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
-      if (typeof renderUsagePill === 'function') renderUsagePill();
+      if (typeof renderUsagePill     === 'function') renderUsagePill();
     });
 
     // === entitlements/{uid} → daty + status + widoczność guzika
@@ -2021,18 +2028,18 @@ onAuthStateChanged(auth, (user) => {
       const data   = snap.data() || {};
       const status = data.status || 'ACTIVE';
 
-      // Status label (opcjonalnie — jeśli masz <strong id="subStatus">)
+      // (opcjonalny) label statusu
       const statusEl = document.getElementById('subStatus');
       if (statusEl) {
         statusEl.textContent = (status === 'CANCELED')
-          ? i18n('status_canceled')
-          : i18n('status_active');
+          ? (i18n?.('status_canceled') || 'Canceled')
+          : (i18n?.('status_active')   || 'Active');
       }
 
       // Daty w stopce
       const endMs   = Number(data.expiryTimeMs || 0);
       const startMs = Number(data.startTimeMs || 0);
-      updateSubFooter(endMs, startMs);
+      if (typeof updateSubFooter === 'function') updateSubFooter(endMs, startMs);
 
       // Guzik: widoczny tylko przy Pro + gdy nie CANCELED
       const cancelBtn = document.getElementById('btnCancelSub');
@@ -2045,14 +2052,19 @@ onAuthStateChanged(auth, (user) => {
     });
 
   } else {
-    // wylogowany → Free + schowaj guzik + wyczyść status + wyzeruj daty
-    localStorage.setItem('syntri.plan', 'Free');
+    // wylogowany → wyczyść auth info
+    try {
+      localStorage.removeItem('syntri.auth.uid');
+      localStorage.removeItem('syntri.auth.email');
+    } catch {}
+    // plan na Free
+    try { localStorage.setItem('syntri.plan', 'Free'); } catch {}
 
     const planName = document.getElementById('planName');
     if (planName) planName.textContent = 'Free';
 
     const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
-    if (btnPro) btnPro.textContent = 'Subscribe £3.99';
+    if (btnPro) btnPro.textContent = i18n?.('btn_subscribe_price') || 'Subscribe £3.99';
 
     const cancelBtn = document.getElementById('btnCancelSub');
     if (cancelBtn) cancelBtn.style.display = 'none';
@@ -2060,10 +2072,10 @@ onAuthStateChanged(auth, (user) => {
     const statusEl = document.getElementById('subStatus');
     if (statusEl) statusEl.textContent = '';
 
-    updateSubFooter(0, 0);
-
+    if (typeof updateSubFooter    === 'function') updateSubFooter(0, 0);
     if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
-    if (typeof renderUsagePill === 'function') renderUsagePill();
+    if (typeof renderUsagePill       === 'function') renderUsagePill();
+    if (typeof renderAuthUI          === 'function') renderAuthUI();
   }
 });
 
