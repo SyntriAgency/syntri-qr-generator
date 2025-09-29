@@ -1987,22 +1987,17 @@ function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('sho
 function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-busy', b?'true':'false'); }
 
 /* === 4) LIVE PLAN: users/{uid} → Free/Pro === */
+// na górze pliku/sekcji:
 let unsubUserDoc = null;
+let unsubEnt     = null;
+
 onAuthStateChanged(auth, (user) => {
-  // aktualizuj localStorage jak wcześniej
-  if (user) {
-    localStorage.setItem('syntri.auth.uid', user.uid);
-    localStorage.setItem('syntri.auth.email', user.email || '');
-  } else {
-    localStorage.removeItem('syntri.auth.uid');
-    localStorage.removeItem('syntri.auth.email');
-  }
-  if (typeof renderAuthUI === 'function') renderAuthUI();
-
-  // odpinaj poprzedni listener
+  // wypnij poprzednie nasłuchy
   if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
+  if (unsubEnt)     { unsubEnt();     unsubEnt     = null; }
 
   if (user) {
+    // === users/{uid} → tylko plan / UI ogólne
     const ref = doc(db, 'users', user.uid);
     unsubUserDoc = onSnapshot(ref, (snap) => {
       const d = snap.data() || {};
@@ -2016,39 +2011,65 @@ onAuthStateChanged(auth, (user) => {
       const planName = document.getElementById('planName');
       if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
 
-      // napis przycisku planu Pro
       const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
       if (btnPro) btnPro.textContent = isPro ? 'Subscribed' : 'Subscribe £3.99';
-
-      /* 👇 NEW: pokaż / ukryj guzik „Cancel at period end” */
-const cancelBtn = document.getElementById('btnCancelSub');
-if (cancelBtn) {
-  const isPro =
-    d.subActive === true ||
-    (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
-
-  cancelBtn.style.display = isPro ? 'inline-block' : 'none';
-}
 
       if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
       if (typeof renderUsagePill === 'function') renderUsagePill();
     });
+
+    // === entitlements/{uid} → daty + status + widoczność guzika
+    const refEnt = doc(db, 'entitlements', user.uid);
+    unsubEnt = onSnapshot(refEnt, (snap) => {
+      const data   = snap.data() || {};
+      const status = data.status || 'ACTIVE';
+
+      // Status label (opcjonalnie — jeśli masz <strong id="subStatus">)
+      const statusEl = document.getElementById('subStatus');
+      if (statusEl) {
+        statusEl.textContent = (status === 'CANCELED')
+          ? i18n('status_canceled')
+          : i18n('status_active');
+      }
+
+      // Daty w stopce
+      const endMs   = Number(data.expiryTimeMs || 0);
+      const startMs = Number(data.startTimeMs || 0);
+      updateSubFooter(endMs, startMs);
+
+      // Guzik: widoczny tylko przy Pro + gdy nie CANCELED
+      const cancelBtn = document.getElementById('btnCancelSub');
+      if (cancelBtn) {
+        const isPro = (localStorage.getItem('syntri.plan') || 'Free') === 'Pro';
+        cancelBtn.style.display = (isPro && status !== 'CANCELED')
+          ? 'inline-block'
+          : 'none';
+      }
+    });
+
   } else {
+    // wylogowany → Free + schowaj guzik + wyczyść status + wyzeruj daty
     localStorage.setItem('syntri.plan', 'Free');
+
     const planName = document.getElementById('planName');
     if (planName) planName.textContent = 'Free';
 
     const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
     if (btnPro) btnPro.textContent = 'Subscribe £3.99';
 
-    /* 👇 NEW: przy wylogowaniu ukryj guzik anulowania */
     const cancelBtn = document.getElementById('btnCancelSub');
     if (cancelBtn) cancelBtn.style.display = 'none';
+
+    const statusEl = document.getElementById('subStatus');
+    if (statusEl) statusEl.textContent = '';
+
+    updateSubFooter(0, 0);
 
     if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
     if (typeof renderUsagePill === 'function') renderUsagePill();
   }
 });
+
 
 /* === 6) Rejestracja === */
 $('#btnRegister')?.addEventListener('click', async () => {
