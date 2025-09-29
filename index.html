@@ -2003,6 +2003,7 @@ onAuthStateChanged(auth, (user) => {
     // === users/{uid} → tylko plan / UI ogólne
     const ref = doc(db, 'users', user.uid);
     unsubUserDoc = onSnapshot(ref, (snap) => {
+      console.debug('[users] snapshot:', snap.data());
       const d = snap.data() || {};
       const isPro =
         d.subActive === true ||
@@ -2025,6 +2026,7 @@ onAuthStateChanged(auth, (user) => {
     // === entitlements/{uid} → daty + status + widoczność guzika
     const refEnt = doc(db, 'entitlements', user.uid);
     unsubEnt = onSnapshot(refEnt, (snap) => {
+      console.debug('[entitlements] snapshot:', snap.data());
       const data   = snap.data() || {};
       const status = data.status || 'ACTIVE';
 
