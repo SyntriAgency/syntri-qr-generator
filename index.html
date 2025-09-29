@@ -1359,7 +1359,10 @@ if (planName) planName.textContent = planStored;
   openModal('#settingsModal');
   highlightSelectedPlan();
   wirePlanButtons();
+  
+  console.log('[DEBUG] tuż przed wireCancelButton');
   wireCancelButton();
+  
   if (typeof lastExpiryMs === 'number' && lastExpiryMs > 0) {
   updateSubFooter(lastExpiryMs);
 }
