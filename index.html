@@ -1986,7 +1986,8 @@ function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-b
 
 /* === 4) LIVE PLAN: users/{uid} → Free/Pro === */
 let unsubUserDoc = null;
-
+let unsubEnt     = null;
+  
 onAuthStateChanged(auth, (user) => {
   // wypnij poprzednie nasłuchy
   if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
