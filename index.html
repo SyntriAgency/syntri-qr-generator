@@ -2061,8 +2061,8 @@ onAuthStateChanged(auth, (user) => {
     const startMs = Number(ent.startTimeMs  || 0);
     if (typeof updateSubFooter === 'function') updateSubFooter(endMs, startMs);
 
-    // 2) Czy aktywny Pro?
-    const active = isEntitlementActive(ent) || window.SYNTRI_IS_PRO_FALLBACK === true;
+// 2) [TEMP PATCH] Pro tylko gdy status === 'ACTIVE'
+const active = String(ent.status || '').toUpperCase() === 'ACTIVE';
 
     // 3) Ustaw plan w storage + UI
     try { localStorage.setItem('syntri.plan', active ? 'Pro' : 'Free'); } catch {}
