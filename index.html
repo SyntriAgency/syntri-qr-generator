@@ -1988,20 +1988,19 @@ function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-b
 let unsubUserDoc = null;
 let unsubEnt     = null;
 
+// Pro jest aktywny WYŁĄCZNIE, jeśli okres nie wygasł.
 function isEntitlementActive(ent) {
-  // status: traktuj brak statusu jako ACTIVE; wymagaj przyszłego expiry
-  const status = (ent?.status || 'ACTIVE').toUpperCase();
-  const endMs  = Number(ent?.expiryTimeMs || 0);
-  return status !== 'CANCELED' && Number.isFinite(endMs) && endMs > Date.now();
+  const endMs = Number(ent?.expiryTimeMs || 0);
+  return Number.isFinite(endMs) && endMs > Date.now();
 }
 
 onAuthStateChanged(auth, (user) => {
-  // 1) Zawsze wypnij poprzednie nasłuchy
+  // 1) Wypnij poprzednie nasłuchy
   if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
   if (unsubEnt)     { unsubEnt();     unsubEnt     = null; }
 
   if (!user) {
-    // 2) Wylogowany → posprzątaj UI i storage
+    // 2) Wylogowany → wyczyść UI/storage
     try {
       localStorage.removeItem('syntri.auth.uid');
       localStorage.removeItem('syntri.auth.email');
@@ -2019,21 +2018,21 @@ onAuthStateChanged(auth, (user) => {
     const statusEl = document.getElementById('subStatus');
     if (statusEl) statusEl.textContent = '';
 
-    if (typeof updateSubFooter         === 'function') updateSubFooter(0, 0);
-    if (typeof highlightSelectedPlan   === 'function') highlightSelectedPlan();
-    if (typeof renderUsagePill         === 'function') renderUsagePill();
-    if (typeof renderAuthUI            === 'function') renderAuthUI();
+    if (typeof updateSubFooter       === 'function') updateSubFooter(0, 0);
+    if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+    if (typeof renderUsagePill       === 'function') renderUsagePill();
+    if (typeof renderAuthUI          === 'function') renderAuthUI();
     return;
   }
 
-  // 3) Zalogowany → zapamiętaj dane do UI i włącz nasłuchy
+  // 3) Zalogowany → zapisz podstawowe dane
   try {
     localStorage.setItem('syntri.auth.uid',   user.uid);
     localStorage.setItem('syntri.auth.email', user.email || '');
   } catch {}
   if (typeof renderAuthUI === 'function') renderAuthUI();
 
-  // === A) users/{uid} → ogólny plan (opcjonalne wsparcie) ===
+  // === A) users/{uid} (lekki fallback) ===
   const usersRef = doc(db, 'users', user.uid);
   unsubUserDoc = onSnapshot(usersRef, (snap) => {
     const d = snap.data() || {};
@@ -2043,14 +2042,11 @@ onAuthStateChanged(auth, (user) => {
       d.subActive === true ||
       (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
 
-    // Nie wymuszamy tutaj planu — głównym źródłem prawdy jest entitlements.
-    // Ale jeśli entitlements brak, to ten flag może być pomocny.
+    // Fallback tylko informacyjny — prawdę ustali entitlements.
     window.SYNTRI_IS_PRO_FALLBACK = !!planFlag;
-
-    // UI (etykiety/przyciski) odświeżymy po entitlements, żeby nie migało.
   });
 
-  // === B) entitlements/{uid} → status, daty, widoczność akcji (źródło prawdy) ===
+  // === B) entitlements/{uid} (źródło prawdy) ===
   const entRef = doc(db, 'entitlements', user.uid);
   unsubEnt = onSnapshot(entRef, (snap) => {
     const ent = snap.data() || {};
@@ -2061,10 +2057,10 @@ onAuthStateChanged(auth, (user) => {
     const startMs = Number(ent.startTimeMs  || 0);
     if (typeof updateSubFooter === 'function') updateSubFooter(endMs, startMs);
 
-// 2) Czy aktywny Pro?
-const active = isEntitlementActive(ent) || window.SYNTRI_IS_PRO_FALLBACK === true; 
+    // 2) Aktywność Pro zależy tylko od expiry
+    const active = isEntitlementActive(ent) || window.SYNTRI_IS_PRO_FALLBACK === true;
 
-    // 3) Ustaw plan w storage + UI
+    // 3) Plan → storage + UI
     try { localStorage.setItem('syntri.plan', active ? 'Pro' : 'Free'); } catch {}
 
     const planName = document.getElementById('planName');
@@ -2077,19 +2073,19 @@ const active = isEntitlementActive(ent) || window.SYNTRI_IS_PRO_FALLBACK === tru
         : (window.i18n?.('btn_subscribe_price') || 'Subscribe £3.99');
     }
 
-    // 4) Label statusu (opcjonalnie)
+    // 4) Status label (tylko dla opisu, NIE dla logiki planu)
     const statusEl = document.getElementById('subStatus');
     if (statusEl) {
-      const st = (ent.status || 'ACTIVE').toUpperCase();
+      const st = String(ent.status || 'ACTIVE').toUpperCase();
       statusEl.textContent = (st === 'CANCELED')
         ? (window.i18n?.('status_canceled') || 'Canceled')
         : (window.i18n?.('status_active')   || 'Active');
     }
 
-    // 5) Guzik „Cancel at period end” — pokazuj tylko, gdy Pro i nie CANCELED
+    // 5) Guzik „Cancel” → widoczny tylko gdy Pro i status ≠ CANCELED
     const cancelBtn = document.getElementById('btnCancelSub');
     if (cancelBtn) {
-      const st = (ent.status || 'ACTIVE').toUpperCase();
+      const st = String(ent.status || 'ACTIVE').toUpperCase();
       cancelBtn.style.display = (active && st !== 'CANCELED') ? 'inline-block' : 'none';
     }
 
