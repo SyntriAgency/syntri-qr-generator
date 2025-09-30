@@ -1984,33 +1984,75 @@ const $ = (s) => document.querySelector(s);
 function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
 function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-busy', b?'true':'false'); }
 
-/* === 4) LIVE PLAN + ENTITLEMENTS (źródło prawdy: entitlements) === */
+/* === 4) LIVE PLAN: users/{uid} → Free/Pro === */
+// na górze pliku/sekcji:
 let unsubUserDoc = null;
-let unsubEnt     = null;
-
-function isEntitlementActive(ent) {
-  // status: brak => ACTIVE; Pro tylko jeśli nie CANCELED i expiry w przyszłości
-  const status = (ent?.status || 'ACTIVE').toUpperCase();
-  const endMs  = Number(ent?.expiryTimeMs || 0);
-  return status !== 'CANCELED' && Number.isFinite(endMs) && endMs > Date.now();
-}
 
 onAuthStateChanged(auth, (user) => {
-  // — odpinamy poprzednie nasłuchy
+  // wypnij poprzednie nasłuchy
   if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
   if (unsubEnt)     { unsubEnt();     unsubEnt     = null; }
 
-  // — gdy wylogowany: czyść UI/storage i zakończ
-  if (!user) {
-    try {
-      localStorage.removeItem('syntri.auth.uid');
-      localStorage.removeItem('syntri.auth.email');
-      localStorage.setItem('syntri.plan', 'Free');
-    } catch {}
-    document.getElementById('planName')?.textContent = 'Free';
+  if (user) {
+    // === users/{uid} → tylko plan / UI ogólne
+    const ref = doc(db, 'users', user.uid);
+    unsubUserDoc = onSnapshot(ref, (snap) => {
+      const d = snap.data() || {};
+      const isPro =
+        d.subActive === true ||
+        (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
+
+      window.SYNTRI_IS_PRO = !!isPro;
+      localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
+
+      const planName = document.getElementById('planName');
+      if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
+
+      const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
+      if (btnPro) btnPro.textContent = isPro ? 'Subscribed' : 'Subscribe £3.99';
+
+      if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+      if (typeof renderUsagePill === 'function') renderUsagePill();
+    });
+
+    // === entitlements/{uid} → daty + status + widoczność guzika
+    const refEnt = doc(db, 'entitlements', user.uid);
+    unsubEnt = onSnapshot(refEnt, (snap) => {
+      const data   = snap.data() || {};
+      const status = data.status || 'ACTIVE';
+
+      // Status label (opcjonalnie — jeśli masz <strong id="subStatus">)
+      const statusEl = document.getElementById('subStatus');
+      if (statusEl) {
+        statusEl.textContent = (status === 'CANCELED')
+          ? i18n('status_canceled')
+          : i18n('status_active');
+      }
+
+      // Daty w stopce
+      const endMs   = Number(data.expiryTimeMs || 0);
+      const startMs = Number(data.startTimeMs || 0);
+      updateSubFooter(endMs, startMs);
+
+      // Guzik: widoczny tylko przy Pro + gdy nie CANCELED
+      const cancelBtn = document.getElementById('btnCancelSub');
+      if (cancelBtn) {
+        const isPro = (localStorage.getItem('syntri.plan') || 'Free') === 'Pro';
+        cancelBtn.style.display = (isPro && status !== 'CANCELED')
+          ? 'inline-block'
+          : 'none';
+      }
+    });
+
+  } else {
+    // wylogowany → Free + schowaj guzik + wyczyść status + wyzeruj daty
+    localStorage.setItem('syntri.plan', 'Free');
+
+    const planName = document.getElementById('planName');
+    if (planName) planName.textContent = 'Free';
 
     const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
-    if (btnPro) btnPro.textContent = (window.i18n?.('btn_subscribe_price') || 'Subscribe £3.99');
+    if (btnPro) btnPro.textContent = 'Subscribe £3.99';
 
     const cancelBtn = document.getElementById('btnCancelSub');
     if (cancelBtn) cancelBtn.style.display = 'none';
@@ -2018,75 +2060,13 @@ onAuthStateChanged(auth, (user) => {
     const statusEl = document.getElementById('subStatus');
     if (statusEl) statusEl.textContent = '';
 
-    typeof updateSubFooter       === 'function' && updateSubFooter(0, 0);
-    typeof highlightSelectedPlan === 'function' && highlightSelectedPlan();
-    typeof renderUsagePill       === 'function' && renderUsagePill();
-    typeof renderAuthUI          === 'function' && renderAuthUI();
-    return;
+    updateSubFooter(0, 0);
+
+    if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+    if (typeof renderUsagePill === 'function') renderUsagePill();
   }
-
-  // — zalogowany: zapamiętaj identyfikację do UI
-  try {
-    localStorage.setItem('syntri.auth.uid',   user.uid);
-    localStorage.setItem('syntri.auth.email', user.email || '');
-  } catch {}
-  typeof renderAuthUI === 'function' && renderAuthUI();
-
-  // A) users/{uid} → tylko FALLBACK (nie ustawia planu bezpośrednio)
-  const usersRef = doc(db, 'users', user.uid);
-  unsubUserDoc = onSnapshot(usersRef, (snap) => {
-    const d = snap.data() || {};
-    const planFlag =
-      d.subActive === true ||
-      (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
-    window.SYNTRI_IS_PRO_FALLBACK = !!planFlag; // użyjemy, jeśli entitlements brak
-  });
-
-  // B) entitlements/{uid} → źródło prawdy planu + daty + widoczność akcji
-  const entRef = doc(db, 'entitlements', user.uid);
-  unsubEnt = onSnapshot(entRef, (snap) => {
-    const ent = snap.data() || {};
-
-    // — daty w stopce
-    const endMs   = Number(ent.expiryTimeMs || 0);
-    const startMs = Number(ent.startTimeMs  || 0);
-    typeof updateSubFooter === 'function' && updateSubFooter(endMs, startMs);
-
-    // — aktywność Pro (entitlements > users fallback)
-    const active = isEntitlementActive(ent) || window.SYNTRI_IS_PRO_FALLBACK === true;
-
-    // — ustaw plan + UI
-    try { localStorage.setItem('syntri.plan', active ? 'Pro' : 'Free'); } catch {}
-    const planName = document.getElementById('planName');
-    if (planName) planName.textContent = active ? 'Pro' : 'Free';
-
-    const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
-    if (btnPro) {
-      btnPro.textContent = active
-        ? (window.i18n?.('btn_subscribed') || 'Subscribed')
-        : (window.i18n?.('btn_subscribe_price') || 'Subscribe £3.99');
-    }
-
-    // — status tekstowy (opcjonalnie)
-    const st = (ent.status || 'ACTIVE').toUpperCase();
-    const statusEl = document.getElementById('subStatus');
-    if (statusEl) {
-      statusEl.textContent = (st === 'CANCELED')
-        ? (window.i18n?.('status_canceled') || 'Canceled')
-        : (window.i18n?.('status_active')   || 'Active');
-    }
-
-    // — widoczność „Cancel at period end” (tylko Pro i nie CANCELED)
-    const cancelBtn = document.getElementById('btnCancelSub');
-    if (cancelBtn) {
-      cancelBtn.style.display = (active && st !== 'CANCELED') ? 'inline-block' : 'none';
-    }
-
-    // — odśwież pozostałe elementy
-    typeof highlightSelectedPlan === 'function' && highlightSelectedPlan();
-    typeof renderUsagePill       === 'function' && renderUsagePill();
-  });
 });
+
 
 /* === 6) Rejestracja === */
 $('#btnRegister')?.addEventListener('click', async () => {
@@ -2338,6 +2318,44 @@ function updateSubFooter(expiryMs, startMs) {
     ? `(${ i18n('plan_pro_days_left').replace('{n}', days) })`
     : `(${ i18n('plan_pro_expired') })`;
 }
+
+// nasłuch Firestore – rozszerzony o startTimeMs
+let unsubEnt = null;
+onAuthStateChanged(auth, (user) => {
+  if (unsubEnt) { unsubEnt(); unsubEnt = null; }
+
+  if (user) {
+    const ref = doc(db, 'entitlements', user.uid);
+    unsubEnt = onSnapshot(ref, snap => {
+      console.log('[entitlements]', snap.exists(), snap.data());
+
+      const data = snap.data() || {};
+
+      const rawEnd   = data.expiryTimeMs;
+      const rawStart = data.startTimeMs;
+
+      const endMs   = (typeof rawEnd   === 'number') ? rawEnd   : Number(rawEnd   || 0);
+      const startMs = (typeof rawStart === 'number') ? rawStart : Number(rawStart || 0);
+
+      // aktualizacja stopki
+      updateSubFooter(endMs, startMs);
+
+      // pokaż/ukryj guzik anulowania
+      const cancelBtn = document.getElementById('btnCancelSub');
+      if (cancelBtn) {
+        if (data.status === 'ACTIVE') {
+          cancelBtn.style.display = 'inline-block';   // widoczny
+        } else {
+          cancelBtn.style.display = 'none';           // ukryty
+        }
+      }
+    });
+  } else {
+    updateSubFooter(0, 0);
+    const cancelBtn = document.getElementById('btnCancelSub');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
+});
   
 </script>
 
