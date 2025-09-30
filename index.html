@@ -2000,19 +2000,24 @@ onAuthStateChanged(auth, (user) => {
   if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
   if (unsubEnt)     { unsubEnt();     unsubEnt     = null; }
 
+  // — gdy wylogowany: czyść UI/storage i zakończ
   if (!user) {
-    // wylogowany → czyścimy UI/storage
     try {
       localStorage.removeItem('syntri.auth.uid');
       localStorage.removeItem('syntri.auth.email');
       localStorage.setItem('syntri.plan', 'Free');
     } catch {}
     document.getElementById('planName')?.textContent = 'Free';
+
     const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
     if (btnPro) btnPro.textContent = (window.i18n?.('btn_subscribe_price') || 'Subscribe £3.99');
+
     const cancelBtn = document.getElementById('btnCancelSub');
     if (cancelBtn) cancelBtn.style.display = 'none';
-    document.getElementById('subStatus') && (document.getElementById('subStatus').textContent = '');
+
+    const statusEl = document.getElementById('subStatus');
+    if (statusEl) statusEl.textContent = '';
+
     typeof updateSubFooter       === 'function' && updateSubFooter(0, 0);
     typeof highlightSelectedPlan === 'function' && highlightSelectedPlan();
     typeof renderUsagePill       === 'function' && renderUsagePill();
@@ -2020,7 +2025,7 @@ onAuthStateChanged(auth, (user) => {
     return;
   }
 
-  // zalogowany → zapamiętujemy usera
+  // — zalogowany: zapamiętaj identyfikację do UI
   try {
     localStorage.setItem('syntri.auth.uid',   user.uid);
     localStorage.setItem('syntri.auth.email', user.email || '');
@@ -2034,24 +2039,23 @@ onAuthStateChanged(auth, (user) => {
     const planFlag =
       d.subActive === true ||
       (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
-    window.SYNTRI_IS_PRO_FALLBACK = !!planFlag;
-    // UI odświeżamy dopiero po entitlements
+    window.SYNTRI_IS_PRO_FALLBACK = !!planFlag; // użyjemy, jeśli entitlements brak
   });
 
-  // B) entitlements/{uid} → źródło prawdy
+  // B) entitlements/{uid} → źródło prawdy planu + daty + widoczność akcji
   const entRef = doc(db, 'entitlements', user.uid);
   unsubEnt = onSnapshot(entRef, (snap) => {
     const ent = snap.data() || {};
 
-    // daty w stopce
+    // — daty w stopce
     const endMs   = Number(ent.expiryTimeMs || 0);
     const startMs = Number(ent.startTimeMs  || 0);
     typeof updateSubFooter === 'function' && updateSubFooter(endMs, startMs);
 
-    // aktywność Pro
+    // — aktywność Pro (entitlements > users fallback)
     const active = isEntitlementActive(ent) || window.SYNTRI_IS_PRO_FALLBACK === true;
 
-    // ustaw plan + UI
+    // — ustaw plan + UI
     try { localStorage.setItem('syntri.plan', active ? 'Pro' : 'Free'); } catch {}
     const planName = document.getElementById('planName');
     if (planName) planName.textContent = active ? 'Pro' : 'Free';
@@ -2063,7 +2067,7 @@ onAuthStateChanged(auth, (user) => {
         : (window.i18n?.('btn_subscribe_price') || 'Subscribe £3.99');
     }
 
-    // status (opcjonalna etykieta)
+    // — status tekstowy (opcjonalnie)
     const st = (ent.status || 'ACTIVE').toUpperCase();
     const statusEl = document.getElementById('subStatus');
     if (statusEl) {
@@ -2072,10 +2076,13 @@ onAuthStateChanged(auth, (user) => {
         : (window.i18n?.('status_active')   || 'Active');
     }
 
-    // widoczność „Cancel at period end”
+    // — widoczność „Cancel at period end” (tylko Pro i nie CANCELED)
     const cancelBtn = document.getElementById('btnCancelSub');
-    if (cancelBtn) cancelBtn.style.display = (active && st !== 'CANCELED') ? 'inline-block' : 'none';
+    if (cancelBtn) {
+      cancelBtn.style.display = (active && st !== 'CANCELED') ? 'inline-block' : 'none';
+    }
 
+    // — odśwież pozostałe elementy
     typeof highlightSelectedPlan === 'function' && highlightSelectedPlan();
     typeof renderUsagePill       === 'function' && renderUsagePill();
   });
