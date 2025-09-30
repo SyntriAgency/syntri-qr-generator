@@ -1984,85 +1984,75 @@ const $ = (s) => document.querySelector(s);
 function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
 function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-busy', b?'true':'false'); }
 
-/* === 4) LIVE PLAN + ENTITLEMENTS (bez duplikatów) === */
+/* === 4) LIVE PLAN + ENTITLEMENTS (źródło prawdy: entitlements) === */
 let unsubUserDoc = null;
 let unsubEnt     = null;
 
-// Pro jest aktywny WYŁĄCZNIE, jeśli okres nie wygasł.
 function isEntitlementActive(ent) {
-  const endMs = Number(ent?.expiryTimeMs || 0);
-  return Number.isFinite(endMs) && endMs > Date.now();
+  // status: brak => ACTIVE; Pro tylko jeśli nie CANCELED i expiry w przyszłości
+  const status = (ent?.status || 'ACTIVE').toUpperCase();
+  const endMs  = Number(ent?.expiryTimeMs || 0);
+  return status !== 'CANCELED' && Number.isFinite(endMs) && endMs > Date.now();
 }
 
 onAuthStateChanged(auth, (user) => {
-  // 1) Wypnij poprzednie nasłuchy
+  // — odpinamy poprzednie nasłuchy
   if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
   if (unsubEnt)     { unsubEnt();     unsubEnt     = null; }
 
   if (!user) {
-    // 2) Wylogowany → wyczyść UI/storage
+    // wylogowany → czyścimy UI/storage
     try {
       localStorage.removeItem('syntri.auth.uid');
       localStorage.removeItem('syntri.auth.email');
       localStorage.setItem('syntri.plan', 'Free');
     } catch {}
-    const planName = document.getElementById('planName');
-    if (planName) planName.textContent = 'Free';
-
+    document.getElementById('planName')?.textContent = 'Free';
     const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
     if (btnPro) btnPro.textContent = (window.i18n?.('btn_subscribe_price') || 'Subscribe £3.99');
-
     const cancelBtn = document.getElementById('btnCancelSub');
     if (cancelBtn) cancelBtn.style.display = 'none';
-
-    const statusEl = document.getElementById('subStatus');
-    if (statusEl) statusEl.textContent = '';
-
-    if (typeof updateSubFooter       === 'function') updateSubFooter(0, 0);
-    if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
-    if (typeof renderUsagePill       === 'function') renderUsagePill();
-    if (typeof renderAuthUI          === 'function') renderAuthUI();
+    document.getElementById('subStatus') && (document.getElementById('subStatus').textContent = '');
+    typeof updateSubFooter       === 'function' && updateSubFooter(0, 0);
+    typeof highlightSelectedPlan === 'function' && highlightSelectedPlan();
+    typeof renderUsagePill       === 'function' && renderUsagePill();
+    typeof renderAuthUI          === 'function' && renderAuthUI();
     return;
   }
 
-  // 3) Zalogowany → zapisz podstawowe dane
+  // zalogowany → zapamiętujemy usera
   try {
     localStorage.setItem('syntri.auth.uid',   user.uid);
     localStorage.setItem('syntri.auth.email', user.email || '');
   } catch {}
-  if (typeof renderAuthUI === 'function') renderAuthUI();
+  typeof renderAuthUI === 'function' && renderAuthUI();
 
-  // === A) users/{uid} (lekki fallback) ===
+  // A) users/{uid} → tylko FALLBACK (nie ustawia planu bezpośrednio)
   const usersRef = doc(db, 'users', user.uid);
   unsubUserDoc = onSnapshot(usersRef, (snap) => {
     const d = snap.data() || {};
-    console.debug('[users] snapshot:', d);
-
     const planFlag =
       d.subActive === true ||
       (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
-
-    // Fallback tylko informacyjny — prawdę ustali entitlements.
     window.SYNTRI_IS_PRO_FALLBACK = !!planFlag;
+    // UI odświeżamy dopiero po entitlements
   });
 
-  // === B) entitlements/{uid} (źródło prawdy) ===
+  // B) entitlements/{uid} → źródło prawdy
   const entRef = doc(db, 'entitlements', user.uid);
   unsubEnt = onSnapshot(entRef, (snap) => {
     const ent = snap.data() || {};
-    console.debug('[entitlements] snapshot:', snap.exists(), ent);
 
-    // 1) Daty w stopce
+    // daty w stopce
     const endMs   = Number(ent.expiryTimeMs || 0);
     const startMs = Number(ent.startTimeMs  || 0);
-    if (typeof updateSubFooter === 'function') updateSubFooter(endMs, startMs);
+    typeof updateSubFooter === 'function' && updateSubFooter(endMs, startMs);
 
-    // 2) Aktywność Pro zależy tylko od expiry
+    // aktywność Pro
     const active = isEntitlementActive(ent) || window.SYNTRI_IS_PRO_FALLBACK === true;
 
-    // 3) Plan → storage + UI
+    // ustaw plan + UI
     try { localStorage.setItem('syntri.plan', active ? 'Pro' : 'Free'); } catch {}
-
     const planName = document.getElementById('planName');
     if (planName) planName.textContent = active ? 'Pro' : 'Free';
 
@@ -2073,25 +2063,21 @@ onAuthStateChanged(auth, (user) => {
         : (window.i18n?.('btn_subscribe_price') || 'Subscribe £3.99');
     }
 
-    // 4) Status label (tylko dla opisu, NIE dla logiki planu)
+    // status (opcjonalna etykieta)
+    const st = (ent.status || 'ACTIVE').toUpperCase();
     const statusEl = document.getElementById('subStatus');
     if (statusEl) {
-      const st = String(ent.status || 'ACTIVE').toUpperCase();
       statusEl.textContent = (st === 'CANCELED')
         ? (window.i18n?.('status_canceled') || 'Canceled')
         : (window.i18n?.('status_active')   || 'Active');
     }
 
-    // 5) Guzik „Cancel” → widoczny tylko gdy Pro i status ≠ CANCELED
+    // widoczność „Cancel at period end”
     const cancelBtn = document.getElementById('btnCancelSub');
-    if (cancelBtn) {
-      const st = String(ent.status || 'ACTIVE').toUpperCase();
-      cancelBtn.style.display = (active && st !== 'CANCELED') ? 'inline-block' : 'none';
-    }
+    if (cancelBtn) cancelBtn.style.display = (active && st !== 'CANCELED') ? 'inline-block' : 'none';
 
-    // 6) Reszta UI
-    if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
-    if (typeof renderUsagePill       === 'function') renderUsagePill();
+    typeof highlightSelectedPlan === 'function' && highlightSelectedPlan();
+    typeof renderUsagePill       === 'function' && renderUsagePill();
   });
 });
 
