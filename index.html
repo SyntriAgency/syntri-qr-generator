@@ -797,45 +797,36 @@ on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
     // ----------------------------------------------
     // Auth (mock) – podmień na Firebase Auth
     // ----------------------------------------------
+// ✅ AUTH oparty wyłącznie o Firebase Auth (źródło prawdy = auth.currentUser)
 const AUTH = {
-  isLoggedIn: () =>
-    !!localStorage.getItem('syntri.auth.uid') ||
-    !!(window.auth && window.auth.currentUser),
-
-  email: () =>
-    localStorage.getItem('syntri.auth.email') ||
-    (window.auth?.currentUser?.email || ''),
-
-  loginMock(email){
-    localStorage.setItem('syntri.auth.uid','dev_uid');
-    localStorage.setItem('syntri.auth.email', email || 'user@example.com');
-    renderAuthUI?.();
-  },
-
-  logout(){
-    localStorage.removeItem('syntri.auth.uid');
-    localStorage.removeItem('syntri.auth.email');
-    renderAuthUI?.();
-  }
+  isLoggedIn: () => !!window.auth?.currentUser,
+  email:      () => window.auth?.currentUser?.email || ''
 };
 
 // zapamiętuje ostatnią wartość expiryTimeMs z Firestore
 let lastExpiryMs = 0;   // zapamiętamy ostatnią wartość
     
 function renderAuthUI() {
-  const logged = AUTH.isLoggedIn();
-  $('#nav-login').style.display   = logged ? 'none' : 'inline-block';
-  $('#nav-account').style.display = logged ? 'inline-block' : 'none';
-  $('#nav-settings').style.display = logged ? 'inline-block' : 'none';
-  $('#nav-signout').style.display = logged ? 'inline-block' : 'none';
-  // logged → liczenie usage na serwerze (tu: unlimited until backend)
-  renderUsagePill();
-  ensureHomeGate();
+  const logged = !!window.auth?.currentUser;
 
-  // ✅ odśwież licznik „days left”, gdy menu/zakładka jest już w DOM
-  if (logged) {
-    updateSubFooter(lastExpiryMs);
-  }
+  const elLogin    = document.getElementById('nav-login');
+  const elAccount  = document.getElementById('nav-account');
+  const elSettings = document.getElementById('nav-settings');
+  const elSignout  = document.getElementById('nav-signout');
+
+  if (elLogin)    elLogin.style.display    = logged ? 'none'         : 'inline-block';
+  if (elAccount)  elAccount.style.display  = logged ? 'inline-block' : 'none';
+  if (elSettings) elSettings.style.display = logged ? 'inline-block' : 'none';
+  if (elSignout)  elSignout.style.display  = logged ? 'inline-block' : 'none';
+
+  // (opcjonalnie) uzupełnij widok konta e-mailem
+  const accEmail = document.getElementById('accEmail');
+  if (accEmail) accEmail.textContent = logged ? (window.auth.currentUser.email || '—') : '—';
+
+  // reszta jak wcześniej
+  renderUsagePill?.();
+  ensureHomeGate?.();
+  if (logged) updateSubFooter?.(lastExpiryMs);
 }
     // ----------------------------------------------
 // Usage & Plans (front-gate for anon + logged)
