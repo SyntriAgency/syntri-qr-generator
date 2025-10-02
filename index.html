@@ -692,9 +692,9 @@
 </div>
 
 <div class="subs-footer-actions">
-  <button id="btnCancelSub" class="btn btn-warning">
-    <span data-i18n="cancel_sub">Cancel at period end</span>
-  </button>
+  <button id="btnCancelSub" class="btn btn-warning" style="display:none">
+  <span data-i18n="cancel_sub">Cancel at period end</span>
+</button>
 </div>
 
 
@@ -801,11 +801,11 @@ on($('#btnChangePass'), 'click', () => {
   openModal('#changePassModal');
 });
 
-on($('#cpCancel'), 'click', () => closeModal('#changePassModal'));
+on($('#cp'), 'click', () => closeModal('#changePassModal'));
 
 // JS – obsługa zamykania
 on($('#cpClose'),  'click', () => closeModal('#changePassModal'));
-on($('#cpCancel'), 'click', () => closeModal('#changePassModal'));
+on($('#cp'), 'click', () => closeModal('#changePassModal'));
 
 // setting - zamykanie ustawien
 on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
@@ -1289,7 +1289,7 @@ document.addEventListener('keydown', async e => {
 
     // Login
     on($('#nav-login'),'click',(e)=>{ e.preventDefault(); openModal('#loginModal'); });
-    on($('#loginCancel'),'click',()=> closeModal('#loginModal'));
+    on($('#login'),'click',()=> closeModal('#loginModal'));
     
 
     // Account
@@ -1430,7 +1430,7 @@ function highlightSelectedPlan() {
   });
 }
 
-    // Cancel at period end
+    //  at period end
 document.getElementById('btnCancelSub')?.addEventListener('click', async () => {
   const btn = document.getElementById('btnCancelSub');
 
