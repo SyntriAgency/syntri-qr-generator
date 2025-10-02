@@ -2230,22 +2230,25 @@ onAuthStateChanged(auth, (user) => {
 
       updateSubFooter(endMs, startMs);
 
-      // 🔑 kiedy pokazać "Cancel at period end"
-      const isActive =
-        (typeof data.status === 'string' && ['ACTIVE','TRIALING'].includes(data.status.toUpperCase())) ||
-        data.active === true ||
-        data.subActive === true;
+     // 🔑 kiedy pokazać "Cancel at period end"
+const isActive =
+  (typeof data.status === 'string' && ['ACTIVE','TRIALING'].includes(data.status.toUpperCase())) ||
+  data.active === true ||
+  data.subActive === true;
 
-      const cancelBtn = document.getElementById('btnCancelSub');
-      if (cancelBtn) cancelBtn.style.display = isActive ? 'inline-block' : 'none';
+document.getElementById('btnCancelSub')?.style && (
+  document.getElementById('btnCancelSub').style.display = isActive ? 'inline-block' : 'none'
+);
 
-      // 🔄 jeśli aktywne – ustaw plan na Pro (wpływa na limit/napisy)
-      if (isActive) {
-        localStorage.setItem('syntri.plan','Pro');
-        document.getElementById('planName')?.textContent = 'Pro';
-        highlightSelectedPlan?.();
-        renderUsagePill?.();
-      }
+// 🔄 jeśli aktywne – ustaw plan na Pro (priorytet entitlements)
+if (isActive) {
+  setPlanSource('Pro','entitlements');     // <-- PRIORYTET
+} else {
+  // tylko jeśli wcześniej NIE było ustawione przez entitlements
+  if (localStorage.getItem('syntri.plan.source') !== 'entitlements') {
+    setPlanSource('Free','users');
+  }
+}
     });
   } else {
     updateSubFooter(0, 0);
