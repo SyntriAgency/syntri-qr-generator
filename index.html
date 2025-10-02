@@ -692,9 +692,9 @@
 </div>
 
 <div class="subs-footer-actions">
-  <button id="btnCancelSub" class="btn btn-warning" style="display:none">
-  <span data-i18n="cancel_sub">Cancel at period end</span>
-</button>
+  <button id="btnCancelSub" class="btn btn-warning">
+    <span data-i18n="cancel_sub">Cancel at period end</span>
+  </button>
 </div>
 
 
@@ -801,11 +801,11 @@ on($('#btnChangePass'), 'click', () => {
   openModal('#changePassModal');
 });
 
-on($('#cp'), 'click', () => closeModal('#changePassModal'));
+on($('#cpCancel'), 'click', () => closeModal('#changePassModal'));
 
 // JS – obsługa zamykania
 on($('#cpClose'),  'click', () => closeModal('#changePassModal'));
-on($('#cp'), 'click', () => closeModal('#changePassModal'));
+on($('#cpCancel'), 'click', () => closeModal('#changePassModal'));
 
 // setting - zamykanie ustawien
 on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
@@ -847,17 +847,6 @@ function renderAuthUI() {
     updateSubFooter(lastExpiryMs);
   }
 }
-
-//test1_naprawa
-function setPlanSource(plan, source){
-  localStorage.setItem('syntri.plan', plan);
-  localStorage.setItem('syntri.plan.source', source); // 'entitlements' | 'users'
-  document.getElementById('planName')?.textContent = plan;
-  highlightSelectedPlan?.();
-  renderUsagePill?.();
-  console.log('[plan] set ->', plan, 'source:', source);
-}
-    
     // ----------------------------------------------
 // Usage & Plans (front-gate for anon + logged)
 // ----------------------------------------------
@@ -1300,7 +1289,7 @@ document.addEventListener('keydown', async e => {
 
     // Login
     on($('#nav-login'),'click',(e)=>{ e.preventDefault(); openModal('#loginModal'); });
-    on($('#login'),'click',()=> closeModal('#loginModal'));
+    on($('#loginCancel'),'click',()=> closeModal('#loginModal'));
     
 
     // Account
@@ -1441,7 +1430,7 @@ function highlightSelectedPlan() {
   });
 }
 
-    //  at period end
+    // Cancel at period end
 document.getElementById('btnCancelSub')?.addEventListener('click', async () => {
   const btn = document.getElementById('btnCancelSub');
 
@@ -1946,7 +1935,7 @@ onAuthStateChanged(auth, (user) => {
       
   /* lub window.syntriPlan = isPro ? 'pro' : 'free'; */   
   window.SYNTRI_IS_PRO = !!isPro;  
-
+  localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
 
   const planName = document.getElementById('planName');
   if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
@@ -2232,34 +2221,27 @@ onAuthStateChanged(auth, (user) => {
     const ref = doc(db, 'entitlements', user.uid);
     unsubEnt = onSnapshot(ref, snap => {
       console.log('[entitlements]', snap.exists(), snap.data());
+
       const data = snap.data() || {};
 
       const rawEnd   = data.expiryTimeMs;
       const rawStart = data.startTimeMs;
+
       const endMs   = (typeof rawEnd   === 'number') ? rawEnd   : Number(rawEnd   || 0);
       const startMs = (typeof rawStart === 'number') ? rawStart : Number(rawStart || 0);
 
+      // aktualizacja stopki
       updateSubFooter(endMs, startMs);
 
-     // 🔑 kiedy pokazać "Cancel at period end"
-const isActive =
-  (typeof data.status === 'string' && ['ACTIVE','TRIALING'].includes(data.status.toUpperCase())) ||
-  data.active === true ||
-  data.subActive === true;
-
-document.getElementById('btnCancelSub')?.style && (
-  document.getElementById('btnCancelSub').style.display = isActive ? 'inline-block' : 'none'
-);
-
-// 🔄 jeśli aktywne – ustaw plan na Pro (priorytet entitlements)
-if (isActive) {
-  setPlanSource('Pro','entitlements');     // <-- PRIORYTET
-} else {
-  // tylko jeśli wcześniej NIE było ustawione przez entitlements
-  if (localStorage.getItem('syntri.plan.source') !== 'entitlements') {
-    setPlanSource('Free','users');
-  }
-}
+      // pokaż/ukryj guzik anulowania
+      const cancelBtn = document.getElementById('btnCancelSub');
+      if (cancelBtn) {
+        if (data.status === 'ACTIVE') {
+          cancelBtn.style.display = 'inline-block';   // widoczny
+        } else {
+          cancelBtn.style.display = 'none';           // ukryty
+        }
+      }
     });
   } else {
     updateSubFooter(0, 0);
@@ -2267,7 +2249,6 @@ if (isActive) {
     if (cancelBtn) cancelBtn.style.display = 'none';
   }
 });
-
   
 </script>
 
