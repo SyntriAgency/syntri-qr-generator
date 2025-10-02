@@ -797,20 +797,27 @@ on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
     // ----------------------------------------------
     // Auth (mock) – podmień na Firebase Auth
     // ----------------------------------------------
- const AUTH = {
-  isLoggedIn: () => !!(window.auth && window.auth.currentUser),
-  email:      () => window.auth?.currentUser?.email || '',
-      loginMock(email){
-        localStorage.setItem('syntri.auth.uid','dev_uid');
-        localStorage.setItem('syntri.auth.email', email || 'user@example.com');
-        renderAuthUI();
-      },
-      logout(){
-        localStorage.removeItem('syntri.auth.uid');
-        localStorage.removeItem('syntri.auth.email');
-        renderAuthUI();
-      }
-    };
+const AUTH = {
+  isLoggedIn: () =>
+    !!localStorage.getItem('syntri.auth.uid') ||
+    !!(window.auth && window.auth.currentUser),
+
+  email: () =>
+    localStorage.getItem('syntri.auth.email') ||
+    (window.auth?.currentUser?.email || ''),
+
+  loginMock(email){
+    localStorage.setItem('syntri.auth.uid','dev_uid');
+    localStorage.setItem('syntri.auth.email', email || 'user@example.com');
+    renderAuthUI?.();
+  },
+
+  logout(){
+    localStorage.removeItem('syntri.auth.uid');
+    localStorage.removeItem('syntri.auth.email');
+    renderAuthUI?.();
+  }
+};
 
 // zapamiętuje ostatnią wartość expiryTimeMs z Firestore
 let lastExpiryMs = 0;   // zapamiętamy ostatnią wartość
