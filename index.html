@@ -1935,7 +1935,7 @@ onAuthStateChanged(auth, (user) => {
       
   /* lub window.syntriPlan = isPro ? 'pro' : 'free'; */   
   window.SYNTRI_IS_PRO = !!isPro;  
-
+  localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
 
   const planName = document.getElementById('planName');
   if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
