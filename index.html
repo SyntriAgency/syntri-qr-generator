@@ -1867,6 +1867,7 @@ import {
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
+  
 /* === 1) KONFIG === */
 const firebaseConfig = {
   apiKey: "AIzaSyCN4mFs-l3SVfLGSiqOeSObenSPgQlx2XU",
@@ -2241,6 +2242,92 @@ function updateSubFooter(expiryMs, startMs) {
     ? `(${ i18n('plan_pro_days_left').replace('{n}', days) })`
     : `(${ i18n('plan_pro_expired') })`;
 }
+
+
+// 15
+// --- Safeguard: nic nie przysłoń modalu (gdyby overlay żył) ---
+document.querySelector('.syntri-overlay')?.remove();
+const modalCss = document.createElement('style');
+modalCss.textContent = `.modal{ z-index:10001 }`;
+document.head.appendChild(modalCss);
+
+// --- Helpery bezpieczne ---
+const $$ = (s) => document.querySelector(s);
+const setBusy = (el,b)=>{ if(!el) return; el.disabled=!!b; el.setAttribute('aria-busy', b?'true':'false'); };
+
+// --- DELEGACJA KLIKÓW: login / register / forgot ---
+// Działa nawet jeśli wcześniejsze addEventListener-y się nie podpięły.
+document.addEventListener('click', async (e) => {
+  const id = e.target && e.target.id;
+
+  // LOGIN
+  if (id === 'btnLogin') {
+    const btn   = e.target;
+    const email = ($$('#loginEmail')?.value || '').trim();
+    const pass  = ($$('#loginPass')?.value  || '').trim();
+    if (!email || !pass){ alert('Podaj email i hasło.'); return; }
+
+    try {
+      setBusy(btn, true);
+      const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js');
+      const cred = await signInWithEmailAndPassword(window.auth, email, pass);
+      alert('Zalogowano jako: ' + (cred.user.email || email));
+      $$('#loginModal')?.classList.remove('show');
+      $$('#loginModal')?.setAttribute('aria-hidden','true');
+    } catch (err) {
+      console.error('[LOGIN] error', err);
+      alert('Logowanie nieudane: ' + (err?.code || err?.message || ''));
+    } finally {
+      setBusy(btn, false);
+    }
+  }
+
+  // REJESTRACJA
+  if (id === 'btnRegister') {
+    const btn   = e.target;
+    const email = ($$('#loginEmail')?.value || '').trim();
+    const pass  = ($$('#loginPass')?.value  || '').trim();
+    if (!email || !pass){ alert('Podaj email i hasło.'); return; }
+    if (pass.length < 6){ alert('Hasło musi mieć min. 6 znaków.'); return; }
+
+    try {
+      setBusy(btn, true);
+      const { createUserWithEmailAndPassword, updateProfile } = await import('https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js');
+      const cred = await createUserWithEmailAndPassword(window.auth, email, pass);
+      try { await updateProfile(cred.user, { displayName: email.split('@')[0].slice(0,32) }); } catch {}
+      alert('Konto utworzone i zalogowano: ' + (cred.user.email || email));
+      $$('#loginModal')?.classList.remove('show');
+      $$('#loginModal')?.setAttribute('aria-hidden','true');
+    } catch (err) {
+      console.error('[REGISTER] error', err);
+      alert('Rejestracja nieudana: ' + (err?.code || err?.message || ''));
+    } finally {
+      setBusy(btn, false);
+    }
+  }
+
+  // ZAPOMNIAŁEŚ HASŁA
+  if (id === 'btnForgot') {
+    const btn   = e.target;
+    const email = ($$('#loginEmail')?.value || '').trim();
+    if (!email){ alert('Podaj adres e-mail, aby zresetować hasło.'); return; }
+
+    try {
+      setBusy(btn, true);
+      const { sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js');
+      await sendPasswordResetEmail(window.auth, email, {
+        url: 'https://syntri-qr-generator.web.app/reset.html',
+        handleCodeInApp: true
+      });
+      alert('Wysłaliśmy link resetu hasła na: ' + email);
+    } catch (err) {
+      console.error('[FORGOT] error', err);
+      alert('Nie udało się wysłać resetu: ' + (err?.code || err?.message || ''));
+    } finally {
+      setBusy(btn, false);
+    }
+  }
+});
 
   
 </script>
