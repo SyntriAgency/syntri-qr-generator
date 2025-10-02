@@ -2038,9 +2038,6 @@ onAuthStateChanged(auth, (user) => {
     const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
     if (btnPro) btnPro.textContent = 'Subscribe £3.99';
 
-    const cancelBtn = document.getElementById('btnCancelSub');
-    if (cancelBtn) cancelBtn.style.display = 'none';
-
     const statusEl = document.getElementById('subStatus');
     if (statusEl) statusEl.textContent = '';
 
@@ -2305,14 +2302,14 @@ function updateSubFooter(expiryMs, startMs) {
     : `(${ i18n('plan_pro_expired') })`;
 }
 
-// nasłuch Firestore – rozszerzony o startTimeMs
+// === nasłuch Firestore – entitlements (z datami start/expiry) ===
 let unsubEnt = null;
 onAuthStateChanged(auth, (user) => {
   if (unsubEnt) { unsubEnt(); unsubEnt = null; }
 
   if (user) {
     const ref = doc(db, 'entitlements', user.uid);
-    unsubEnt = onSnapshot(ref, snap => {
+    unsubEnt = onSnapshot(ref, (snap) => {
       console.log('[entitlements]', snap.exists(), snap.data());
 
       const data = snap.data() || {};
@@ -2326,46 +2323,49 @@ onAuthStateChanged(auth, (user) => {
       // aktualizacja stopki
       updateSubFooter(endMs, startMs);
 
-      // pokaż/ukryj guzik anulowania
-      const cancelBtn = document.getElementById('btnCancelSub');
-      if (cancelBtn) {
-        if (data.status === 'ACTIVE') {
-          cancelBtn.style.display = 'inline-block';   // widoczny
-        } else {
-          cancelBtn.style.display = 'none';           // ukryty
-        }
-      }
+      // 🔘 widoczność guzika anulowania
+      updateCancelVisibility(data);
     });
   } else {
     updateSubFooter(0, 0);
-    const cancelBtn = document.getElementById('btnCancelSub');
-    if (cancelBtn) cancelBtn.style.display = 'none';
+    // guzikiem zajmuje się updateCancelVisibility → tutaj już nie ruszamy
   }
 });
 
+
   //=== 16) aktualizuje widoczność guzika „Cancel at period end”===
-  function updateCancelVisibility(entData){
+  function updateCancelVisibility(data){
   const btn = document.getElementById('btnCancelSub');
   if (!btn) return;
 
-  // statusy z Firestore: ACTIVE / CANCELED / INCOMPLETE / PAST_DUE itd.
-  const status = (entData?.status || '').toUpperCase();
+  const user    = window.auth?.currentUser || null;
+  const logged  = !!user;
 
-  // Czy user ma plan Pro wg lokalnego latcha (ustawiasz go już w onSnapshot(users))
-  const isPro = (localStorage.getItem('syntri.plan') || 'Free') === 'Pro';
+  const lsPlan  = (localStorage.getItem('syntri.plan') || 'Free');
+  const isProLS = (lsPlan === 'Pro');
 
-  // jeżeli masz w danych flagę „cancel at period end” (opcjonalnie):
-  const cancelAtPeriodEnd = !!entData?.cancelAtPeriodEnd;
+  const planStr = (data?.plan || '').toLowerCase();
+  const isProByDoc = data?.subActive === true || planStr === 'pro';
 
-  // Logika: pokazuj, gdy Pro + nie jest już anulowana
-  // (jeśli masz flagę cancelAtPeriodEnd → też schowaj, żeby drugi raz nie „anulować”)
-  const show =
-    isPro &&
-    status !== 'CANCELED' &&
-    !cancelAtPeriodEnd;
+  const isPro   = isProLS || isProByDoc;
+
+  const status  = String(data?.status || '').toUpperCase(); // 'ACTIVE' / 'CANCELED' / ''
+  const expiry  = Number(data?.expiryTimeMs || 0);
+
+  const show = logged && isPro && status !== 'CANCELED' && expiry > Date.now();
 
   btn.style.display = show ? 'inline-block' : 'none';
-}  
+
+  // podpinamy klik tylko raz
+  if (!btn.dataset.wired) {
+    btn.dataset.wired = '1';
+    btn.addEventListener('click', () => openModal('#confirmCancel'));
+  }
+
+  console.debug('[cancel-visibility]', {
+    logged, lsPlan, isProLS, isProByDoc, isPro, status, expiry, show
+  });
+}
 </script>
 
 </body>
