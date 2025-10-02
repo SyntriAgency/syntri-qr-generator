@@ -724,9 +724,6 @@
     </div>
   </div>
 
-   <!-- Firebase compat build – działa w zwykłym <script> -->
-
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
 <script>
   const firebaseConfig = {
@@ -814,9 +811,9 @@ on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
     // ----------------------------------------------
     // Auth (mock) – podmień na Firebase Auth
     // ----------------------------------------------
-    const AUTH = {
-      isLoggedIn: () => !!localStorage.getItem('syntri.auth.uid'),
-      email:      () => localStorage.getItem('syntri.auth.email') || '',
+const AUTH = {
+  isLoggedIn: () => !!(window.auth && window.auth.currentUser),
+  email:      () => window.auth?.currentUser?.email || '',
       loginMock(email){
         localStorage.setItem('syntri.auth.uid','dev_uid');
         localStorage.setItem('syntri.auth.email', email || 'user@example.com');
@@ -833,19 +830,16 @@ on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
 let lastExpiryMs = 0;   // zapamiętamy ostatnią wartość
     
 function renderAuthUI() {
-  const logged = AUTH.isLoggedIn();
-  $('#nav-login').style.display   = logged ? 'none' : 'inline-block';
-  $('#nav-account').style.display = logged ? 'inline-block' : 'none';
-  $('#nav-settings').style.display = logged ? 'inline-block' : 'none';
-  $('#nav-signout').style.display = logged ? 'inline-block' : 'none';
-  // logged → liczenie usage na serwerze (tu: unlimited until backend)
+  const logged = !!(window.auth && window.auth.currentUser);
+  $('#nav-login').style.display    = logged ? 'none'        : 'inline-block';
+  $('#nav-account').style.display  = logged ? 'inline-block': 'none';
+  $('#nav-settings').style.display = logged ? 'inline-block': 'none';
+  $('#nav-signout').style.display  = logged ? 'inline-block': 'none';
+
   renderUsagePill();
   ensureHomeGate();
-
-  // ✅ odśwież licznik „days left”, gdy menu/zakładka jest już w DOM
-  if (logged) {
-    updateSubFooter(lastExpiryMs);
-  }
+  if (logged) updateSubFooter(lastExpiryMs);
+}
 }
     // ----------------------------------------------
 // Usage & Plans (front-gate for anon + logged)
@@ -2049,15 +2043,24 @@ $('#btnForgot')?.addEventListener('click', async () => {
 $('#nav-signout')?.addEventListener('click', async (e) => {
   e.preventDefault();
   const link = $('#nav-signout');
+  const hardSyncUI = () => {
+    localStorage.removeItem('syntri.auth.uid');
+    localStorage.removeItem('syntri.auth.email');
+    localStorage.setItem('syntri.plan', 'Free');
+    renderAuthUI?.();
+    highlightSelectedPlan?.();
+    updateSubFooter?.(0, 0);
+  };
   try {
-    setBusy(link, true);
+    setBusy?.(link, true);
     await signOut(auth);
     alert('Wylogowano.');
   } catch (err) {
-    console.error(err);
-    alert('Błąd wylogowania: ' + (err?.code || err?.message || err));
+    console.error('[SignOut] ERROR', err);
+    alert('Błąd wylogowania (sprzątam lokalny stan): ' + (err?.code || err?.message || ''));
   } finally {
-    setBusy(link, false);
+    hardSyncUI();
+    setBusy?.(link, false);
   }
 });
 
