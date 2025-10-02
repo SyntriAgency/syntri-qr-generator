@@ -1492,16 +1492,29 @@ document.getElementById('btnCancelSub')?.addEventListener('click', async () => {
 });
 
   // --- Event handler guzika anulowania subskrypcji (modal zamiast window.confirm)
-function wireCancelButton() {
+function wireCancelButton(){
   const btn = document.getElementById('btnCancelSub');
-  if (!btn) return;
-  if (btn.dataset.wired === '1') return; // już podpięty
+  if (!btn || btn.dataset.wired === '1') return;
   btn.dataset.wired = '1';
-
-  btn.addEventListener('click', () => {
-    openModal('#confirmCancel'); // pokaż modal potwierdzenia
-  });
+  btn.addEventListener('click', () => openModal('#confirmCancel'));
 }
+document.getElementById('cancelNo')?.addEventListener('click', () => closeModal('#confirmCancel'));
+document.getElementById('cancelYes')?.addEventListener('click', async () => {
+  closeModal('#confirmCancel');
+  const btn = document.getElementById('btnCancelSub');
+  try {
+    const user = auth.currentUser;
+    if (!user) return alert('Musisz być zalogowany.');
+    btn && (btn.disabled = true, btn.setAttribute('aria-busy','true'));
+    const idToken = await user.getIdToken();
+    const r = await fetch(`${API_BASE_PROT}/cancel-subscription`, { method:'POST', headers:{ 'Authorization': `Bearer ${idToken}` }});
+    if (!r.ok) throw new Error((await r.text()).slice(0,500) || 'Cancel failed');
+    alert('Subskrypcja zostanie anulowana z końcem okresu rozliczeniowego.');
+    if (btn) btn.style.display = 'none';
+  } catch(e){ console.error(e); alert('Nie udało się anulować: ' + (e?.message || e)); }
+  finally { btn && (btn.disabled = false, btn.removeAttribute('aria-busy')); }
+});
+
 
 // obsługa przycisków modala
 document.getElementById('cancelNo')?.addEventListener('click', () => {
@@ -1976,17 +1989,17 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
-/* zgodność z resztą kodu (openCheckout itd.) */
 window.auth = auth;
 
 /* === 3) UTIL === */
 const $ = (s) => document.querySelector(s);
+const setText = (el, txt) => { if (el && el.textContent !== String(txt)) el.textContent = String(txt); };
 function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
 function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-busy', b?'true':'false'); }
 
-/* === 4) LIVE PLAN: users/{uid} → Free/Pro === */
-// na górze pliku/sekcji:
+/* === 4) LIVE PLAN: users/{uid} → Free/Pro + entitlements === */
 let unsubUserDoc = null;
+let unsubEnt     = null;
 
 onAuthStateChanged(auth, (user) => {
   // wypnij poprzednie nasłuchy
@@ -1994,9 +2007,9 @@ onAuthStateChanged(auth, (user) => {
   if (unsubEnt)     { unsubEnt();     unsubEnt     = null; }
 
   if (user) {
-    // === users/{uid} → tylko plan / UI ogólne
-    const ref = doc(db, 'users', user.uid);
-    unsubUserDoc = onSnapshot(ref, (snap) => {
+    // === users/{uid} → plan (Free/Pro) i ogólne UI
+    const uref = doc(db, 'users', user.uid);
+    unsubUserDoc = onSnapshot(uref, (snap) => {
       const d = snap.data() || {};
       const isPro =
         d.subActive === true ||
@@ -2005,68 +2018,71 @@ onAuthStateChanged(auth, (user) => {
       window.SYNTRI_IS_PRO = !!isPro;
       localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
 
-      const planName = document.getElementById('planName');
-      if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
+      setText(document.getElementById('planName'), isPro ? 'Pro' : 'Free');
 
       const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
-      if (btnPro) btnPro.textContent = isPro ? 'Subscribed' : 'Subscribe £3.99';
+      if (btnPro) {
+        const label = isPro ? (i18n?.('btn_subscribed') || 'Subscribed')
+                            : (i18n?.('btn_subscribe_price') || 'Subscribe £3.99');
+        if (btnPro.textContent !== label) btnPro.textContent = label;
+      }
 
       if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
       if (typeof renderUsagePill === 'function') renderUsagePill();
     });
 
-    // === entitlements/{uid} → daty + status + widoczność guzika
-    const refEnt = doc(db, 'entitlements', user.uid);
-    unsubEnt = onSnapshot(refEnt, (snap) => {
+    // === entitlements/{uid} → daty, status, widoczność guzika „Cancel at period end”
+    const eref = doc(db, 'entitlements', user.uid);
+    unsubEnt = onSnapshot(eref, (snap) => {
       const data   = snap.data() || {};
       const status = data.status || 'ACTIVE';
 
-      // Status label (opcjonalnie — jeśli masz <strong id="subStatus">)
+      // Status label (opcjonalnie – <strong id="subStatus">)
       const statusEl = document.getElementById('subStatus');
       if (statusEl) {
-        statusEl.textContent = (status === 'CANCELED')
-          ? i18n('status_canceled')
-          : i18n('status_active');
+        const activeLbl   = i18n?.('status_active')   || 'Active';
+        const canceledLbl = i18n?.('status_canceled') || 'Canceled';
+        setText(statusEl, status === 'CANCELED' ? canceledLbl : activeLbl);
       }
 
       // Daty w stopce
       const endMs   = Number(data.expiryTimeMs || 0);
       const startMs = Number(data.startTimeMs || 0);
-      updateSubFooter(endMs, startMs);
+      if (typeof updateSubFooter === 'function') updateSubFooter(endMs, startMs);
 
-      // Guzik: widoczny tylko przy Pro + gdy nie CANCELED
+      // Widoczność guzika anulowania: tylko Pro i gdy status != CANCELED
       const cancelBtn = document.getElementById('btnCancelSub');
       if (cancelBtn) {
         const isPro = (localStorage.getItem('syntri.plan') || 'Free') === 'Pro';
-        cancelBtn.style.display = (isPro && status !== 'CANCELED')
-          ? 'inline-block'
-          : 'none';
+        cancelBtn.style.display = (isPro && status !== 'CANCELED') ? 'inline-block' : 'none';
       }
     });
 
   } else {
-    // wylogowany → Free + schowaj guzik + wyczyść status + wyzeruj daty
+    // === wylogowany → ustaw Free, posprzątaj UI
+    window.SYNTRI_IS_PRO = false;
     localStorage.setItem('syntri.plan', 'Free');
 
-    const planName = document.getElementById('planName');
-    if (planName) planName.textContent = 'Free';
+    setText(document.getElementById('planName'), 'Free');
 
     const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
-    if (btnPro) btnPro.textContent = 'Subscribe £3.99';
+    if (btnPro) {
+      const label = i18n?.('btn_subscribe_price') || 'Subscribe £3.99';
+      if (btnPro.textContent !== label) btnPro.textContent = label;
+    }
 
     const cancelBtn = document.getElementById('btnCancelSub');
     if (cancelBtn) cancelBtn.style.display = 'none';
 
     const statusEl = document.getElementById('subStatus');
-    if (statusEl) statusEl.textContent = '';
+    if (statusEl) setText(statusEl, '');
 
-    updateSubFooter(0, 0);
+    if (typeof updateSubFooter === 'function') updateSubFooter(0, 0);
 
     if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
     if (typeof renderUsagePill === 'function') renderUsagePill();
   }
 });
-
 
 /* === 6) Rejestracja === */
 $('#btnRegister')?.addEventListener('click', async () => {
