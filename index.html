@@ -848,6 +848,8 @@ function renderAuthUI() {
     updateSubFooter(lastExpiryMs);
   }
 }
+
+    
     // ----------------------------------------------
 // Usage & Plans (front-gate for anon + logged)
 // ----------------------------------------------
@@ -2020,14 +2022,10 @@ onAuthStateChanged(auth, (user) => {
       const startMs = Number(data.startTimeMs || 0);
       updateSubFooter(endMs, startMs);
 
-      // Guzik: widoczny tylko przy Pro + gdy nie CANCELED
-      const cancelBtn = document.getElementById('btnCancelSub');
-      if (cancelBtn) {
-        const isPro = (localStorage.getItem('syntri.plan') || 'Free') === 'Pro';
-        cancelBtn.style.display = (isPro && status !== 'CANCELED')
-          ? 'inline-block'
-          : 'none';
-      }
+      // 🔘 widoczność guzika
+      updateCancelVisibility(data);
+
+    
     });
 
   } else {
@@ -2344,7 +2342,30 @@ onAuthStateChanged(auth, (user) => {
     if (cancelBtn) cancelBtn.style.display = 'none';
   }
 });
-  
+
+  //=== 16) aktualizuje widoczność guzika „Cancel at period end”===
+  function updateCancelVisibility(entData){
+  const btn = document.getElementById('btnCancelSub');
+  if (!btn) return;
+
+  // statusy z Firestore: ACTIVE / CANCELED / INCOMPLETE / PAST_DUE itd.
+  const status = (entData?.status || '').toUpperCase();
+
+  // Czy user ma plan Pro wg lokalnego latcha (ustawiasz go już w onSnapshot(users))
+  const isPro = (localStorage.getItem('syntri.plan') || 'Free') === 'Pro';
+
+  // jeżeli masz w danych flagę „cancel at period end” (opcjonalnie):
+  const cancelAtPeriodEnd = !!entData?.cancelAtPeriodEnd;
+
+  // Logika: pokazuj, gdy Pro + nie jest już anulowana
+  // (jeśli masz flagę cancelAtPeriodEnd → też schowaj, żeby drugi raz nie „anulować”)
+  const show =
+    isPro &&
+    status !== 'CANCELED' &&
+    !cancelAtPeriodEnd;
+
+  btn.style.display = show ? 'inline-block' : 'none';
+}  
 </script>
 
 </body>
