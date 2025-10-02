@@ -2051,6 +2051,8 @@ onAuthStateChanged(auth, (user) => {
     if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
     if (typeof renderUsagePill === 'function') renderUsagePill();
   }
+if (typeof renderAuthUI === 'function') renderAuthUI();
+  
 });
 
 
