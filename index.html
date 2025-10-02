@@ -848,16 +848,16 @@ on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
 let lastExpiryMs = 0;   // zapamiętamy ostatnią wartość
     
 function renderAuthUI() {
-  const logged = AUTH.isLoggedIn();
-  $('#nav-login').style.display   = logged ? 'none' : 'inline-block';
-  $('#nav-account').style.display = logged ? 'inline-block' : 'none';
+  const logged = !!auth.currentUser;
+  $('#nav-login').style.display    = logged ? 'none' : 'inline-block';
+  $('#nav-account').style.display  = logged ? 'inline-block' : 'none';
   $('#nav-settings').style.display = logged ? 'inline-block' : 'none';
-  $('#nav-signout').style.display = logged ? 'inline-block' : 'none';
-  // logged → liczenie usage na serwerze (tu: unlimited until backend)
+  $('#nav-signout').style.display  = logged ? 'inline-block' : 'none';
+
   renderUsagePill();
   ensureHomeGate();
 
-  // ✅ odśwież licznik „days left”, gdy menu/zakładka jest już w DOM
+  // odśwież „days left”
   if (logged) {
     updateSubFooter(lastExpiryMs);
   }
@@ -927,36 +927,35 @@ function renderUsagePill(){
     
 async function openCheckout() {
   const btn = document.activeElement;
-  if (btn) {
-    btn.disabled = true;
-    btn.setAttribute('aria-busy','true');
-  }
+  if (btn) { btn.disabled = true; btn.setAttribute('aria-busy','true'); }
   try {
-    // >>> POBIERZ ID TOKEN UŻYTKOWNIKA <<<
-    const token = await auth.currentUser.getIdToken();
+    const user = auth.currentUser;
+    if (!user) { alert('Zaloguj się, aby rozpocząć płatność.'); return; }
+
+    const idToken = await user.getIdToken();
+    const deviceId = localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID());
 
     const res = await fetch(`${API_BASE_PROT}/create-checkout-session`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
-  },
-  body: JSON.stringify({})
-});
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
+      },
+      body: JSON.stringify({ deviceId })
+    });
 
-    const data = await res.json();
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json() : null;
     if (!res.ok || !data?.url) throw new Error(data?.error || `HTTP ${res.status}`);
     window.location.href = data.url;
   } catch (e) {
     console.error('Checkout error:', e);
     alert('Could not start checkout. Please try again.');
   } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.removeAttribute('aria-busy');
-    }
+    if (btn) { btn.disabled = false; btn.removeAttribute('aria-busy'); }
   }
 }
+
 
     
 // Konsumpcja: { ok, remaining, resetMs }
@@ -1309,18 +1308,19 @@ document.addEventListener('keydown', async e => {
 
     // Account
     on($('#nav-account'),'click',(e)=>{
-    e.preventDefault();
-    $('#accountEmail').textContent = AUTH.email() || '—';
-    $('#accountPlan').textContent  = 'Plan: ' + getPlan();
-    openModal('#accountModal');
-    });
+  e.preventDefault();
+  const email = auth.currentUser?.email || '—';
+  $('#accountEmail').textContent = email;
+  $('#accountPlan').textContent  = 'Plan: ' + (localStorage.getItem('syntri.plan') || 'Free');
+  openModal('#accountModal');
+});
     
     on($('#accountClose'),'click',()=> closeModal('#accountModal'));
     
 
 on($('#openPortal'),'click', async ()=>{
   try {
-    const email = AUTH.email();
+    const email = auth.currentUser?.email || '';
     if (!email) { alert('Najpierw się zaloguj.'); return; }
 
     const resp = await fetch(`${API_BASE_PUBLIC}/create-stripe-portal?email=${encodeURIComponent(email)}`);
@@ -1498,7 +1498,9 @@ function wireCancelButton(){
   btn.dataset.wired = '1';
   btn.addEventListener('click', () => openModal('#confirmCancel'));
 }
+
 document.getElementById('cancelNo')?.addEventListener('click', () => closeModal('#confirmCancel'));
+
 document.getElementById('cancelYes')?.addEventListener('click', async () => {
   closeModal('#confirmCancel');
   const btn = document.getElementById('btnCancelSub');
@@ -1507,12 +1509,21 @@ document.getElementById('cancelYes')?.addEventListener('click', async () => {
     if (!user) return alert('Musisz być zalogowany.');
     btn && (btn.disabled = true, btn.setAttribute('aria-busy','true'));
     const idToken = await user.getIdToken();
-    const r = await fetch(`${API_BASE_PROT}/cancel-subscription`, { method:'POST', headers:{ 'Authorization': `Bearer ${idToken}` }});
+
+    const r = await fetch(`${API_BASE_PROT}/cancel-subscription`, {
+      method:'POST',
+      headers:{ 'Authorization': `Bearer ${idToken}` }
+    });
+
     if (!r.ok) throw new Error((await r.text()).slice(0,500) || 'Cancel failed');
     alert('Subskrypcja zostanie anulowana z końcem okresu rozliczeniowego.');
     if (btn) btn.style.display = 'none';
-  } catch(e){ console.error(e); alert('Nie udało się anulować: ' + (e?.message || e)); }
-  finally { btn && (btn.disabled = false, btn.removeAttribute('aria-busy')); }
+  } catch(e){
+    console.error('[CancelSub] error:', e);
+    alert('Nie udało się anulować: ' + (e?.message || e));
+  } finally {
+    btn && (btn.disabled = false, btn.removeAttribute('aria-busy'));
+  }
 });
 
 
@@ -1554,28 +1565,19 @@ document.getElementById('cancelYes')?.addEventListener('click', async () => {
   // strona na GitHub Pages → używamy pełnego URL do Functions
   
   function wirePlanButtons(){
-   async function openCheckout() {
-  const btn = document.activeElement;
-  if (btn) { btn.disabled = true; btn.setAttribute('aria-busy','true'); }
-  try {
-    // wymaga zalogowanego użytkownika
-    const user = auth.currentUser;
-    if (!user) {
-      alert('Zaloguj się, aby rozpocząć płatność.');
-      return;
-    }
-
-    const idToken = await user.getIdToken();    // <- nazwa zmiennej idToken
-    const deviceId = localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID());
-
-    const res = await fetch(`${API_BASE_PROT}/create-checkout-session`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`    // <- tu MUSI być idToken
-      },
-      body: JSON.stringify({ deviceId })
-    });
+  document.querySelectorAll('.plan-btn[data-action="choose"]').forEach(btn=>{
+    btn.onclick = () => {
+      const plan = btn.dataset.plan;
+      if (plan === 'Pro') {
+        openCheckout();
+      } else {
+        setPlan(plan);
+        highlightSelectedPlan();
+        alert(`Ustawiono ${plan} (mock).`);
+      }
+    };
+  });
+}
 
     const ct = res.headers.get('content-type') || '';
     const data = ct.includes('application/json') ? await res.json() : null;
@@ -1750,6 +1752,8 @@ const I18N = {
     cancel_confirm_body: 'Twoja subskrypcja pozostanie aktywna do końca bieżącego okresu rozliczeniowego. Czy na pewno chcesz ją anulować?',
     cancel_no: 'Nie',
     cancel_yes: 'Tak, anuluj',
+    status_active: 'Aktywna',
+    status_canceled: 'Anulowana',
 
     
     // --- PAYWALL ---
@@ -1903,6 +1907,8 @@ const I18N = {
     cancel_confirm_body: 'Your subscription will stay active until the end of the current billing period. Do you really want to cancel?',
     cancel_no: 'No',
     cancel_yes: 'Yes, cancel',
+    status_active: 'Active',
+    status_canceled: 'Canceled',
     
     // --- PAYWALL ---
     paywall_title: 'Free limit reached',
@@ -2335,43 +2341,6 @@ function updateSubFooter(expiryMs, startMs) {
     : `(${ i18n('plan_pro_expired') })`;
 }
 
-// nasłuch Firestore – rozszerzony o startTimeMs
-let unsubEnt = null;
-onAuthStateChanged(auth, (user) => {
-  if (unsubEnt) { unsubEnt(); unsubEnt = null; }
-
-  if (user) {
-    const ref = doc(db, 'entitlements', user.uid);
-    unsubEnt = onSnapshot(ref, snap => {
-      console.log('[entitlements]', snap.exists(), snap.data());
-
-      const data = snap.data() || {};
-
-      const rawEnd   = data.expiryTimeMs;
-      const rawStart = data.startTimeMs;
-
-      const endMs   = (typeof rawEnd   === 'number') ? rawEnd   : Number(rawEnd   || 0);
-      const startMs = (typeof rawStart === 'number') ? rawStart : Number(rawStart || 0);
-
-      // aktualizacja stopki
-      updateSubFooter(endMs, startMs);
-
-      // pokaż/ukryj guzik anulowania
-      const cancelBtn = document.getElementById('btnCancelSub');
-      if (cancelBtn) {
-        if (data.status === 'ACTIVE') {
-          cancelBtn.style.display = 'inline-block';   // widoczny
-        } else {
-          cancelBtn.style.display = 'none';           // ukryty
-        }
-      }
-    });
-  } else {
-    updateSubFooter(0, 0);
-    const cancelBtn = document.getElementById('btnCancelSub');
-    if (cancelBtn) cancelBtn.style.display = 'none';
-  }
-});
   
 </script>
 
