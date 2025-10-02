@@ -2059,21 +2059,39 @@ $('#btnForgot')?.addEventListener('click', async () => {
   }
 });
 
-/* === 9) Wylogowanie (link w nawigacji) === */
+/* === 9) Wylogowanie (link w nawigacji) — odporna wersja === */
 $('#nav-signout')?.addEventListener('click', async (e) => {
   e.preventDefault();
   const link = $('#nav-signout');
+
+  // 0) Twarde sprzątanie UI/state — wywołamy w finally niezależnie od sukcesu signOut
+  const hardSyncUI = () => {
+    localStorage.removeItem('syntri.auth.uid');
+    localStorage.removeItem('syntri.auth.email');
+    localStorage.setItem('syntri.plan', 'Free');
+    if (typeof renderAuthUI === 'function') renderAuthUI();
+    highlightSelectedPlan?.();
+    updateSubFooter?.(0, 0);
+  };
+
   try {
-    setBusy(link, true);
+    setBusy?.(link, true);
+    console.log('[SignOut] before currentUser =', auth?.currentUser?.uid);
+
     await signOut(auth);
+
+    console.log('[SignOut] after currentUser =', auth?.currentUser);
     alert('Wylogowano.');
   } catch (err) {
-    console.error(err);
-    alert('Błąd wylogowania: ' + (err?.code || err?.message || err));
+    console.error('[SignOut] ERROR', err);
+    alert('Błąd wylogowania (sprzątam lokalny stan): ' + (err?.code || err?.message || ''));
   } finally {
-    setBusy(link, false);
+    // niezależnie od rezultatu — wymuś poprawny stan UI
+    hardSyncUI();
+    setBusy?.(link, false);
   }
 });
+
 
   
 //* === 10) Delete account with re-auth (inside the module script) ===
