@@ -797,9 +797,9 @@ on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
     // ----------------------------------------------
     // Auth (mock) – podmień na Firebase Auth
     // ----------------------------------------------
-    const AUTH = {
-      isLoggedIn: () => !!localStorage.getItem('syntri.auth.uid'),
-      email:      () => localStorage.getItem('syntri.auth.email') || '',
+ const AUTH = {
+  isLoggedIn: () => !!(window.auth && window.auth.currentUser),
+  email:      () => window.auth?.currentUser?.email || '',
       loginMock(email){
         localStorage.setItem('syntri.auth.uid','dev_uid');
         localStorage.setItem('syntri.auth.email', email || 'user@example.com');
