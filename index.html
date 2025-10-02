@@ -724,7 +724,24 @@
     </div>
   </div>
 
+   <!-- Firebase compat build – działa w zwykłym <script> -->
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCN4mFs-l3SVfLGSiqOeSObenSPgQlx2XU",
+    authDomain: "syntri-qr-generator.firebaseapp.com",
+    projectId: "syntri-qr-generator",
+    storageBucket: "syntri-qr-generator.appspot.com",   // 👈 popraw host!
+    messagingSenderId: "535838079759",
+    appId: "1:535838079759:web:865ddfaee615280b645c7a",
+    measurementId: "G-D1V72QVK11"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  window.auth = firebase.auth();   // teraz auth dostępny globalnie
+</script>
 
   <!-- ✅ Stałe z adresami API – tuż pod Firebase -->
   <script>
@@ -1892,18 +1909,12 @@ const $ = (s) => document.querySelector(s);
 function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
 function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-busy', b?'true':'false'); }
 
-// === 4) LIVE PLAN: users/{uid} + entitlements/{uid} → Free/Pro + daty + Cancel ===
+/* === 4) LIVE PLAN: users/{uid} → Free/Pro === */
 let unsubUserDoc = null;
-let unsubEnt     = null;
-
 onAuthStateChanged(auth, (user) => {
-  // zdejmij poprzednie nasłuchy
-  if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
-  if (unsubEnt)     { unsubEnt();     unsubEnt     = null; }
-
-  // zsynchronizuj „stare” UI (localStorage) i odśwież
+  // aktualizuj localStorage jak wcześniej
   if (user) {
-    localStorage.setItem('syntri.auth.uid',   user.uid);
+    localStorage.setItem('syntri.auth.uid', user.uid);
     localStorage.setItem('syntri.auth.email', user.email || '');
   } else {
     localStorage.removeItem('syntri.auth.uid');
@@ -1911,69 +1922,44 @@ onAuthStateChanged(auth, (user) => {
   }
   if (typeof renderAuthUI === 'function') renderAuthUI();
 
-  // stan wylogowany
-  if (!user) {
-    localStorage.setItem('syntri.plan', 'Free');
-    document.getElementById('planName')?.textContent = 'Free';
-    const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
-    if (btnPro) btnPro.textContent = i18n?.('btn_subscribe_price') || 'Subscribe £3.99';
-    const cancelBtn = document.getElementById('btnCancelSub');
-    if (cancelBtn) cancelBtn.style.display = 'none';
-    updateSubFooter?.(0, 0);
-    highlightSelectedPlan?.();
-    renderUsagePill?.();
-    return;
-  }
+  // odpinaj poprzedni listener
+  if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
 
-  // --- users/{uid}: opcjonalne źródło (jeśli backend tam wpisuje plan/subActive)
-  unsubUserDoc = onSnapshot(doc(db, 'users', user.uid), (snap) => {
-    const d = snap.data() || {};
-    const isProFromUsers =
-      d.subActive === true ||
-      (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
+  if (user) {
+    const ref = doc(db, 'users', user.uid);
+    unsubUserDoc = onSnapshot(ref, (snap) => {
+  const d = snap.data() || {};
+  const isPro =
+    d.subActive === true ||
+    (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
+      
+  /* lub window.syntriPlan = isPro ? 'pro' : 'free'; */   
+  window.SYNTRI_IS_PRO = !!isPro;  
+  localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
 
-    if (isProFromUsers) {
-      localStorage.setItem('syntri.plan', 'Pro');
-      document.getElementById('planName')?.textContent = 'Pro';
-      const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
-      if (btnPro) btnPro.textContent = i18n?.('btn_subscribed') || 'Subscribed';
-    }
-    highlightSelectedPlan?.();
-    renderUsagePill?.();
-  });
+  const planName = document.getElementById('planName');
+  if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
 
-  // --- entitlements/{uid}: główne źródło prawdy dla uprawnień i dat
-  unsubEnt = onSnapshot(doc(db, 'entitlements', user.uid), (snap) => {
-    const data   = snap.data() || {};
-    const status = String(data.status || '').toUpperCase(); // ACTIVE/TRIALING/CANCELED/...
-    const endMs  = Number(data.expiryTimeMs || 0);
-    const startMs= Number(data.startTimeMs || 0);
+  /* 👇 NEW: zmiana napisu przycisku planu Pro */
+  const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
+  if (btnPro) btnPro.textContent = isPro ? 'Subscribed' : 'Subscribe £3.99';
 
-    // Pro, jeśli mamy ważne uprawnienie i nie jest CANCELED
-    const entitlementIsPro = (endMs > Date.now()) && status !== 'CANCELED';
-
-    if (entitlementIsPro) {
-      localStorage.setItem('syntri.plan', 'Pro');
-      document.getElementById('planName')?.textContent = 'Pro';
-      const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
-      if (btnPro) btnPro.textContent = i18n?.('btn_subscribed') || 'Subscribed';
-    } else if (!snap.exists()) {
-      // brak dokumentu — nie wymuszaj zmiany (zostaw to, co ustawił users/{uid} albo Free)
-      if (!localStorage.getItem('syntri.plan')) localStorage.setItem('syntri.plan','Free');
-    }
-
-    // daty w stopce
-    updateSubFooter?.(endMs, startMs);
-
-    // widoczność „Cancel at period end”
-    const cancelBtn = document.getElementById('btnCancelSub');
-    if (cancelBtn) cancelBtn.style.display = entitlementIsPro ? 'inline-block' : 'none';
-
-    highlightSelectedPlan?.();
-    renderUsagePill?.();
-  });
+  if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+  if (typeof renderUsagePill === 'function') renderUsagePill();
 });
+} else {
+  localStorage.setItem('syntri.plan', 'Free');
+  const planName = document.getElementById('planName');
+  if (planName) planName.textContent = 'Free';
 
+  /* 👇 NEW: również przy wylogowaniu wróć do domyślnego napisu */
+  const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
+  if (btnPro) btnPro.textContent = 'Subscribe £3.99';
+
+  if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+  if (typeof renderUsagePill === 'function') renderUsagePill();
+}
+});
 
 /* === 6) Rejestracja === */
 $('#btnRegister')?.addEventListener('click', async () => {
@@ -2059,39 +2045,21 @@ $('#btnForgot')?.addEventListener('click', async () => {
   }
 });
 
-/* === 9) Wylogowanie (link w nawigacji) — odporna wersja === */
+/* === 9) Wylogowanie (link w nawigacji) === */
 $('#nav-signout')?.addEventListener('click', async (e) => {
   e.preventDefault();
   const link = $('#nav-signout');
-
-  // 0) Twarde sprzątanie UI/state — wywołamy w finally niezależnie od sukcesu signOut
-  const hardSyncUI = () => {
-    localStorage.removeItem('syntri.auth.uid');
-    localStorage.removeItem('syntri.auth.email');
-    localStorage.setItem('syntri.plan', 'Free');
-    if (typeof renderAuthUI === 'function') renderAuthUI();
-    highlightSelectedPlan?.();
-    updateSubFooter?.(0, 0);
-  };
-
   try {
-    setBusy?.(link, true);
-    console.log('[SignOut] before currentUser =', auth?.currentUser?.uid);
-
+    setBusy(link, true);
     await signOut(auth);
-
-    console.log('[SignOut] after currentUser =', auth?.currentUser);
     alert('Wylogowano.');
   } catch (err) {
-    console.error('[SignOut] ERROR', err);
-    alert('Błąd wylogowania (sprzątam lokalny stan): ' + (err?.code || err?.message || ''));
+    console.error(err);
+    alert('Błąd wylogowania: ' + (err?.code || err?.message || err));
   } finally {
-    // niezależnie od rezultatu — wymuś poprawny stan UI
-    hardSyncUI();
-    setBusy?.(link, false);
+    setBusy(link, false);
   }
 });
-
 
   
 //* === 10) Delete account with re-auth (inside the module script) ===
@@ -2244,9 +2212,45 @@ function updateSubFooter(expiryMs, startMs) {
     : `(${ i18n('plan_pro_expired') })`;
 }
 
+// nasłuch Firestore – rozszerzony o startTimeMs
+let unsubEnt = null;
+onAuthStateChanged(auth, (user) => {
+  if (unsubEnt) { unsubEnt(); unsubEnt = null; }
+
+  if (user) {
+    const ref = doc(db, 'entitlements', user.uid);
+    unsubEnt = onSnapshot(ref, snap => {
+      console.log('[entitlements]', snap.exists(), snap.data());
+
+      const data = snap.data() || {};
+
+      const rawEnd   = data.expiryTimeMs;
+      const rawStart = data.startTimeMs;
+
+      const endMs   = (typeof rawEnd   === 'number') ? rawEnd   : Number(rawEnd   || 0);
+      const startMs = (typeof rawStart === 'number') ? rawStart : Number(rawStart || 0);
+
+      // aktualizacja stopki
+      updateSubFooter(endMs, startMs);
+
+      // pokaż/ukryj guzik anulowania
+      const cancelBtn = document.getElementById('btnCancelSub');
+      if (cancelBtn) {
+        if (data.status === 'ACTIVE') {
+          cancelBtn.style.display = 'inline-block';   // widoczny
+        } else {
+          cancelBtn.style.display = 'none';           // ukryty
+        }
+      }
+    });
+  } else {
+    updateSubFooter(0, 0);
+    const cancelBtn = document.getElementById('btnCancelSub');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
+});
   
 </script>
 
 </body>
 </html>
-
