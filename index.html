@@ -708,7 +708,6 @@
 
   <!-- 🔘 Cancel subscription button (start hidden) -->
 <div class="subs-footer-actions">
-  <button id="btnCancelSub" class="btn btn-warning">
   <span data-i18n="cancel_sub">Cancel at period end</span>
 </button>
 </div>
@@ -2338,29 +2337,26 @@ function updateCancelVisibility(data){
   const lsPlan  = (localStorage.getItem('syntri.plan') || 'Free');
   const isProLS = (lsPlan === 'Pro');
 
-  const planStr = (data?.plan || '').toLowerCase();
+  const planStr    = (data?.plan || '').toLowerCase();
   const isProByDoc = data?.subActive === true || planStr === 'pro';
+  const isPro      = isProLS || isProByDoc;
 
-  const isPro   = isProLS || isProByDoc;
+  // ⬇️ kluczowe domyślne: jeśli data brak, traktuj jak ACTIVE i „daleką” datę
+  const status  = String(data?.status ?? 'ACTIVE').toUpperCase(); // ACTIVE/TRIALING/CANCELED
+  const expiry  = Number(data?.expiryTimeMs ?? Number.MAX_SAFE_INTEGER);
 
-  const status  = String(data?.status || '').toUpperCase(); // 'ACTIVE' / 'TRIALING' / 'CANCELED' / ''
-  const expiry  = Number(data?.expiryTimeMs || 0);
-
-  // jeśli masz TRIALING, też traktuj jak aktywną
   const isActiveLike = (status === 'ACTIVE' || status === 'TRIALING');
-
   const show = logged && isPro && isActiveLike && expiry > Date.now();
 
   btn.style.display = show ? 'inline-block' : 'none';
 
-  // podpinamy klik tylko raz (otwiera modal potwierdzenia)
   if (!btn.dataset.wired) {
     btn.dataset.wired = '1';
     btn.addEventListener('click', () => openModal('#confirmCancel'));
   }
 
   console.debug('[cancel-visibility]', {
-    logged, lsPlan, isProLS, isProByDoc, isPro, status, expiry, show
+    logged, lsPlan, isProLS, isProByDoc, isPro, status, expiry, show, data
   });
 }
 </script>
