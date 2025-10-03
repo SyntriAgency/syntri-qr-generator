@@ -2313,28 +2313,22 @@ onAuthStateChanged(auth, (user) => {
       console.log('[entitlements]', snap.exists(), snap.data());
 
       const data = snap.data() || {};
+      const endMs   = Number(data.expiryTimeMs ?? 0);
+      const startMs = Number(data.startTimeMs ?? 0);
 
-      const rawEnd   = data.expiryTimeMs;
-      const rawStart = data.startTimeMs;
-
-      const endMs   = (typeof rawEnd   === 'number') ? rawEnd   : Number(rawEnd   || 0);
-      const startMs = (typeof rawStart === 'number') ? rawStart : Number(rawStart || 0);
-
-      // aktualizacja stopki
       updateSubFooter(endMs, startMs);
-
-      // 🔘 widoczność guzika anulowania
-      updateCancelVisibility(data);
+      updateCancelVisibility(data);   // ← tu decydujemy o guziku
     });
+
   } else {
     updateSubFooter(0, 0);
-    // guzikiem zajmuje się updateCancelVisibility → tutaj już nie ruszamy
+    updateCancelVisibility(null);     // ← wylogowany: schowaj guzik
   }
 });
 
 
-  //=== 16) aktualizuje widoczność guzika „Cancel at period end”===
-  function updateCancelVisibility(data){
+ //=== 16) aktualizuje widoczność guzika „Cancel at period end”===
+function updateCancelVisibility(data){
   const btn = document.getElementById('btnCancelSub');
   if (!btn) return;
 
@@ -2349,14 +2343,17 @@ onAuthStateChanged(auth, (user) => {
 
   const isPro   = isProLS || isProByDoc;
 
-  const status  = String(data?.status || '').toUpperCase(); // 'ACTIVE' / 'CANCELED' / ''
+  const status  = String(data?.status || '').toUpperCase(); // 'ACTIVE' / 'TRIALING' / 'CANCELED' / ''
   const expiry  = Number(data?.expiryTimeMs || 0);
 
-  const show = logged && isPro && status !== 'CANCELED' && expiry > Date.now();
+  // jeśli masz TRIALING, też traktuj jak aktywną
+  const isActiveLike = (status === 'ACTIVE' || status === 'TRIALING');
+
+  const show = logged && isPro && isActiveLike && expiry > Date.now();
 
   btn.style.display = show ? 'inline-block' : 'none';
 
-  // podpinamy klik tylko raz
+  // podpinamy klik tylko raz (otwiera modal potwierdzenia)
   if (!btn.dataset.wired) {
     btn.dataset.wired = '1';
     btn.addEventListener('click', () => openModal('#confirmCancel'));
