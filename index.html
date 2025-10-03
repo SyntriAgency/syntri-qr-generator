@@ -483,7 +483,36 @@
 </div>          
 
           
+<!-- DEV panel – widoczny tylko z ?dev=1 -->
+<div id="dev-panel" style="display:none; margin-top:8px; display:flex; gap:8px;">
+  <button id="dev-exhaust" class="btn btn-ghost">DEV: Max limit</button>
+  <button id="dev-reset"   class="btn btn-ghost">DEV: Reset</button>
+</div>
+          
+          <p class="muted" id="note-offline" style="margin-top:10px;" data-i18n="note_offline">
+            Działa lokalnie w przeglądarce — żadne dane nie opuszczają urządzenia.
+          </p>
+        </section>
 
+        <section id="sec-preview">
+          <div class="preview">
+            <div id="qr" class="qr-box"></div>
+          </div>
+        </section>
+      </div>
+
+      <footer>
+        <div class="left">
+          <span class="kbd">⌘ / Ctrl + Enter</span>
+          <span class="muted" id="hint-hotkey" data-i18n="hint_hotkey">— szybkie generowanie</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <a class="link" href="#" id="shareLink" data-i18n="link_share" title="Udostępnij parametry w URL">Udostępnij</a>
+          <button id="copyLink" class="btn btn-ghost" data-i18n="btn_copy">Kopiuj link</button>
+        </div>
+      </footer>
+    </div>
+  </div>
 
  <!-- Login / Register modal (Email + Password) -->
 <div id="loginModal" class="modal" aria-hidden="true">
