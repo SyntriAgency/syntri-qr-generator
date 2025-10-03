@@ -884,31 +884,26 @@ function planQuota(plan){
   }
 }
 
-// Zwraca { used, quota, resetAt }, zachowuje resetAt ze storage,
-// tylko jeśli go brak lub minął – wyznacza nowy (początek następnego miesiąca).
+// Zwraca {used, quota, resetAt}
 function getUsage(){
-  const plan   = getPlan();
-  const quota  = planQuota(plan);
-  const now    = Date.now();
-  const nextMo = monthResetAtMs();
+  const plan = getPlan();
+  const quota = planQuota(plan);
+  const resetAt = monthResetAtMs();
+  const def = { used:0, quota, resetAt };
 
-  let raw;
   try {
-    raw = JSON.parse(localStorage.getItem(usageKey()) || '{}');
-  } catch { raw = {}; }
-
-  let used    = Number.isFinite(raw?.used) ? raw.used : 0;
-  let resetAt = Number.isFinite(raw?.resetAt) ? raw.resetAt : nextMo;
-
-  // jeśli resetAt przeszły → reset okna
-  if (resetAt <= now) { used = 0; resetAt = nextMo; }
-
-  return { used, quota, resetAt };
+    const raw = JSON.parse(localStorage.getItem(usageKey()) || JSON.stringify(def));
+    raw.quota = quota;
+    raw.resetAt = resetAt;
+    return raw;
+  } catch {
+    return def;
+  }
 }
 
 function saveUsage(u){
-  const toStore = { used: u.used|0, resetAt: Number(u.resetAt) || monthResetAtMs() };
-  localStorage.setItem(usageKey(), JSON.stringify(toStore));
+  // zapisujemy dla wszystkich (anon + logged), by front-gate był spójny
+  localStorage.setItem(usageKey(), JSON.stringify(u));
 }
 
 function renderUsagePill(){
@@ -919,7 +914,6 @@ function renderUsagePill(){
   usagePill.title = (u.quota===Infinity) ? 'Paid plan' : 'Monthly quota';
   ensureHomeGate();
 }
-    
 // --- Stripe: openCheckout (redirect-based) ---
     
 async function openCheckout() {
@@ -1094,27 +1088,25 @@ function remainingMs(){
         if (t < 1){
           requestAnimationFrame(frame);
         } else {
-          // --- ANIMATION DONE → usage gate (LOCAL) ---
-const gate = tryConsumeUsage();   // używa poprawionego getUsage/saveUsage
-hint.textContent = '';
+          // ANIMATION DONE → usage gate
+          const gate = tryConsumeUsage();
+          if (!gate.ok){
+            // paywall
+            openModal('#paywallModal');
+            // keep buttons disabled
+          } else {
+            // enable downloads
+            document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions').forEach(el=>{ el.style.display='block'; });
+            btnPng.disabled = false; btnSvg.disabled = false;
+            btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
+            btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+          }
+          hint.textContent = '';
+        }
+      }
+      requestAnimationFrame(frame);
+    }
 
-if (!gate.ok){
-  // paywall + cooldown
-  openModal('#paywallModal');
-  showCooldownUI(Date.now() + gate.resetMs);
-  // przyciski zostają zablokowane
-} else {
-  // enable downloads
-  document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
-    .forEach(el => { el.style.display='block'; });
-  btnPng.disabled = false; btnSvg.disabled = false;
-  btnPng.onclick = () => downloadCanvasAsPNG(cv, filename('png'));
-  btnSvg.onclick = () => downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
-
-  // odśwież UI licznika i ewentualnie home gate
-  renderUsagePill();
-  ensureHomeGate();
-}
 // ----------------------------------------------
 // Cooldown UI (zamiana preview na odliczanie + CTA)
 // ----------------------------------------------
@@ -2370,3 +2362,4 @@ function updateCancelVisibility(data){
 
 </body>
 </html>
+
