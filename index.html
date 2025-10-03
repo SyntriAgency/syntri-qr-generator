@@ -2335,33 +2335,28 @@ function updateCancelVisibility(data){
   const btn = document.getElementById('btnCancelSub');
   if (!btn) return;
 
-  const user    = window.auth?.currentUser || null;
-  const logged  = !!user;
+  const logged = !!window.auth?.currentUser;
 
-  const lsPlan  = (localStorage.getItem('syntri.plan') || 'Free');
-  const isProLS = (lsPlan === 'Pro');
+  const expiry = Number(data?.expiryTimeMs ?? 0);
+  const status = String(data?.status ?? '').toUpperCase();
 
-  const planStr    = (data?.plan || '').toLowerCase();
-  const isProByDoc = data?.subActive === true || planStr === 'pro';
-  const isPro      = isProLS || isProByDoc;
+  // Pro wg dat/Statusu – bez localStorage
+  const isActiveByDates  = Number.isFinite(expiry) && expiry > Date.now();
+  const isActiveByStatus = (status === 'ACTIVE' || status === 'TRIALING');
 
-  // ⬇️ kluczowe domyślne: jeśli data brak, traktuj jak ACTIVE i „daleką” datę
-  const status  = String(data?.status ?? 'ACTIVE').toUpperCase(); // ACTIVE/TRIALING/CANCELED
-  const expiry  = Number(data?.expiryTimeMs ?? Number.MAX_SAFE_INTEGER);
+  // Pokaż, gdy zalogowany i subskrypcja faktycznie trwa
+  const show = logged && (isActiveByDates || isActiveByStatus);
 
-  const isActiveLike = (status === 'ACTIVE' || status === 'TRIALING');
-  const show = logged && isPro && isActiveLike && expiry > Date.now();
+  // preferuj atrybut hidden zamiast inline display (łatwiejsze do debugowania)
+  btn.hidden = !show;
 
-  btn.style.display = show ? 'inline-block' : 'none';
-
+  // jednorazowe podpięcie modala
   if (!btn.dataset.wired) {
     btn.dataset.wired = '1';
     btn.addEventListener('click', () => openModal('#confirmCancel'));
   }
 
-  console.debug('[cancel-visibility]', {
-    logged, lsPlan, isProLS, isProByDoc, isPro, status, expiry, show, data
-  });
+  console.debug('[cancel-visibility]', { logged, expiry, status, show, data });
 }
 </script>
 
