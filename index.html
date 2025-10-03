@@ -1,1 +1,2368 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIrt8jvQpW9N+MGPbY6rY3s6QCG+YtG1vCvtKo1YFpsioeQq9v7bSIL3V7CwKqVdQ0bV1PpL5x1sI6W7Gd2g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    if(!window.QRCode){
+      var s=document.createElement('script');
+      s.src='https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js';
+      document.head.appendChild(s);
+    }
+  </script>
+  
+
+  <style>
+    :root{--bg:#0b0f14;--panel:#111722;--muted:#90a3b3;--text:#e8eef6;--accent:#7dd3fc;--accent-2:#22d3ee;}
+    @media (prefers-color-scheme: light){:root{--bg:#f6f8fb;--panel:#ffffff;--muted:#5b6b78;--text:#0b0f14;--accent:#0284c7;--accent-2:#06b6d4}}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;background:radial-gradient(1200px 500px at 80% -10%, rgba(125,211,252,.15), transparent),var(--bg);color:var(--text)}
+    .wrap{max-width:980px;margin:48px auto;padding:0 20px}
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:18px;box-shadow:0 10px 32px rgba(0,0,0,.25);overflow:hidden}
+    header{position:relative;padding:22px 24px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(255,255,255,.06)}
+    .decor-logo{position:absolute;right:12px;top:2px;width:72px;opacity:.95}
+    .page-title{margin:0;width:100%;text-align:center;font-size:20px;font-weight:800;letter-spacing:.2px;pointer-events:none}
+    .subnav{position:sticky;top:0;z-index:5;background:linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.15) 100%),var(--panel);border-bottom:1px solid rgba(255,255,255,.06);display:flex;gap:10px;padding:10px 16px;backdrop-filter:blur(6px)}
+    .subnav a{font-size:12px;padding:8px 10px;border-radius:10px;text-decoration:none;color:var(--muted);border:1px solid transparent}
+    .subnav a.active{color:var(--text);border-color:rgba(255,255,255,.14)}
+    .lang-panel{display:none;gap:8px;padding:10px 16px;background:var(--panel);border-bottom:1px solid rgba(255,255,255,.06)}
+    .lang-panel.show{display:flex}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;padding:22px}
+    @media (max-width:860px){.grid{grid-template-columns:1fr}}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:8px;letter-spacing:.2px}
+    input[type="text"],textarea,select,input[type="number"]{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:transparent;color:var(--text);outline:none}
+    input::placeholder{color:#7a8a98}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .btn{appearance:none;border:none;cursor:pointer;padding:12px 14px;border-radius:12px;font-weight:700}
+    .btn-primary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.14)}
+    .btn-primary:hover{background:rgba(255,255,255,.06)}
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.14)}
+    .muted{color:var(--muted);font-size:12px}
+    .preview{display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(from 0deg,#0000 0 15deg,rgba(255,255,255,.03) 15deg 30deg);border-radius:14px;min-height:380px;position:relative}
+    .preview:has(canvas),.preview:has(img){background:#0b0f1420}
+    .qr-box{padding:16px;background:#fff;border-radius:12px}
+    footer{padding:16px 22px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.06)}
+    .left{display:flex;gap:10px;align-items:center}
+    .kbd{font:800 11px/1 Inter,sans-serif;border:1px solid rgba(255,255,255,.2);padding:6px 8px;border-radius:8px;color:var(--muted)}
+    a.link{color:var(--accent);text-decoration:none}
+    .usage-pill{margin-left:8px;font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:var(--muted)}
+    html{scroll-behavior:smooth}
+   
+
+
+    /* Cinematic overlay */
+    .syntri-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#000a;backdrop-filter:blur(6px);opacity:0;transition:opacity .25s ease}
+    .syntri-modal{width:min(720px,92vw);background:var(--panel);border:1px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.45);padding:24px;text-align:center;position:relative}
+    .syntri-title{font-weight:800;letter-spacing:.12em;margin:4px 0 8px 0;display:none}
+    .syntri-sub{margin:0 0 12px 0;font-weight:700;letter-spacing:.25em;display:none}
+    .syntri-grid{display:grid;grid-template-columns:1fr;gap:14px;place-items:center;margin-top:8px}
+    #cin-canvas{background:#fff;border-radius:12px;padding:12px}
+    .syntri-actions{display:flex;gap:10px;justify-content:center;margin-top:8px;display:none}
+    .syntri-actions .btn[disabled]{opacity:.5;pointer-events:none}
+    .syntri-close{position:absolute;right:16px;top:12px;cursor:pointer;font-weight:700;color:var(--muted)}
+
+    /* Generic modal for Login/Account/Paywall */
+    .modal{position:fixed;inset:0;z-index:9998;display:none;align-items:center;justify-content:center;background:#000a;backdrop-filter:blur(4px)}
+    .modal.show{display:flex}
+    .modal-card{width:min(520px,92vw);background:var(--panel);border:1px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.45);padding:20px}
+    .modal-card h3{margin:0 0 8px 0;font-size:16px}
+    .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+    .field-row{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+
+    /* === Syntri UI – Login Card override === */
+#loginModal .modal-card{
+  width:min(520px,92vw);
+  background:#fff; color:#111827;
+  border:1px solid #e5e7eb; border-radius:12px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+  padding:24px 28px;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal .modal-card{
+    background:#0f1720; color:#e5e7eb;
+    border-color:#1f2937; box-shadow:0 6px 20px rgba(0,0,0,.35);
+  }
+}
+#loginModal .modal-card h3{
+  margin:0 0 6px; font-weight:600; font-size:1.4rem; text-align:center;
+}
+#loginModal .field-row label{
+  font-size:.95rem; color:#111827;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal .field-row label{ color:#e5e7eb; }
+}
+#loginModal input[type="email"],
+#loginModal input[type="password"]{
+  width:100%; padding:10px 12px; margin-top:6px;
+  font-size:1rem; border-radius:8px; box-sizing:border-box;
+  background:transparent; outline:none;
+  border:1px solid #d1d5db; color:#111827;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal input[type="email"],
+  #loginModal input[type="password"]{
+    border-color:#334155; color:#e5e7eb;
+  }
+}
+#loginModal .btn-primary{
+  background:#111827; color:#fff; border:0;
+  border-radius:8px; padding:12px 16px; font-weight:600; font-size:1rem;
+  transition:background .15s ease, transform .02s ease-in;
+}
+#loginModal .btn-primary:hover{ background:#1f2937; }
+#loginModal .btn-primary:active{ transform:translateY(1px); }
+@media (prefers-color-scheme: dark){
+  #loginModal .btn-primary{
+    background:#e5e7eb; color:#111827;
+  }
+  #loginModal .btn-primary:hover{ background:#d1d5db; }
+}
+#loginModal .btn-ghost{
+  background:transparent; color:inherit;
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:8px; padding:10px 14px; font-weight:600;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal .btn-ghost{ border-color:#334155; }
+}
+/* === Syntri UI – Settings Split Layout === */
+#settingsModal .modal-card.settings-split{
+  width:min(720px,92vw);
+  display:grid;
+  grid-template-columns:180px 1fr;
+  background:#fff; color:#111827;
+  border:1px solid #e5e7eb; border-radius:12px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+  position: relative;
+}
+@media (prefers-color-scheme: dark){
+  #settingsModal .modal-card.settings-split{
+    background:#0f1720; color:#e5e7eb;
+    border-color:#1f2937; box-shadow:0 6px 20px rgba(0,0,0,.35);
+  }
+}
+#settingsModal .settings-nav{
+  display:flex;
+  flex-direction:column;
+  border-right:1px solid rgba(0,0,0,.1);
+}
+@media (prefers-color-scheme: dark){
+  #settingsModal .settings-nav{
+    border-right-color:#334155;
+  }
+}
+#settingsModal .settings-nav button{
+  background:transparent;
+  border:0;
+  padding:12px 16px;
+  text-align:left;
+  font-weight:600;
+  cursor:pointer;
+}
+#settingsModal .settings-nav button.active{
+  background:rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  #settingsModal .settings-nav button.active{
+    background:rgba(255,255,255,.05);
+  }
+}
+#settingsModal .settings-content{
+  padding:24px;
+}
+#settingsModal .settings-content .tab{
+  display:none;
+}
+#settingsModal .settings-content .tab.active{
+  display:block;
+}
+/* === Change Password – te same style co login === */
+#loginModal .modal-card,
+#changePassModal .modal-card{
+  width:min(520px,92vw);
+  background:#fff; color:#111827;
+  border:1px solid #e5e7eb; border-radius:12px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+  padding:24px 28px;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal .modal-card,
+  #changePassModal .modal-card{
+    background:#0f1720; color:#e5e7eb;
+    border-color:#1f2937; box-shadow:0 6px 20px rgba(0,0,0,.35);
+  }
+}
+
+#loginModal .modal-card h3,
+#changePassModal .modal-card h3{
+  margin:0 0 6px; font-weight:600; font-size:1.4rem; text-align:center;
+}
+
+#loginModal .field-row label,
+#changePassModal .field-row label{
+  font-size:.95rem; color:#111827;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal .field-row label,
+  #changePassModal .field-row label{ color:#e5e7eb; }
+}
+
+#loginModal input[type="email"],
+#loginModal input[type="password"],
+#changePassModal input[type="password"]{
+  width:100%; padding:10px 12px; margin-top:6px;
+  font-size:1rem; border-radius:8px; box-sizing:border-box;
+  background:transparent; outline:none;
+  border:1px solid #d1d5db; color:#111827;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal input[type="email"],
+  #loginModal input[type="password"],
+  #changePassModal input[type="password"]{
+    border-color:#334155; color:#e5e7eb;
+  }
+}
+
+#loginModal .btn-primary,
+#changePassModal .btn-primary{
+  background:#111827; color:#fff; border:0;
+  border-radius:8px; padding:12px 16px; font-weight:600; font-size:1rem;
+  transition:background .15s ease, transform .02s ease-in;
+}
+#loginModal .btn-primary:hover,
+#changePassModal .btn-primary:hover{ background:#1f2937; }
+#loginModal .btn-primary:active,
+#changePassModal .btn-primary:active{ transform:translateY(1px); }
+@media (prefers-color-scheme: dark){
+  #loginModal .btn-primary,
+  #changePassModal .btn-primary{
+    background:#e5e7eb; color:#111827;
+  }
+  #loginModal .btn-primary:hover,
+  #changePassModal .btn-primary:hover{ background:#d1d5db; }
+}
+
+#loginModal .btn-ghost,
+#changePassModal .btn-ghost{
+  background:transparent; color:inherit;
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:8px; padding:10px 14px; font-weight:600;
+}
+@media (prefers-color-scheme: dark){
+  #loginModal .btn-ghost,
+  #changePassModal .btn-ghost{ border-color:#334155; }
+}
+/* === Subscription cards === */
+.subs-wrap{padding:6px}
+.subs-header{ text-align:center; margin:8px 0 14px }
+.subs-title{ font-weight:800; font-size:18px; margin:0 0 6px }
+.subs-sub{ color:var(--muted); font-weight:700; letter-spacing:.02em }
+
+.plans{ display:flex; flex-direction:column; gap:14px }
+.plan-card{
+  background: var(--panel);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+  padding:14px 16px;
+}
+@media (prefers-color-scheme: light){
+  .plan-card{ border-color:#e5e7eb; box-shadow:0 6px 18px rgba(0,0,0,.06); }
+}
+.plan-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px }
+.plan-name{ font-weight:800 }
+.plan-price{ font-weight:700; opacity:.85; font-size:.95rem }
+.plan-feats{ margin:8px 0 12px; padding-left:18px }
+.plan-feats li{ margin:4px 0 }
+.plan-btn{
+  width:100%; border-radius:12px; padding:12px 14px; font-weight:800;
+  border:0; cursor:pointer;
+  background:#111827; color:#fff;
+}
+@media (prefers-color-scheme: dark){
+  .plan-btn{ background:#e5e7eb; color:#111827; }
+}
+.plan-btn.secondary{
+  background:transparent; color:inherit;
+  border:1px solid rgba(255,255,255,.18);
+}
+.plan-card.selected{ outline:2px solid var(--accent-2); }
+.plan-card.selected .plan-btn{ background:#6b7280; cursor:default }
+.subs-footer{
+  margin-top:14px; font-size:.9rem; padding:10px 12px;
+  border-radius:10px; background:rgba(255,255,255,.04);
+}
+/* Niewybrany plan z secondary → czarny guzik */
+.plan-card:not(.selected) .plan-btn.secondary{
+  background:#111827;
+  color:#fff;
+  border:0;
+}
+@media (prefers-color-scheme: dark){
+  .plan-card:not(.selected) .plan-btn.secondary{
+    background:#e5e7eb;
+    color:#111827;
+  }
+}
+
+.subs-footer{
+  margin-top:14px; font-size:.9rem; padding:10px 12px;
+  border-radius:10px; background:rgba(255,255,255,.04);
+}
+
+/* === Section header (jak w subs) === */
+.acc-wrap{padding:6px}
+.acc-header{text-align:center;margin:8px 0 14px}
+.acc-title{font-weight:800;font-size:18px;margin:0 0 6px}
+.acc-sub{color:var(--muted);font-weight:700;letter-spacing:.02em}
+
+/* === Info cards (spójne z .plan-card) === */
+.info-card{
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+  padding:14px 16px;
+}
+@media (prefers-color-scheme: light){
+  .info-card{ border-color:#e5e7eb; box-shadow:0 6px 18px rgba(0,0,0,.06); }
+}
+.info-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.info-title{font-weight:800}
+.badge{font-weight:700;opacity:.85;font-size:.95rem;border:1px solid rgba(255,255,255,.18);padding:2px 8px;border-radius:999px}
+@media (prefers-color-scheme: light){
+  .badge{border-color:#e5e7eb}
+}
+.info-list{margin:8px 0 12px;padding-left:18px}
+.info-list li{margin:4px 0}
+.action-row{display:flex;gap:10px}
+.btn-danger{
+  background:transparent;
+  color:inherit;
+  border:1px solid rgba(255,0,0,.35);
+  border-radius:12px;
+  padding:12px 14px;
+  font-weight:800;
+  cursor:pointer;
+}  
+
+/* scroll tylko dla zakładki „policy” */
+.tab.policy{
+  max-height: 60vh;      /* np. 60% wysokości okna */
+  overflow-y: auto;      /* włącza pionowy scrollbar */
+  padding-right: 12px;   /* mały odstęp, żeby tekst nie chował się pod scrollem */
+}
+    
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <img class="decor-logo" src="assets/syntri_logo_black.png" alt="Syntri logo"/>
+        <h1 id="title" class="page-title" data-i18n="title">Syntri • QR Generator</h1>
+      </header>
+
+      <!-- Simplified nav: Login / Language -->
+      <nav class="subnav" aria-label="App navigation">
+        <a href="#" id="nav-login" data-i18n="nav_login">Login</a>
+        <a href="#" id="nav-account" style="display:none" data-i18n="nav_account">Account</a>
+        <a href="#" id="nav-settings" style="display:none" data-i18n="nav_settings">Settings</a>
+        <a href="#" id="nav-signout" style="display:none" data-i18n="nav_signout">Sign out</a>
+        <a href="#" id="nav-language" data-i18n="nav_language" style="margin-left:auto">Language</a>
+      </nav>
+      <div id="lang-panel" class="lang-panel" aria-hidden="true">
+        <button type="button" class="btn btn-ghost" id="btn-pl">PL</button>
+        <button type="button" class="btn btn-ghost" id="btn-en">EN</button>
+      </div>
+
+      <!-- Single section: Input + compact options + preview -->
+      <div class="grid">
+        <section>
+          <div class="field">
+            <label for="text" id="label-text" data-i18n="label_text">Treść (URL / tekst)</label>
+            <input id="text" type="text" placeholder="https://syntriagency.github.io/syntri-qr-generator/" value="https://syntri.app" />
+          </div>
+
+          <div class="row" style="margin-top:12px;">
+            <div>
+              <label for="size" id="label-size" data-i18n="label_size">Rozmiar (px)</label>
+              <input id="size" type="number" min="64" max="2048" step="16" value="100" />
+            </div>
+            <div>
+              <label for="margin" id="label-margin" data-i18n="label_margin">Margines</label>
+              <input id="margin" type="number" min="0" max="16" step="1" value="2" />
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:12px;">
+            <div>
+              <label for="ecc" id="label-ecc" data-i18n="label_ecc">Korekcja błędów</label>
+              <select id="ecc">
+                <option value="L">L (7%)</option>
+                <option value="M" selected>M (15%)</option>
+                <option value="Q">Q (25%)</option>
+                <option value="H">H (30%)</option>
+              </select>
+            </div>
+            <div>
+              <label for="fg" id="label-color" data-i18n="label_color">Kolor kodu</label>
+              <input id="fg" type="color" value="#000000" />
+            </div>
+          </div>
+
+          <label style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+            <input id="transparent" type="checkbox"> <span class="muted" data-i18n="label_transparent">Przezroczyste tło</span>
+          </label>
+
+          <div style="display:flex; gap:10px; align-items:center; margin-top:16px;">
+            <button id="generate" class="btn btn-primary" data-i18n="btn_generate">Generuj</button>
+            <button id="clear" class="btn btn-ghost" data-i18n="btn_clear">Wyczyść</button>
+            <span id="usagePill" class="usage-pill" title="Free monthly quota">10 / 10</span>
+          </div>
+
+<!-- Change Password modal (dopasowany do stylu login) -->
+<div id="changePassModal" class="modal" aria-hidden="true">
+  <div class="modal-card" style="position:relative">
+    <!-- X close button -->
+    <button id="cpClose" type="button" aria-label="Close"
+            style="position:absolute;top:12px;right:16px;
+                   background:none;border:0;font-size:24px;
+                   font-weight:700;line-height:1;cursor:pointer;
+                   color:var(--muted)">
+      ×
+    </button>
+
+    <h3>Change password</h3>
+
+    <div class="field-row">
+      <label class="muted">Current password</label>
+      <input id="cpCurrent" type="password" autocomplete="current-password"
+             placeholder="your current password" />
+    </div>
+
+    <div class="field-row">
+      <label class="muted">New password</label>
+      <input id="cpNew" type="password" autocomplete="new-password"
+             placeholder="min. 6 characters" />
+    </div>
+
+    <div class="field-row">
+      <label class="muted">Repeat new password</label>
+      <input id="cpNew2" type="password" autocomplete="new-password"
+             placeholder="repeat new password" />
+    </div>
+
+    <div class="modal-actions" style="justify-content:flex-end">
+      <button class="btn btn-ghost" id="cpCancel">Cancel</button>
+      <button class="btn btn-primary" id="cpSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- === Confirm Cancel Subscription Modal === -->
+<div id="confirmCancel" class="modal">
+  <div class="modal-card">
+    <h3 data-i18n="cancel_confirm_title">Cancel subscription?</h3>
+    <p data-i18n="cancel_confirm_body">
+      Your subscription will stay active until the end of the current billing period.
+      Do you really want to cancel?
+    </p>
+    <div class="modal-actions">
+      <button id="cancelNo"  class="btn btn-ghost"   data-i18n="cancel_no">No</button>
+      <button id="cancelYes" class="btn btn-warning" data-i18n="cancel_yes">Yes, cancel</button>
+    </div>
+  </div>
+</div>          
+
+          
+<!-- DEV panel – widoczny tylko z ?dev=1 -->
+<div id="dev-panel" style="display:none; margin-top:8px; display:flex; gap:8px;">
+  <button id="dev-exhaust" class="btn btn-ghost">DEV: Max limit</button>
+  <button id="dev-reset"   class="btn btn-ghost">DEV: Reset</button>
+</div>
+          
+          <p class="muted" id="note-offline" style="margin-top:10px;" data-i18n="note_offline">
+            Działa lokalnie w przeglądarce — żadne dane nie opuszczają urządzenia.
+          </p>
+        </section>
+
+        <section id="sec-preview">
+          <div class="preview">
+            <div id="qr" class="qr-box"></div>
+          </div>
+        </section>
+      </div>
+
+      <footer>
+        <div class="left">
+          <span class="kbd">⌘ / Ctrl + Enter</span>
+          <span class="muted" id="hint-hotkey" data-i18n="hint_hotkey">— szybkie generowanie</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <a class="link" href="#" id="shareLink" data-i18n="link_share" title="Udostępnij parametry w URL">Udostępnij</a>
+          <button id="copyLink" class="btn btn-ghost" data-i18n="btn_copy">Kopiuj link</button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+ <!-- Login / Register modal (Email + Password) -->
+<div id="loginModal" class="modal" aria-hidden="true">
+  <div class="modal-card">
+    <h3 data-i18n="login_title">Account</h3>
+
+    <div class="field-row">
+      <label for="loginEmail" class="muted" data-i18n="login_email_label">Email</label>
+      <input id="loginEmail" type="email" placeholder="you@domain.com"
+             required autocomplete="email" inputmode="email" />
+    </div>
+
+    <div class="field-row">
+      <label for="loginPass" class="muted">Hasło</label>
+      <input id="loginPass" type="password" placeholder="min. 6 znaków"
+             required autocomplete="current-password" />
+    </div>
+
+    <div class="field-row" style="margin-top:12px;display:flex;gap:8px;">
+      <button id="btnRegister" class="btn btn-primary" type="button">Zarejestruj</button>
+      <button id="btnLogin"    class="btn btn-ghost"   type="button">Zaloguj</button>
+      <button id="btnForgot"   class="btn btn-ghost"   type="button">Forgot password?</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="loginCancel" data-i18n="btn_cancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+  <!-- Account modal -->
+  <div id="accountModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <h3 data-i18n="account_title">Account</h3>
+      <p class="muted" id="accountEmail"></p>
+      <p class="muted" id="accountPlan"></p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="openPortal" data-i18n="btn_manage_billing">Manage billing</button>
+        <button class="btn btn-primary" id="accountClose" data-i18n="btn_close">Close</button>
+      </div>
+    </div>
+  </div>
+
+
+ <div id="settingsModal" class="modal" aria-hidden="true">
+  <div class="modal-card settings-split">
+      <!-- X close button -->
+    <button id="settingsClose" type="button" aria-label="Close settings"
+            style="position:absolute;top:12px;right:16px;
+                   background:none;border:0;font-size:24px;
+                   font-weight:700;line-height:1;cursor:pointer;
+                   color:var(--muted)">
+      ×
+    </button>
+    <aside class="settings-nav">
+      <button data-tab="account">Account</button>
+      <button data-tab="policy">Policy</button>
+      <button data-tab="subscription">Subscription</button>
+      <button data-tab="support">Support</button>
+    
+    </aside>
+
+    <section class="settings-content">
+      <div class="tab account">
+  <div class="acc-wrap">
+    <div class="acc-header">
+      <h4 class="acc-title" data-i18n="account_title">Account</h4>
+      <div class="acc-sub" data-i18n="account_manage">Manage your profile & security</div>
+    </div>
+
+    <!-- Karta: Profil -->
+    <article class="info-card">
+      <div class="info-head">
+        <div class="info-title" data-i18n="account_profile">Profile</div>
+        <span class="badge" id="planName">Free</span>
+      </div>
+      <ul class="info-list">
+        <li>Email: <strong id="accEmail">—</strong></li>
+        <li data-i18n="account_status">Status: Active</li>
+      </ul>
+      <div class="action-row">
+        <button id="btnChangePass" class="plan-btn secondary" data-i18n="account_change_password">Change password</button>
+      </div>
+    </article>
+
+    <!-- Karta: Bezpieczeństwo -->
+    <article class="info-card" style="margin-top:12px">
+      <div class="info-head">
+        <div class="info-title" data-i18n="account_security">Security</div>
+      </div>
+      <ul class="info-list">
+        <li data-i18n="account_security_hint">Use a strong, unique password.</li>
+      </ul>
+      <div class="action-row">
+        <button id="btnDeleteAcc" class="btn-danger" data-i18n="account_delete">Delete account</button>
+      </div>
+    </article>
+  </div>
+</div>
+
+      <div class="tab policy">
+  <h4 data-i18n="policy_title">Privacy Policy</h4>
+  <p class="muted" data-i18n="policy_updated">Last update: 18 Sep 2025</p>
+
+  <h5 data-i18n="policy_scope_h">Scope</h5>
+  <p data-i18n="policy_scope_p">The app generates QR codes locally in your browser. By default, we do not send the content you enter to any server.</p>
+
+  <h5 data-i18n="policy_data_h">Data we process</h5>
+  <ul>
+    <li data-i18n="policy_data_local">In-browser (localStorage): settings, usage counter, language, optional mock flags.</li>
+    <li data-i18n="policy_data_no_server">We do not store QR contents or settings on our servers.</li>
+  </ul>
+
+  <h5 data-i18n="policy_account_h">Account & login</h5>
+  <p data-i18n="policy_account_p">Current version uses mock-auth (local only). If we enable real login (e.g., Firebase Auth), we will update this policy accordingly.</p>
+
+  <h5 data-i18n="policy_payments_h">Payments & subscriptions</h5>
+  <p data-i18n="policy_payments_p">UI contains mock Stripe/PayPal buttons. If we enable real payments, Stripe/PayPal will process payment data; this policy will be updated.</p>
+
+  <h5 data-i18n="policy_legal_h">Legal bases & retention</h5>
+  <ul>
+    <li data-i18n="policy_legal_gdpr">GDPR legal bases: legitimate interest; consent for optional features.</li>
+    <li data-i18n="policy_retention_local">localStorage stays on your device until you clear it.</li>
+  </ul>
+
+  <h5 data-i18n="policy_rights_h">Your rights</h5>
+  <p data-i18n="policy_rights_p">Access, rectification, erasure, restriction, portability, objection (where applicable). For local data, clear your browser storage.</p>
+
+  <h5 data-i18n="policy_security_h">Security</h5>
+  <p data-i18n="policy_security_p">Served over HTTPS. Client-side processing. Future providers will meet security standards.</p>
+
+  <h5 data-i18n="policy_children_h">Children</h5>
+  <p data-i18n="policy_children_p">Service intended for adults; no data knowingly collected from children.</p>
+
+  <h5 data-i18n="policy_contact_h">Contact</h5>
+ <p><a class="link" href="mailto:syntri.business.agency@gmail.com">syntri.business.agency@gmail.com</a></p>
+</div>
+
+ <!-- === Subscription cards styl -->
+      <div class="tab subscription">
+  <div class="subs-wrap">
+    <div class="subs-header">
+      <h4 class="subs-title" data-i18n="subscription_title">Subscription</h4>
+      <div class="subs-sub" data-i18n="subscription_choose">Choose Your Plan</div>
+    </div>
+
+    <div class="plans">
+      <!-- FREE -->
+      <article class="plan-card" data-plan="Free">
+        <div class="plan-head">
+          <div class="plan-name">Free</div>
+          <div class="plan-price" data-i18n="price_free">Free</div>
+        </div>
+        <ul class="plan-feats">
+          <li>15 QR codes / month</li>
+          <li>PNG &amp; SVG export</li>
+          <li>1 device</li>
+        </ul>
+        <button class="plan-btn secondary" data-action="choose" data-plan="Free"
+                data-i18n="cta_free">Free plan</button>
+      </article>
+
+      <!-- PRO £3.99 -->
+      <article class="plan-card" data-plan="Pro">
+        <div class="plan-head">
+          <div class="plan-name">Pro</div>
+          <div class="plan-price">£3.99 / <span data-i18n="price_month">month</span></div>
+        </div>
+        <ul class="plan-feats">
+          <li>Unlimited QR codes</li>
+          <li>No watermark</li>
+          <li>Priority support</li>
+        </ul>
+        <button class="plan-btn" data-action="choose" data-plan="Pro"
+                data-i18n="cta_pro">Subscribe £3.99/month</button>
+      </article>
+    </div>
+
+
+<!--
+  ===== Subscription footer & actions =====
+  • Wyświetla daty startu i końca subskrypcji
+  • Pokazuje liczbę dni do wygaśnięcia
+  • Zawiera guzik „Cancel at period end” (anuluje subskrypcję po zakończeniu okresu)
+-->
+
+<div class="subs-footer">
+  <span data-i18n="started_label">Started:</span>
+  <strong id="subStarted">—</strong>
+  |
+  <span data-i18n="expires_label">Expiring:</span>
+  <strong id="subExpires">—</strong>
+  <span id="subDaysLeft" class="muted"></span>
+</div>
+
+
+<!-- 🔘 Cancel subscription button (start hidden) -->
+<div class="subs-footer-actions">
+  <button id="btnCancelSub" class="btn btn-warning">
+  <span data-i18n="cancel_sub">Cancel at period end</span>
+</button>
+</div>
+
+  
+<div class="tab support">
+  <p>Masz pytania lub zgłoszenia błędów? Napisz do nas:</p>
+  <p>Email:
+    <a class="link" href="mailto:syntri.business.agency@gmail.com">
+      syntri.business.agency@gmail.com
+    </a>
+  </p>
+  <p class="muted">Odpowiadamy zwykle w ciągu 1–2 dni roboczych.</p>
+</div>
+
+  
+  <!-- Paywall modal -->
+  <div id="paywallModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <h3 data-i18n="paywall_title">Free limit reached</h3>
+      <p class="muted" data-i18n="paywall_copy">You used all free codes this month. Choose a plan to continue.</p>
+      <div class="modal-actions" style="justify-content:space-between">
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" id="subscribeStripe">Subscribe – Stripe</button>
+        </div>
+        <button class="btn btn-ghost" id="paywallClose" data-i18n="btn_close">Close</button>
+      </div>
+    </div>
+  </div>
+
+   <!-- Firebase compat build – działa w zwykłym <script> -->
+
+
+
+  <!-- ✅ Stałe z adresami API – tuż pod Firebase -->
+  <script>
+    const API_FN_ROOT     = 'https://us-central1-syntri-qr-generator.cloudfunctions.net/api';
+    const API_BASE_PUBLIC = API_FN_ROOT;          // publiczne (health, whoami, create-stripe-portal)
+    const API_BASE_PROT   = API_FN_ROOT + '/api';  // chronione (create-checkout-session)
+  </script>
+      
+  <script>
+    // ----------------------------------------------
+    // helpers / state
+    // ----------------------------------------------
+    const $ = (s) => document.querySelector(s);
+    const params = new URLSearchParams(location.search);
+    const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
+    const persist = (k,v) => localStorage.setItem(`syntri.qr.${k}`, v);
+    const load = (k, def) => localStorage.getItem(`syntri.qr.${k}`) ?? def;
+
+    const text = $('#text'); const size=$('#size'); const ecc=$('#ecc');
+    const margin=$('#margin'); const fg=$('#fg'); const transparent=$('#transparent');
+    const qrBox=$('#qr'); const usagePill = $('#usagePill');
+
+
+    
+    let qr;
+
+   // --- metrics (stub) ---
+   // Podmień na wywołanie Firestore, gdy podepniesz Firebase.
+   async function bumpQrCount(){
+   if (!AUTH.isLoggedIn()) return;          // Zliczaj tylko zalogowanych
+   // TODO: Firestore: increment(qrCount) dla bieżącego użytkownika
+     console.debug('bumpQrCount (mock) – zalogowany:', AUTH.email());
+   }
+    
+    function clamp(n, min, max){ return Math.min(Math.max(n, min), max); }
+
+    function filename(ext){
+    const raw = (text?.value || '').trim() || 'syntri';
+    const slug = raw
+    .replace(/^https?:\/\//,'')
+    .slice(0,64)
+    .replace(/[^a-z0-9\-_.]+/gi,'-')
+    .replace(/-+/g,'-')
+    .replace(/(^-|-$)/g,'');
+    return `syntri-qr-${slug || 'code'}.${ext}`;
+}
+
+  // ----------------------------------------------
+  // --- modal helpers (uniwersalne) ---
+  // ----------------------------------------------
+
+// --- Change-password modal ---
+on($('#btnChangePass'), 'click', () => {
+  // najpierw zamknij ustawienia
+  closeModal('#settingsModal');
+  // a dopiero potem pokaż modal zmiany hasła
+  openModal('#changePassModal');
+});
+
+on($('#cpCancel'), 'click', () => closeModal('#changePassModal'));
+
+// JS – obsługa zamykania
+on($('#cpClose'),  'click', () => closeModal('#changePassModal'));
+on($('#cpCancel'), 'click', () => closeModal('#changePassModal'));
+
+// setting - zamykanie ustawien
+on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
+      
+  
+    // ----------------------------------------------
+    // Auth (mock) – podmień na Firebase Auth
+    // ----------------------------------------------
+    const AUTH = {
+  isLoggedIn: () => !!(window.auth && window.auth.currentUser),
+  email:      () => window.auth?.currentUser?.email || '',
+  loginMock(email){
+    console.warn('loginMock już nieużywany – zaloguj się przez Firebase UI');
+  },
+  async logout(){
+    try {
+      await signOut(window.auth);
+    } catch(e){
+      console.error(e);
+    }
+    renderAuthUI();
+  }
+};
+
+// zapamiętuje ostatnią wartość expiryTimeMs z Firestore
+let lastExpiryMs = 0;   // zapamiętamy ostatnią wartość
+    
+function renderAuthUI() {
+  const logged = AUTH.isLoggedIn();
+  $('#nav-login').style.display   = logged ? 'none' : 'inline-block';
+  $('#nav-account').style.display = logged ? 'inline-block' : 'none';
+  $('#nav-settings').style.display = logged ? 'inline-block' : 'none';
+  $('#nav-signout').style.display = logged ? 'inline-block' : 'none';
+  // logged → liczenie usage na serwerze (tu: unlimited until backend)
+  renderUsagePill();
+  ensureHomeGate();
+
+  // ✅ odśwież licznik „days left”, gdy menu/zakładka jest już w DOM
+  if (logged) {
+    updateSubFooter(lastExpiryMs);
+  }
+}
+
+    
+    // ----------------------------------------------
+// Usage & Plans (front-gate for anon + logged)
+// ----------------------------------------------
+
+// Plan (mock). Na razie trzymany w localStorage; gdy podepniesz backend, zwracaj realny plan.
+// Ustaw ręcznie w konsoli np.: localStorage.setItem('syntri.plan','Free'|'Basic'|'Pro')
+function getPlan(){
+  return localStorage.getItem('syntri.plan') || 'Free';
+}
+// Reset miesięczny: 1. dzień następnego miesiąca, 00:00
+function monthResetAtMs(){
+  const d = new Date();
+  const y = d.getFullYear(), m = d.getMonth();
+  return new Date(y, m + 1, 1, 0, 0, 0, 0).getTime();
+}
+
+function usageKey(){
+  const d=new Date();
+  const ym=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`;
+  return `syntri.qr.usage.${ym}`;
+}
+
+// Quota per plan – miesięczne limity
+function planQuota(plan){
+  switch (plan) {
+    case 'Pro':   return Infinity; // brak limitu
+    case 'Basic': return 100;      // 100 / mies.
+    default:      return 15;       // Free – 15 / mies.
+  }
+}
+
+// Zwraca {used, quota, resetAt}
+function getUsage(){
+  const plan = getPlan();
+  const quota = planQuota(plan);
+  const resetAt = monthResetAtMs();
+  const def = { used:0, quota, resetAt };
+
+  try {
+    const raw = JSON.parse(localStorage.getItem(usageKey()) || JSON.stringify(def));
+    raw.quota = quota;
+    raw.resetAt = resetAt;
+    return raw;
+  } catch {
+    return def;
+  }
+}
+
+function saveUsage(u){
+  // zapisujemy dla wszystkich (anon + logged), by front-gate był spójny
+  localStorage.setItem(usageKey(), JSON.stringify(u));
+}
+
+function renderUsagePill(){
+  const u = getUsage();
+  const plan = getPlan();
+  const left = (u.quota===Infinity) ? '∞' : Math.max(0, u.quota - u.used);
+  usagePill.textContent = (u.quota===Infinity) ? `${plan} • unlimited` : `${left} / ${u.quota}`;
+  usagePill.title = (u.quota===Infinity) ? 'Paid plan' : 'Monthly quota';
+  ensureHomeGate();
+}
+// --- Stripe: openCheckout (redirect-based) ---
+    
+async function openCheckout() {
+  const btn = document.activeElement;
+  if (btn) {
+    btn.disabled = true;
+    btn.setAttribute('aria-busy','true');
+  }
+  try {
+    // >>> POBIERZ ID TOKEN UŻYTKOWNIKA <<<
+    const token = await auth.currentUser.getIdToken();
+
+    const res = await fetch(`${API_BASE_PROT}/create-checkout-session`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({})
+});
+
+    const data = await res.json();
+    if (!res.ok || !data?.url) throw new Error(data?.error || `HTTP ${res.status}`);
+    window.location.href = data.url;
+  } catch (e) {
+    console.error('Checkout error:', e);
+    alert('Could not start checkout. Please try again.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+    }
+  }
+}
+
+    
+// Konsumpcja: { ok, remaining, resetMs }
+function tryConsumeUsage(){
+  const u = getUsage();
+  if (u.quota === Infinity) return { ok:true, remaining:Infinity, resetMs:0 };
+
+  if (u.used >= u.quota){
+    const resetMs = Math.max(0, u.resetAt - Date.now());
+    return { ok:false, remaining:0, resetMs };
+  }
+  u.used += 1;
+  saveUsage(u);
+  renderUsagePill();
+  return { ok:true, remaining: u.quota - u.used, resetMs: Math.max(0, u.resetAt - Date.now()) };
+}
+    // --- helpers: szybkie sprawdzenie limitu na stronie głównej ---
+function canGenerateNow(){ 
+  const u = getUsage();
+  return u.quota === Infinity || u.used < u.quota;
+}
+
+function remainingMs(){
+  const u = getUsage();
+  return u.quota === Infinity ? 0 : Math.max(0, u.resetAt - Date.now());
+}
+
+    // ----------------------------------------------
+    // QR render
+    // ----------------------------------------------
+    function render(){
+      qrBox.innerHTML = '';
+      const placeholderDefault = 'https://syntriagency.github.io/syntri-qr-generator/';
+      const value = text.value.trim() || placeholderDefault;
+      const colorDark = fg.value || '#000000';
+      const colorLight = transparent?.checked ? 'rgba(0,0,0,0)' : '#ffffff';
+      const width = clamp(parseInt(size.value||100,10), 64, 2048);
+      const m = clamp(parseInt(margin.value||2,10), 0, 16);
+
+      qr = new QRCode(qrBox, {
+        text: value, width, height: width,
+        colorDark, colorLight,
+        correctLevel: QRCode.CorrectLevel[ecc.value || 'M'],
+        margin: m
+      });
+
+      qrBox.setAttribute('role','img');
+      qrBox.setAttribute('aria-label', `QR code, size ${width}px, ECC ${ecc.value}, margin ${m}`);
+    }
+
+    // downloads (from animation canvas)
+    function downloadCanvasAsPNG(canvas, name){
+      const scale = 2;
+      const off = document.createElement('canvas');
+      off.width = canvas.width*scale; off.height = canvas.height*scale;
+      const ctx = off.getContext('2d');
+      if(!transparent.checked){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,off.width,off.height); }
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(canvas, 0, 0, off.width, off.height);
+      const a = document.createElement('a'); a.download = name; a.href = off.toDataURL('image/png'); a.click();
+    }
+    function downloadCanvasAsSVG(canvas, name, transparentBg){
+      const pngData = canvas.toDataURL('image/png');
+      const bg = transparentBg ? '' : '<rect width="100%" height="100%" fill="#fff"/>';
+      const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">${bg}<image href="${pngData}" width="100%" height="100%"/></svg>`;
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ----------------------------------------------
+    // Cinematic modal + usage gate
+    // ----------------------------------------------
+    function startCinematic(){
+      if(!qr || !qr._oQRCode){ render(); }
+      if(!qr || !qr._oQRCode){ alert(i18n('alert_generate_first')); return; }
+
+      const q = qr._oQRCode;
+      const modules = q.moduleCount;
+      const matrix  = q.modules || [];
+      const cell = 10;
+      const marginCells = clamp(parseInt(margin.value||2,10), 0, 16);
+      const quietPx = marginCells * cell;
+      const canvasSize = (modules + marginCells*2) * cell;
+
+      const dark = [];
+      for (let y = 0; y < modules; y++) for (let x = 0; x < modules; x++) if (matrix[y] && matrix[y][x]) dark.push([x,y]);
+      for (let i=dark.length-1; i>0; i--){ const j = Math.floor(Math.random()*(i+1)); [dark[i],dark[j]] = [dark[j],dark[i]]; }
+
+      const overlay = document.createElement('div'); overlay.className='syntri-overlay';
+      const modal = document.createElement('div'); modal.className='syntri-modal';
+      const closeBtn = document.createElement('div'); closeBtn.className='syntri-close'; closeBtn.textContent = i18n('btn_close');
+      closeBtn.onclick = ()=>{ overlay.style.opacity='0'; setTimeout(()=>overlay.remove(),200); };
+
+      const title = document.createElement('h2'); title.className='syntri-title'; title.textContent = i18n('modal_title');
+      const sub   = document.createElement('div'); sub.className='syntri-sub'; sub.textContent = i18n('modal_sub');
+      const grid  = document.createElement('div'); grid.className='syntri-grid';
+      const hint  = document.createElement('div'); hint.className='muted'; hint.id='cin-hint'; hint.textContent = i18n('modal_hint');
+
+      const cv = document.createElement('canvas'); cv.id='cin-canvas'; cv.width=canvasSize; cv.height=canvasSize;
+      const ctx = cv.getContext('2d', { alpha: true });
+      if (!$('#transparent')?.checked){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height); }
+
+      const actions = document.createElement('div'); actions.className='syntri-actions';
+      const btnPng = document.createElement('button'); btnPng.className='btn btn-ghost'; btnPng.textContent = i18n('btn_png'); btnPng.disabled = true;
+      const btnSvg = document.createElement('button'); btnSvg.className='btn btn-ghost'; btnSvg.textContent = i18n('btn_svg'); btnSvg.disabled = true;
+      actions.appendChild(btnPng); actions.appendChild(btnSvg);
+
+      grid.appendChild(cv);
+      modal.appendChild(closeBtn); modal.appendChild(title); modal.appendChild(sub);
+      modal.appendChild(grid); modal.appendChild(actions); modal.appendChild(hint);
+      overlay.appendChild(modal); document.body.appendChild(overlay);
+      requestAnimationFrame(()=>{ overlay.style.opacity='1'; });
+
+      const totalMs = 5000;
+      const t0 = performance.now();
+      const N = dark.length;
+      const fgColor = ($('#fg')?.value) || '#000000';
+      let lastDrawn = 0;
+
+      function frame(now){
+        const elapsed = Math.max(0, now - t0);
+        const t = Math.min(1, elapsed / totalMs);
+        const shouldDraw = (N === 0) ? 0 : Math.floor(N * t);
+
+        if (N > 0){
+          ctx.fillStyle = fgColor;
+          for (let i = lastDrawn; i < shouldDraw; i++){
+            const [x,y] = dark[i];
+            ctx.fillRect(quietPx + x*cell, quietPx + y*cell, cell, cell);
+          }
+          lastDrawn = shouldDraw;
+        }
+        const pct = Math.round(t*100);
+        hint.textContent = (t < 1) ? `${i18n('modal_hint')} ${pct}%` : '';
+
+        if (t < 1){
+          requestAnimationFrame(frame);
+        } else {
+          // --- ANIMATION DONE → usage gate (LOCAL) ---
+const gate = tryConsumeUsage();   // używa poprawionego getUsage/saveUsage
+hint.textContent = '';
+
+if (!gate.ok){
+  // paywall + cooldown
+  openModal('#paywallModal');
+  showCooldownUI(Date.now() + gate.resetMs);
+  // przyciski zostają zablokowane
+} else {
+  // enable downloads
+  document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
+    .forEach(el => { el.style.display='block'; });
+  btnPng.disabled = false; btnSvg.disabled = false;
+  btnPng.onclick = () => downloadCanvasAsPNG(cv, filename('png'));
+  btnSvg.onclick = () => downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+
+  // odśwież UI licznika i ewentualnie home gate
+  renderUsagePill();
+  ensureHomeGate();
+}
+
+// ----------------------------------------------
+// Cooldown UI (zamiana preview na odliczanie + CTA)
+// ----------------------------------------------
+let cooldownTimerId = null;
+
+function formatDHMS(ms){
+  const s = Math.max(0, Math.floor(ms/1000));
+  const d = Math.floor(s/86400);
+  const h = Math.floor((s%86400)/3600);
+  const m = Math.floor((s%3600)/60);
+  const sec = s%60;
+  return { d, h, m, s:sec };
+}
+
+function showCooldownUI(resetMs){
+  const preview = document.querySelector('#sec-preview .preview');
+  if (!preview) return;
+
+  preview.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.style.textAlign='center';
+  wrap.style.padding='20px';
+
+  const h = document.createElement('h3');
+  h.textContent = i18n('paywall_title') || 'Free limit reached';
+  h.style.margin='0 0 6px 0';
+
+  const p = document.createElement('p');
+  p.className = 'muted';
+  p.style.margin='0 0 12px 0';
+  p.textContent = i18n('paywall_copy') || 'You used all free codes this month.';
+
+  const timer = document.createElement('div');
+  timer.style.fontWeight='800';
+  timer.style.fontSize='18px';
+  timer.style.margin='8px 0 12px 0';
+  timer.id = 'cooldown-timer';
+
+  const ctaRow = document.createElement('div');
+  ctaRow.style.display='flex';
+  ctaRow.style.gap='10px';
+  ctaRow.style.justifyContent='center';
+
+  const btnUpgrade1 = document.createElement('button');
+  btnUpgrade1.className='btn btn-primary';
+  btnUpgrade1.textContent='Upgrade – Stripe';
+  btnUpgrade1.onclick = () => openCheckout();
+
+
+  ctaRow.appendChild(btnUpgrade1);
+
+  wrap.appendChild(h); wrap.appendChild(p); wrap.appendChild(timer); wrap.appendChild(ctaRow);
+  preview.appendChild(wrap);
+
+  if (cooldownTimerId) clearInterval(cooldownTimerId);
+  const tick = ()=>{
+    const ms = Math.max(0, resetMs - Date.now());
+    const {d,h,m,s} = formatDHMS(ms);
+    timer.textContent = (d>0 ? `${d}d ` : '') + `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (ms <= 0){
+      clearInterval(cooldownTimerId);
+      renderUsagePill();
+      // przywróć pusty preview z ramką QR
+      document.querySelector('#sec-preview .preview').innerHTML = '<div id="qr" class="qr-box"></div>';
+      render();
+    }
+  };
+  tick();
+  cooldownTimerId = setInterval(tick, 1000);
+}
+    
+function ensureHomeGate(){
+  const ok = canGenerateNow();
+
+  // blokada guzika
+  const btn = document.querySelector('#generate');
+  if (btn) { 
+    btn.disabled = !ok; 
+    btn.setAttribute('aria-disabled', String(!ok));
+    btn.title = ok ? '' : (i18n('paywall_title') || 'Free limit reached'); 
+  }
+
+  if (!ok){
+    showCooldownUI(Date.now() + remainingMs());
+  } else {
+    const preview = document.querySelector('#sec-preview .preview');
+    if (preview && preview.querySelector('#cooldown-timer')) {
+      preview.innerHTML = '<div id="qr" class="qr-box"></div>';
+      render();
+    }
+  }
+}   
+
+    // ----------------------------------------------
+    // URL state / live events / init
+    // ----------------------------------------------
+    function updateShareLink(){
+      const p = new URLSearchParams({
+        t:text.value.trim(), s:size.value, e:ecc.value, m:margin.value, c:fg.value, bg: transparent.checked ? '1':'0'
+      });
+      const url = location.origin + location.pathname + '?' + p.toString();
+      $('#shareLink').href = url;
+      $('#copyLink').onclick = async ()=>{ try{ await navigator.clipboard.writeText(url); }catch{} };
+    }
+
+    function syncFromURL(){
+      if(params.has('t')) text.value = decodeURIComponent(params.get('t'));
+      if(params.has('s')) size.value = params.get('s');
+      if(params.has('e')) ecc.value = params.get('e');
+      if(params.has('m')) margin.value = params.get('m');
+      if(params.has('c')) fg.value = params.get('c');
+      if(params.has('bg')) transparent.checked = params.get('bg') === '1';
+    }
+    function restoreState(){
+      if(!params.has('t')) text.value   = load('t', text.value);
+      if(!params.has('s')) size.value   = load('s', size.value);
+      if(!params.has('e')) ecc.value    = load('e', ecc.value);
+      if(!params.has('m')) margin.value = load('m', margin.value);
+      if(!params.has('c')) fg.value     = load('c', fg.value);
+      if(!params.has('bg')) transparent.checked = (load('bg','0')==='1');
+    }
+    function saveState(){
+      persist('t', text.value.trim()); persist('s', size.value);
+      persist('e', ecc.value); persist('m', margin.value);
+      persist('c', fg.value); persist('bg', transparent.checked ? '1':'0');
+    }
+
+    function debounce(fn, ms=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+    const liveRender = debounce(()=>{ render(); updateShareLink(); saveState(); }, 250);
+    ['input','change'].forEach(ev=>{
+      [text,size,ecc,margin,fg,transparent].forEach(el=> on(el, ev, liveRender));
+    });
+
+    $('#generate').addEventListener('click', async () => {
+  render(); updateShareLink(); saveState(); startCinematic();
+  try { await bumpQrCount(); console.log("QR count incremented"); } 
+  catch (err) { console.error("bumpQrCount error", err); }
+});
+
+$('#clear').addEventListener('click', () => {
+  text.value=''; render(); updateShareLink(); saveState();
+});
+
+document.addEventListener('keydown', async e => {
+  if ((e.ctrlKey||e.metaKey) && e.key==='Enter'){
+    render(); updateShareLink(); saveState(); startCinematic();
+    try { await bumpQrCount(); } 
+    catch (err){ console.error(err); }
+  }
+});
+    (function initWhenReady(){
+      const start = Date.now();
+      (function check(){
+        if (window.QRCode) { syncFromURL(); restoreState(); render(); updateShareLink(); renderAuthUI(); ensureHomeGate(); }
+        else if (Date.now() - start < 8000) setTimeout(check, 50);
+        else { console.error('QRCode library failed to load'); alert('QR library failed to load. Please refresh (Ctrl/Cmd+F5).'); }
+      })();
+    })();
+
+    // ----------------------------------------------
+    // Language panel
+    // ----------------------------------------------
+    const navLanguage = document.getElementById('nav-language');
+    const langPanel   = document.getElementById('lang-panel');
+    navLanguage?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const show = !langPanel.classList.contains('show');
+      langPanel.classList.toggle('show', show);
+      langPanel.setAttribute('aria-hidden', show ? 'false' : 'true');
+      navLanguage.classList.toggle('active', show);
+    });
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape' && langPanel.classList.contains('show')){
+        langPanel.classList.remove('show'); langPanel.setAttribute('aria-hidden','true'); navLanguage.classList.remove('active');
+      }
+    });
+    document.getElementById('btn-pl')?.addEventListener('click', ()=>{ applyI18n('pl'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
+    document.getElementById('btn-en')?.addEventListener('click', ()=>{ applyI18n('en'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
+
+    // ----------------------------------------------
+    // Login / Account / Paywall modals (mock)
+    // ----------------------------------------------
+    function openModal(sel){ const m=$(sel); if(!m) return; m.classList.add('show'); m.setAttribute('aria-hidden','false'); }
+    function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
+
+    // Login
+    on($('#nav-login'),'click',(e)=>{ e.preventDefault(); openModal('#loginModal'); });
+    on($('#loginCancel'),'click',()=> closeModal('#loginModal'));
+    
+
+    // Account
+    on($('#nav-account'),'click',(e)=>{
+    e.preventDefault();
+    $('#accountEmail').textContent = AUTH.email() || '—';
+    $('#accountPlan').textContent  = 'Plan: ' + getPlan();
+    openModal('#accountModal');
+    });
+    
+    on($('#accountClose'),'click',()=> closeModal('#accountModal'));
+    
+
+on($('#openPortal'),'click', async ()=>{
+  try {
+    const email = AUTH.email();
+    if (!email) { alert('Najpierw się zaloguj.'); return; }
+
+    const resp = await fetch(`${API_BASE_PUBLIC}/create-stripe-portal?email=${encodeURIComponent(email)}`);
+    const ct = resp.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await resp.json() : null;
+
+    if (!resp.ok || !data?.url) throw new Error(data?.error || `HTTP ${resp.status}`);
+    window.location.href = data.url;
+  } catch (err) {
+    console.error(err);
+    alert('Nie udało się otworzyć portalu Stripe.');
+  }
+});
+
+    
+  
+    // Paywall
+    on($('#paywallClose'),'click',()=> closeModal('#paywallModal'));
+    on($('#subscribeStripe'),'click', () => openCheckout());
+    
+
+// === Settings modal ===
+function activateSettingsTab(tab='account'){
+  document.querySelectorAll('#settingsModal .settings-nav button')
+    .forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('#settingsModal .settings-content .tab')
+    .forEach(t => t.classList.toggle('active', t.classList.contains(tab)));
+}
+
+on($('#nav-settings'),'click',(e)=>{
+  e.preventDefault();
+
+ // fill up dane w split settings
+const email = AUTH.email();
+// najpierw spróbuj odczytać zapisany plan z localStorage
+const planStored = localStorage.getItem('syntri.plan')
+                 || (AUTH.isLoggedIn() ? 'Free' : 'Free');
+
+const accEmail = $('#accEmail');
+if (accEmail) accEmail.textContent = email || '—';
+
+const planName = $('#planName');
+if (planName) planName.textContent = planStored;
+
+  // show startowo tab „Account”
+  activateSettingsTab('account');
+
+  openModal('#settingsModal');
+  highlightSelectedPlan();
+  wirePlanButtons();
+  
+  console.log('[DEBUG] tuż przed wireCancelButton');
+  wireCancelButton();
+  
+  if (typeof lastExpiryMs === 'number' && lastExpiryMs > 0) {
+  updateSubFooter(lastExpiryMs);
+}
+});
+
+    
+
+// tab w nawigacji settings
+document.querySelectorAll('#settingsModal .settings-nav button')
+  .forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const tab = btn.dataset.tab;
+      document
+        .querySelectorAll('#settingsModal .settings-nav button')
+        .forEach(b=>b.classList.toggle('active', b===btn));
+      document
+        .querySelectorAll('#settingsModal .settings-content .tab')
+        .forEach(t=>t.classList.toggle('active', t.classList.contains(tab)));
+    });
+  });
+
+// akcje w tabs – stuby
+
+on($('#btnManageSub'),   ()=> alert('Manage subscription (stub)'));
+
+// --- SUBSCRIPTION: zmiana planu (mock) ---
+const setPlan = (plan) => {
+  localStorage.setItem('syntri.plan', plan);
+  renderUsagePill(); // przelicza quota i odświeża pill + gate
+  const planName = document.getElementById('planName');
+  if (planName) planName.textContent = plan;
+};
+
+// === Subscription helpers ===
+function highlightSelectedPlan() {
+  const cur   = localStorage.getItem('syntri.plan') || 'Free';
+  const isPro = (cur === 'Pro');
+
+  document.querySelectorAll('.plan-card').forEach(card => {
+    const selected = card.dataset.plan === cur;
+    card.classList.toggle('selected', selected);
+
+    const btn = card.querySelector('.plan-btn');
+    if (!btn) return;
+
+    // 🔒 blokuj kliknięcie:
+    // – plan już wybrany
+    // – jeśli Pro, dodatkowo blokuj Free
+    let disable = selected;
+    if (isPro && card.dataset.plan === 'Free') {
+      disable = true;
+    }
+
+    btn.disabled = disable;
+    btn.setAttribute('aria-disabled', String(disable));
+
+    // 👉 zachowaj normalny wygląd mimo disabled
+    if (disable) {
+      btn.style.pointerEvents = 'none';   // brak reakcji
+      btn.style.opacity = '1';            // pełna widoczność
+      btn.style.cursor = 'default';       // brak „rączki”
+    } else {
+      btn.style.pointerEvents = '';
+      btn.style.opacity = '';
+      btn.style.cursor = '';
+    }
+
+    // napis przycisku planu Pro
+    if (card.dataset.plan === 'Pro') {
+  btn.textContent = isPro ? i18n('btn_subscribed') : i18n('btn_subscribe_price');
+}
+  });
+}
+
+    // Cancel at period end
+document.getElementById('btnCancelSub')?.addEventListener('click', async () => {
+  const btn = document.getElementById('btnCancelSub');
+
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      alert('Musisz być zalogowany.');
+      return;
+    }
+
+    // potwierdzenie
+    if (!confirm('Anulować subskrypcję na koniec bieżącego okresu?')) return;
+
+    // blokuj guzik
+    if (btn) { btn.disabled = true; btn.setAttribute('aria-busy', 'true'); }
+
+    const token = await user.getIdToken();
+
+    const r = await fetch(`${API_BASE_PROT}/cancel-subscription`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!r.ok) {
+      const msg = (await r.text()).slice(0, 500);
+      throw new Error(msg || 'Cancel failed');
+    }
+
+    alert('Subskrypcja zostanie anulowana z końcem okresu rozliczeniowego.');
+
+    // ukryj guzik (status zmieni się też po onSnapshot z Firestore)
+    if (btn) btn.style.display = 'none';
+
+  } catch (err) {
+    console.error('[CancelSub] error:', err);
+    alert('Nie udało się anulować: ' + (err?.message || String(err)));
+  } finally {
+    if (btn) { btn.disabled = false; btn.removeAttribute('aria-busy'); }
+  }
+});
+
+  // --- Event handler guzika anulowania subskrypcji (modal zamiast window.confirm)
+function wireCancelButton() {
+  const btn = document.getElementById('btnCancelSub');
+  if (!btn) return;
+  if (btn.dataset.wired === '1') return; // już podpięty
+  btn.dataset.wired = '1';
+
+  btn.addEventListener('click', () => {
+    openModal('#confirmCancel'); // pokaż modal potwierdzenia
+  });
+}
+
+// obsługa przycisków modala
+document.getElementById('cancelNo')?.addEventListener('click', () => {
+  closeModal('#confirmCancel');
+});
+
+document.getElementById('cancelYes')?.addEventListener('click', async () => {
+  closeModal('#confirmCancel');        // zamknij modal
+  const btn = document.getElementById('btnCancelSub');
+  try {
+    const user = auth.currentUser;
+    if (!user) return alert('Musisz być zalogowany.');
+
+    btn.disabled = true;
+    btn.setAttribute('aria-busy','true');
+
+    const token = await user.getIdToken();
+    const r = await fetch(`${API_BASE_PROT}/cancel-subscription`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!r.ok) throw new Error((await r.text()).slice(0,500) || 'Cancel failed');
+
+    alert('Subskrypcja zostanie anulowana z końcem okresu rozliczeniowego.');
+    btn.style.display = 'none'; // ukryj po potwierdzeniu
+  } catch (e) {
+    console.error('[CancelSub] error:', e);
+    alert('Nie udało się anulować: ' + (e?.message || String(e)));
+  } finally {
+    btn.disabled = false;
+    btn.removeAttribute('aria-busy');
+  }
+});  
+
+  // Otwarcie Stripe Checkout dla planu Pro
+  // strona na GitHub Pages → używamy pełnego URL do Functions
+  
+  function wirePlanButtons(){
+   async function openCheckout() {
+  const btn = document.activeElement;
+  if (btn) { btn.disabled = true; btn.setAttribute('aria-busy','true'); }
+  try {
+    // wymaga zalogowanego użytkownika
+    const user = auth.currentUser;
+    if (!user) {
+      alert('Zaloguj się, aby rozpocząć płatność.');
+      return;
+    }
+
+    const idToken = await user.getIdToken();    // <- nazwa zmiennej idToken
+    const deviceId = localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID());
+
+    const res = await fetch(`${API_BASE_PROT}/create-checkout-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`    // <- tu MUSI być idToken
+      },
+      body: JSON.stringify({ deviceId })
+    });
+
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json() : null;
+
+    if (!res.ok || !data?.url) throw new Error(data?.error || `HTTP ${res.status}`);
+    window.location.href = data.url;
+  } catch (e) {
+    console.error('Checkout error:', e);
+    alert('Could not start checkout. Please try again.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.removeAttribute('aria-busy'); }
+  }
+}
+
+    // Podpięcie guzików planów (Pro otwiera Stripe)
+    document.querySelectorAll('.plan-btn[data-action="choose"]').forEach(btn=>{
+      btn.onclick = () => {
+        const plan = btn.dataset.plan;
+        if (plan === 'Pro') {
+          openCheckout();      // real Stripe Checkout (Cloud Functions)
+        } else {
+          setPlan(plan);       // Free/Basic mock lokalny
+          highlightSelectedPlan();
+          alert(`Ustawiono ${plan} (mock).`);
+        }
+      };
+    });
+  }
+    
+// DEV panel – działa tylko z ?dev=1
+(function setupDevPanel(){
+  const showDev = params.get('dev') === '1';
+  const panel = document.getElementById('dev-panel');
+  if (panel) panel.style.display = showDev ? 'flex' : 'none';
+
+  // DEV: wyczerp limit (ustawia plan Free, used=quota, reset za 60s)
+  on(document.getElementById('dev-exhaust'), 'click', () => {
+    localStorage.setItem('syntri.plan','Free'); // zapewnia finish quotę
+    const u = getUsage();                       // { used, quota, resetAt }
+    const exhausted = { ...u, used: u.quota, resetAt: Date.now() + 60_000 };
+    saveUsage(exhausted);
+    renderUsagePill();                          // refresh pill + ensureHomeGate()
+    alert('DEV: quota wyczerpana na 60s (Free plan).');
+  });
+
+  // DEV: reset limitu (used=0, resetAt -> początek następnego miesiąca)
+  on(document.getElementById('dev-reset'), 'click', () => {
+    const u = getUsage();
+    const reset = { ...u, used: 0, resetAt: monthResetAtMs() };
+    saveUsage(reset);
+    renderUsagePill();
+    alert('DEV: quota zresetowana.');
+  });
+})();
+    
+   // ----------------------------------------------
+// i18n (PL / EN) – pogrupowane klucze
+// ----------------------------------------------
+const I18N = {
+  pl: {
+    // --- NAV ---
+    nav_login: 'Zaloguj',
+    nav_account: 'Konto',
+    nav_settings: 'Ustawienia',
+    nav_signout: 'Wyloguj',
+    nav_language: 'Język',
+
+    // --- STRONA / POLA ---
+    title: 'Syntri • Generator QR',
+    label_text: 'Treść (URL / tekst)',
+    label_size: 'Rozmiar (px)',
+    label_ecc: 'Korekcja błędów',
+    label_margin: 'Margines',
+    label_color: 'Kolor kodu',
+    label_transparent: 'Przezroczyste tło',
+    note_offline: 'Działa lokalnie w przeglądarce — żadne dane nie opuszczają urządzenia.',
+    hint_hotkey: '— szybkie generowanie',
+
+    // --- PRZYCISKI ---
+    btn_generate: 'Generuj',
+    btn_clear: 'Wyczyść',
+    btn_png: 'Pobierz PNG',
+    btn_svg: 'Pobierz SVG',
+    btn_copy: 'Kopiuj link',
+    btn_close: 'Zamknij',
+    btn_login: 'Zaloguj',
+    btn_cancel: 'Anuluj',
+    btn_manage_billing: 'Zarządzaj subskrypcją',
+    btn_delete_account: 'Usuń konto',
+    link_share: 'Udostępnij',
+    btn_subscribe_price: 'Subskrybuj £3.99',
+    btn_subscribed: 'Zasubskrybowano',
+
+    // --- KOMUNIKATY / HINTY ---
+    alert_generate_first: 'Najpierw wygeneruj QR',
+    copied: 'Skopiowano',
+
+    // --- MODAL: CINEMATIC ---
+    modal_title: 'To Twój kod QR',
+    modal_sub: 'Generator Syntri',
+    modal_hint: 'Budowanie pikseli…',
+
+    // --- MODAL: LOGIN ---
+    login_title: 'Logowanie',
+    login_email_label: 'Email',
+
+    // --- MODAL: ACCOUNT ---
+    account_title: 'Konto',
+    account_manage: 'Zarządzanie kontem',
+    account_profile: 'Profil',
+    account_security: 'Bezpieczeństwo',
+    account_security_hint: 'Zmień hasło, aby chronić dostęp do konta',
+    account_change_password: 'Zmień hasło',
+    account_delete: 'Usuń konto',
+    
+    
+
+    // --- MODAL: SETTINGS ---
+    settings_title: 'Ustawienia',
+    settings_email_label: 'Email',
+    settings_plan_label: 'Plan',
+
+    // --- SETTINGS SPLIT ---
+    settings_nav_account:      'Konto',
+    settings_nav_policy:       'Polityka',
+    settings_nav_subscription: 'Subskrypcja',
+    settings_nav_support:      'Wsparcie',
+
+    // --- SETTINGS / ACCOUNT TAB ---
+    settings_acc_current_email: 'Bieżący e-mail',
+    settings_acc_change_pass:   'Zmień hasło',
+    settings_acc_delete_acc:    'Usuń konto',
+    settings_acc_delete_confirm:'Czy na pewno chcesz usunąć konto?',
+
+    // --- SETTINGS / POLICY TAB ---
+    settings_policy_title: 'Prywatność i zasady',
+
+    // --- SETTINGS / SUBSCRIPTION TAB ---
+    settings_sub_plan:        'Plan',
+    settings_sub_manage:      'Zarządzaj subskrypcją',
+    plan_pro_days_left: '{n} dni pozostało',
+    plan_pro_expired: 'wygasła',
+    started_label: 'Rozpoczęto:',
+    cancel_sub: 'Anuluj przy końcu okresu',
+    
+    // --- SETTINGS / SUPPORT TAB ---
+    settings_support_title:   'Wsparcie',
+    settings_support_contact: 'Kontakt: support@syntri.app',
+
+  // --- ACCOUNT TAB — błędy logowania ---
+    err_wrong_pass: 'Nieprawidłowe hasło – spróbuj ponownie.',
+    err_user_not_found: 'Użytkownik o podanym adresie nie istnieje.',
+    err_invalid_email: 'Nieprawidłowy format adresu e-mail.',
+    login_missing_fields: 'Podaj email i hasło.',
+    login_failed_generic: 'Logowanie nieudane. Spróbuj ponownie.',
+
+  // --- MODAL: SUBSCRIPTION ---
+    plan_label: 'Plan:',
+    sub_manage: 'Zarządzaj subskrypcją',
+    sub_current_plan: 'Twój bieżący plan to:',
+    sub_upgrade_basic: 'Ulepsz do planu Basic',
+    sub_upgrade_pro: 'Ulepsz do planu Pro',
+    sub_downgrade_free: 'Przejdź na plan Free',
+    subscription_title:'Subskrypcja',
+    subscription_choose:'Wybierz plan',
+    price_free:'Darmowy',
+    price_month:'miesiąc',
+    cta_free:'Darmowy plan',
+    cta_pro:'Subskrybuj £3.99/mies.',
+    expires_label:'Wygasa:',
+    cancel_confirm_title: 'Anulować subskrypcję?',
+    cancel_confirm_body: 'Twoja subskrypcja pozostanie aktywna do końca bieżącego okresu rozliczeniowego. Czy na pewno chcesz ją anulować?',
+    cancel_no: 'Nie',
+    cancel_yes: 'Tak, anuluj',
+
+    
+    // --- PAYWALL ---
+    paywall_title: 'Wyczerpano limit darmowy',
+    paywall_copy:
+      'Wykorzystałeś/aś wszystkie darmowe kody w tym miesiącu. Wybierz plan, aby kontynuować.',
+
+    // --- Support--- 
+    "support_title": "Wsparcie",
+    "support_intro": "Masz pytania, uwagi lub chcesz zgłosić problem? Napisz do nas.",
+    "support_email_label": "E-mail",
+    "support_reply_hint": "Odpowiadamy zwykle w ciągu 1–2 dni roboczych.",
+
+    // --- Policy ---
+    policy_title: 'Polityka prywatności',
+    policy_updated: 'Ostatnia aktualizacja: 18.09.2025',
+    policy_scope_h: 'Zakres działania',
+    policy_scope_p: 'Aplikacja generuje kody QR lokalnie w przeglądarce. Domyślnie nie wysyłamy wprowadzonych treści na serwer.',
+    policy_data_h: 'Jakie dane przetwarzamy',
+    policy_data_local: 'W przeglądarce (localStorage): ustawienia generatora, licznik użycia, język, opcjonalne flagi mock.',
+    policy_data_no_server: 'Nie zapisujemy treści QR ani ustawień na serwerach.',
+    policy_account_h: 'Konto i logowanie',
+    policy_account_p: 'Obecnie używamy mock-auth (lokalnie). Po wdrożeniu rzeczywistego logowania (np. Firebase) zaktualizujemy politykę.',
+    policy_payments_h: 'Płatności i subskrypcje',
+    policy_payments_p: 'Przyciski Stripe/PayPal są makietą. Po uruchomieniu realnych płatności to Stripe/PayPal będą przetwarzać dane płatnicze.',
+    policy_legal_h: 'Podstawy prawne i retencja',
+    policy_legal_gdpr: 'RODO: uzasadniony interes; zgoda dla funkcji opcjonalnych.',
+    policy_retention_local: 'localStorage pozostaje na urządzeniu do czasu wyczyszczenia.',
+    policy_rights_h: 'Twoje prawa',
+    policy_rights_p: 'Dostęp, sprostowanie, usunięcie, ograniczenie, przenoszenie, sprzeciw (w zakresie danych po naszej stronie). Dla danych lokalnych wyczyść pamięć przeglądarki.',
+    policy_security_h: 'Bezpieczeństwo',
+    policy_security_p: 'Serwis po HTTPS. Przetwarzanie po stronie klienta. Dostawcy zewnętrzni będą spełniać standardy bezpieczeństwa.',
+    policy_children_h: 'Dzieci',
+    policy_children_p: 'Usługa dla dorosłych; nie zbieramy danych dzieci.',
+    policy_contact_h: 'Kontakt'
+        
+  },
+
+  en: {
+    // --- NAV ---
+    nav_login: 'Login',
+    nav_account: 'Account',
+    nav_settings: 'Settings',
+    nav_signout: 'Sign out',
+    nav_language: 'Language',
+
+    // --- PAGE / FIELDS ---
+    title: 'Syntri • QR Generator',
+    label_text: 'Content (URL / text)',
+    label_size: 'Size (px)',
+    label_ecc: 'Error correction',
+    label_margin: 'Margin',
+    label_color: 'Code color',
+    label_transparent: 'Transparent background',
+    note_offline: 'Runs locally in your browser — no data leaves your device.',
+    hint_hotkey: '— quick generate',
+
+    // --- BUTTONS ---
+    btn_generate: 'Generate',
+    btn_clear: 'Clear',
+    btn_png: 'Download PNG',
+    btn_svg: 'Download SVG',
+    btn_copy: 'Copy link',
+    btn_close: 'Close',
+    btn_login: 'Log in',
+    btn_cancel: 'Cancel',
+    btn_manage_billing: 'Manage billing',
+    btn_delete_account: 'Delete account',
+    link_share: 'Share',
+    btn_subscribe_price: 'Subscribe £3.99',
+    btn_subscribed: 'Subscribed',
+    
+    // --- MESSAGES / HINTS ---
+    alert_generate_first: 'Generate the QR first',
+    copied: 'Copied',
+
+    // --- MODAL: CINEMATIC ---
+    modal_title: "It's your QR code",
+    modal_sub: 'Generator by Syntri',
+    modal_hint: 'Building pixels…',
+
+    // --- MODAL: LOGIN ---
+    login_title: 'Log in',
+    login_email_label: 'Email',
+
+    // --- MODAL: ACCOUNT ---
+    account_title: 'Account',
+    account_manage: 'Account Management',
+    account_profile: 'Profile',
+    account_security: 'Security',
+    account_security_hint: 'Change your password to protect account access',
+    account_change_password: 'Change Password',
+    account_delete: 'Delete Account',
+    
+    
+    
+    // --- MODAL: SETTINGS ---
+    settings_title: 'Settings',
+    settings_email_label: 'Email',
+    settings_plan_label: 'Plan',
+
+    // --- SETTINGS SPLIT ---
+    settings_nav_account:      'Account',
+    settings_nav_policy:       'Policy',
+    settings_nav_subscription: 'Subscription',
+    settings_nav_support:      'Support',
+
+    // --- SETTINGS / ACCOUNT TAB ---
+    settings_acc_current_email: 'Current email',
+    settings_acc_change_pass:   'Change password',
+    settings_acc_delete_acc:    'Delete account',
+    settings_acc_delete_confirm:'Are you sure you want to delete the account?',
+
+    // --- SETTINGS / POLICY TAB ---
+    settings_policy_title: 'Privacy & Rules',
+
+    // --- SETTINGS / SUBSCRIPTION TAB ---
+    settings_sub_plan:        'Plan',
+    settings_sub_manage:      'Manage subscription',
+    plan_pro_days_left: '{n} days left',
+    plan_pro_expired: 'expired',
+    started_label: 'Started:',
+    cancel_sub: 'Cancel at period end',
+    
+    // --- SETTINGS / SUPPORT TAB ---
+    settings_support_title:   'Support',
+    settings_support_contact: 'Contact: support@syntri.app',
+
+   // --- ACCOUNT TAB — login errors ---
+    err_wrong_pass: 'Incorrect password – please try again.',
+    err_user_not_found: 'No user found with this email.',
+    err_invalid_email: 'Invalid email format.',
+    login_missing_fields: 'Please enter email and password.',
+    login_failed_generic: 'Login failed. Please try again.',
+
+   // --- MODAL: SUBSCRIPTION ---
+    plan_label: 'Plan:',
+    sub_manage: 'Manage subscription',
+    sub_current_plan: 'Your current plan is:',
+    sub_upgrade_basic: 'Upgrade to Basic plan',
+    sub_upgrade_pro: 'Upgrade to Pro plan',
+    sub_downgrade_free: 'Downgrade to Free plan',
+    subscription_title:'Subscription',
+    subscription_choose:'Choose Your Plan',
+    price_free:'Free',
+    price_month:'month',
+    cta_free:'Free plan',
+    cta_pro:'Subscribe £3.99/month',
+    expires_label:'Expiring:',
+    cancel_confirm_title: 'Cancel subscription?',
+    cancel_confirm_body: 'Your subscription will stay active until the end of the current billing period. Do you really want to cancel?',
+    cancel_no: 'No',
+    cancel_yes: 'Yes, cancel',
+    
+    // --- PAYWALL ---
+    paywall_title: 'Free limit reached',
+    paywall_copy:
+      'You used all free codes this month. Choose a plan to continue.',
+    
+    // --- Support contact --
+    "support_title": "Support",
+    "support_intro": "Questions, feedback or bug reports? Drop us an email.",
+    "support_email_label": "Email",
+    "support_reply_hint": "We usually reply within 1–2 business days.",
+
+    // --- Policy ---
+    policy_title: 'Privacy Policy',
+    policy_updated: 'Last update: 18 Sep 2025',
+    policy_scope_h: 'Scope',
+    policy_scope_p: 'The app generates QR codes locally in your browser. By default, we do not send entered content to any server.',
+    policy_data_h: 'Data we process',
+    policy_data_local: 'In-browser (localStorage): generator settings, usage counter, language, optional mock flags.',
+    policy_data_no_server: 'We do not store QR contents or settings on servers.',
+    policy_account_h: 'Account & login',
+    policy_account_p: 'We use mock-auth (local only). If real login (e.g., Firebase) is enabled, this policy will be updated.',
+    policy_payments_h: 'Payments & subscriptions',
+    policy_payments_p: 'Stripe/PayPal buttons are mock. If we enable real payments, Stripe/PayPal will process payment data.',
+    policy_legal_h: 'Legal bases & retention',
+    policy_legal_gdpr: 'GDPR: legitimate interest; consent for optional features.',
+    policy_retention_local: 'localStorage remains on your device until cleared.',
+    policy_rights_h: 'Your rights',
+    policy_rights_p: 'Access, rectification, erasure, restriction, portability, objection (where applicable). For local data, clear your browser storage.',
+    policy_security_h: 'Security',
+    policy_security_p: 'Served over HTTPS. Client-side processing. External providers will meet security standards.',
+    policy_children_h: 'Children',
+    policy_children_p: 'Service intended for adults; no data knowingly collected from children.',
+    policy_contact_h: 'Contact'
+    
+  }
+};
+    function i18n(k){ const lang = localStorage.getItem('syntri.lang') || 'pl'; return (I18N[lang]||I18N.en)[k] || k; }
+    const userLang = localStorage.getItem('syntri.lang') || ((navigator.language || 'en').startsWith('pl') ? 'pl' : 'en');
+    function applyI18n(lang){
+      const dict = I18N[lang] || I18N.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if (dict[key]) el.textContent = dict[key]; });
+      const textInput = document.getElementById('text'); if (textInput) textInput.placeholder = lang==='pl' ? 'https://przyklad.pl' : 'https://example.com';
+      localStorage.setItem('syntri.lang', lang);
+      renderAuthUI();
+    }
+    document.getElementById('btn-pl')?.addEventListener('click', ()=>{ applyI18n('pl'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
+    document.getElementById('btn-en')?.addEventListener('click', ()=>{ applyI18n('en'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
+    applyI18n(userLang);
+  </script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  signOut,
+  onAuthStateChanged,
+  updateProfile,
+  deleteUser,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  updatePassword
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+/* === 1) KONFIG === */
+const firebaseConfig = {
+  apiKey: "AIzaSyCN4mFs-l3SVfLGSiqOeSObenSPgQlx2XU",
+  authDomain: "syntri-qr-generator.firebaseapp.com",
+  projectId: "syntri-qr-generator",
+  storageBucket: "syntri-qr-generator.appspot.com",
+  messagingSenderId: "535838079759",
+  appId: "1:535838079759:web:865ddfaee615280b645c7a",
+  measurementId: "G-D1V72QVK11"
+};
+
+/* === 2) INIT === */
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+/* zgodność z resztą kodu (openCheckout itd.) */
+window.auth = auth;
+
+/* === 3) UTIL === */
+const $ = (s) => document.querySelector(s);
+function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
+function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-busy', b?'true':'false'); }
+
+/* === 4) LIVE PLAN: users/{uid} → Free/Pro === */
+// na górze pliku/sekcji:
+let unsubUserDoc = null;
+
+onAuthStateChanged(auth, (user) => {
+  // wypnij poprzednie nasłuchy
+  if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
+  if (unsubEnt)     { unsubEnt();     unsubEnt     = null; }
+
+  if (user) {
+    // === users/{uid} → tylko plan / UI ogólne
+    const ref = doc(db, 'users', user.uid);
+    unsubUserDoc = onSnapshot(ref, (snap) => {
+      const d = snap.data() || {};
+      const isPro =
+        d.subActive === true ||
+        (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
+
+      window.SYNTRI_IS_PRO = !!isPro;
+      localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
+
+      const planName = document.getElementById('planName');
+      if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
+
+      const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
+      if (btnPro) btnPro.textContent = isPro ? 'Subscribed' : 'Subscribe £3.99';
+
+      if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+      if (typeof renderUsagePill === 'function') renderUsagePill();
+    });
+
+    // === entitlements/{uid} → daty + status + widoczność guzika
+    const refEnt = doc(db, 'entitlements', user.uid);
+    unsubEnt = onSnapshot(refEnt, (snap) => {
+      const data   = snap.data() || {};
+      const status = data.status || 'ACTIVE';
+
+      // Status label (opcjonalnie — jeśli masz <strong id="subStatus">)
+      const statusEl = document.getElementById('subStatus');
+      if (statusEl) {
+        statusEl.textContent = (status === 'CANCELED')
+          ? i18n('status_canceled')
+          : i18n('status_active');
+      }
+
+      // Daty w stopce
+      const endMs   = Number(data.expiryTimeMs || 0);
+      const startMs = Number(data.startTimeMs || 0);
+      updateSubFooter(endMs, startMs);
+
+      // 🔘 widoczność guzika
+      updateCancelVisibility(data);
+
+    
+    });
+
+  } else {
+    // wylogowany → Free + schowaj guzik + wyczyść status + wyzeruj daty
+    localStorage.setItem('syntri.plan', 'Free');
+
+    const planName = document.getElementById('planName');
+    if (planName) planName.textContent = 'Free';
+
+    const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
+    if (btnPro) btnPro.textContent = 'Subscribe £3.99';
+
+    const statusEl = document.getElementById('subStatus');
+    if (statusEl) statusEl.textContent = '';
+
+    updateSubFooter(0, 0);
+
+    if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+    if (typeof renderUsagePill === 'function') renderUsagePill();
+  }
+if (typeof renderAuthUI === 'function') renderAuthUI();
+  
+});
+
+
+/* === 6) Rejestracja === */
+$('#btnRegister')?.addEventListener('click', async () => {
+  const btn   = $('#btnRegister');
+  const email = ($('#loginEmail')?.value || '').trim();
+  const pass  = ($('#loginPass')?.value  || '').trim();
+
+  if (!email || !pass){ alert('Podaj email i hasło.'); return; }
+  if (pass.length < 6){ alert('Hasło musi mieć min. 6 znaków.'); return; }
+
+  try {
+    setBusy(btn, true);
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    // (opcjonalnie) ustaw nazwę z części e-maila
+    const name = email.split('@')[0].slice(0, 32);
+    try { await updateProfile(cred.user, { displayName: name }); } catch {}
+    alert('Konto utworzone i zalogowano: ' + (cred.user.email || email));
+    closeModal('#loginModal');
+  } catch (err) {
+    console.error(err);
+    // Najczęstsze: auth/email-already-in-use, auth/invalid-email, auth/weak-password
+    alert('Rejestracja nieudana: ' + (err?.code || err?.message || err));
+  } finally {
+    setBusy(btn, false);
+  }
+});
+
+/* === 7) Logowanie === */
+$('#btnLogin')?.addEventListener('click', async () => {
+  const btn   = $('#btnLogin');
+  const email = ($('#loginEmail')?.value || '').trim();
+  const pass  = ($('#loginPass')?.value  || '').trim();
+
+  if (!email || !pass){ alert(i18n('login_missing_fields') || 'Podaj email i hasło.'); return; }
+
+  try {
+    setBusy(btn, true);
+    const cred = await signInWithEmailAndPassword(auth, email, pass);
+    alert('Zalogowano jako: ' + (cred.user.email || email));
+    closeModal('#loginModal');
+  } catch (err) {
+    console.error(err);
+    let msg;
+    switch (err.code) {
+      case 'auth/wrong-password':   msg = i18n('err_wrong_pass'); break;
+      case 'auth/user-not-found':   msg = i18n('err_user_not_found'); break;
+      case 'auth/invalid-email':    msg = i18n('err_invalid_email'); break;
+      default:                      msg = i18n('login_failed_generic') || 'Logowanie nieudane.';
+    }
+    alert(msg);
+  } finally {
+    setBusy(btn, false);
+  }
+});
+
+/* === 8) Reset hasła (Forgot password) – z własną stroną resetu === */
+$('#btnForgot')?.addEventListener('click', async () => {
+  const btn   = $('#btnForgot');
+  const email = ($('#loginEmail')?.value || '').trim();
+  if (!email) {
+    alert('Podaj adres e-mail, aby zresetować hasło.');
+    return;
+  }
+
+  try {
+    setBusy(btn, true);
+
+    // >>> TU podaj adres swojej strony resetu hasła:
+    // Plik reset.html musi być wdrożony w Firebase Hosting
+    const actionCodeSettings = {
+      url: 'https://syntri-qr-generator.web.app/reset.html',
+      handleCodeInApp: true
+    };
+
+    await sendPasswordResetEmail(auth, email, actionCodeSettings);
+    alert('Wysłaliśmy link resetu hasła na: ' + email);
+  } catch (err) {
+    console.error(err);
+    // Typowe błędy: auth/user-not-found, auth/invalid-email
+    alert('Nie udało się wysłać resetu: ' + (err?.code || err?.message || err));
+  } finally {
+    setBusy(btn, false);
+  }
+});
+
+/* === 9) Wylogowanie (link w nawigacji) === */
+$('#nav-signout')?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  const link = $('#nav-signout');
+  try {
+    setBusy(link, true);
+    await signOut(auth);
+    alert('Wylogowano.');
+  } catch (err) {
+    console.error(err);
+    alert('Błąd wylogowania: ' + (err?.code || err?.message || err));
+  } finally {
+    setBusy(link, false);
+  }
+});
+
+  
+//* === 10) Delete account with re-auth (inside the module script) ===
+const btnDeleteAcc = document.getElementById('btnDeleteAcc');
+
+btnDeleteAcc?.addEventListener('click', async () => {
+  const user = auth.currentUser;
+  if (!user?.email) { alert('Nie jesteś zalogowany/a.'); return; }
+
+  const confirmTxt = i18n('settings_acc_delete_confirm') || 'Are you sure you want to delete the account?';
+  if (!confirm(confirmTxt)) return;
+
+  const pass = prompt('Aby potwierdzić, wpisz hasło do konta:');
+  if (!pass) return;
+
+  setBusy?.(btnDeleteAcc, true);
+  try {
+    console.log('[DeleteAcc] Reauth start for', user.email);
+    const cred = EmailAuthProvider.credential(user.email, pass);
+    await reauthenticateWithCredential(user, cred);
+    console.log('[DeleteAcc] Reauth OK');
+
+    console.log('[DeleteAcc] Deleting user…');
+    await deleteUser(user);
+    console.log('[DeleteAcc] Delete OK');
+
+    try { await signOut(auth); } catch {}
+    localStorage.removeItem('syntri.auth.uid');
+    localStorage.removeItem('syntri.auth.email');
+    if (typeof renderAuthUI === 'function') renderAuthUI();
+    closeModal('#settingsModal');
+
+    alert('Konto zostało usunięte.');
+  } catch (err) {
+    console.error('[DeleteAcc] ERROR', err);
+    let msg = 'Nie udało się usunąć konta. ';
+    switch (err?.code) {
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':  msg += 'Błędne hasło.'; break;
+      case 'auth/requires-recent-login': msg += 'Wymagana ponowna autoryzacja – zaloguj się ponownie i spróbuj jeszcze raz.'; break;
+      case 'auth/user-not-found':      msg += 'Użytkownik nie istnieje.'; break;
+      case 'auth/network-request-failed': msg += 'Problem z siecią – sprawdź połączenie.'; break;
+      default: msg += (err?.message || String(err));
+    }
+    alert(msg);
+  } finally {
+    setBusy?.(btnDeleteAcc, false);
+  }
+});
+  
+// === 11) Change Password: zapisz nowe hasło (delegacja click) ===
+document.addEventListener('click', async (e) => {
+  if (e.target?.id !== 'cpSave') return;   // reaguj tylko na przycisk Save
+
+  console.log('[ChangePass] Save clicked');
+  const user = auth.currentUser;
+  if (!user?.email) { alert('Nie jesteś zalogowany/a.'); return; }
+
+  const cur = (document.getElementById('cpCurrent')?.value || '').trim();
+  const np1 = (document.getElementById('cpNew')?.value || '').trim();
+  const np2 = (document.getElementById('cpNew2')?.value || '').trim();
+
+  if (!cur || !np1 || !np2) { alert('Uzupełnij wszystkie pola.'); return; }
+  if (np1 !== np2)          { alert('Nowe hasła nie są takie same.'); return; }
+  if (np1.length < 6)       { alert('Nowe hasło musi mieć min. 6 znaków.'); return; }
+
+  e.target.disabled = true;
+  e.target.setAttribute('aria-busy','true');
+
+  try {
+    const cred = EmailAuthProvider.credential(user.email, cur);
+    await reauthenticateWithCredential(user, cred);
+    await updatePassword(user, np1);
+
+    ['cpCurrent','cpNew','cpNew2'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+
+    const m = document.getElementById('changePassModal');
+    if (m) { m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
+
+    alert('Hasło zostało zmienione.');
+  } catch (err) {
+    console.error('[ChangePass] ERROR', err);
+    let msg = 'Nie udało się zmienić hasła. ';
+    switch (err?.code) {
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential': msg += 'Obecne hasło jest nieprawidłowe.'; break;
+      case 'auth/weak-password':      msg += 'Nowe hasło jest zbyt słabe.'; break;
+      case 'auth/requires-recent-login': msg += 'Wymagane ponowne logowanie – zaloguj się i spróbuj ponownie.'; break;
+      case 'auth/too-many-requests':  msg += 'Za dużo prób. Spróbuj za chwilę.'; break;
+      default:                        msg += (err?.message || String(err));
+    }
+    alert(msg);
+  } finally {
+    e.target.disabled = false;
+    e.target.removeAttribute('aria-busy');
+  }
+});
+
+
+
+// === 12) Delegacja dla wszystkich przycisków oznaczonych .modal-close ===
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.modal-close');
+  if (!btn) return;
+  const target = btn.getAttribute('data-target');
+  if (target) closeModal(target);
+});
+
+//  === 13) Esc: zamknij najwyższy widoczny modal ===
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const open = Array.from(document.querySelectorAll('.modal.show'));
+  if (!open.length) return;
+  const top = open[open.length - 1];
+  closeModal('#' + top.id);
+});
+
+  
+  // === 14) aktualizuje etykiety w stopce ===
+
+function updateSubFooter(expiryMs, startMs) {
+  lastExpiryMs = expiryMs;
+  const expEl    = document.getElementById('subExpires');
+  const leftEl   = document.getElementById('subDaysLeft');
+  const startEl  = document.getElementById('subStarted');
+
+  if (startEl) {
+  if (startMs && Number.isFinite(startMs)) {
+    startEl.textContent = new Date(startMs).toLocaleDateString();
+  } else {
+    startEl.textContent = '—';   // myślnik gdy brak danych
+  }
+}
+
+  if (!expEl || !leftEl) return;
+
+  if (!expiryMs || !Number.isFinite(expiryMs)) {
+    expEl.textContent  = '—';
+    leftEl.textContent = '';
+    return;
+  }
+
+  expEl.textContent = new Date(expiryMs).toLocaleDateString();
+  const days = Math.max(0, Math.ceil((expiryMs - Date.now()) / 86_400_000));
+  leftEl.textContent = days > 0
+    ? `(${ i18n('plan_pro_days_left').replace('{n}', days) })`
+    : `(${ i18n('plan_pro_expired') })`;
+}
+
+// === nasłuch Firestore – entitlements (z datami start/expiry) ===
+let unsubEnt = null;
+onAuthStateChanged(auth, (user) => {
+  if (unsubEnt) { unsubEnt(); unsubEnt = null; }
+
+  if (user) {
+    const ref = doc(db, 'entitlements', user.uid);
+    unsubEnt = onSnapshot(ref, (snap) => {
+      console.log('[entitlements]', snap.exists(), snap.data());
+
+      const data = snap.data() || {};
+      const endMs   = Number(data.expiryTimeMs ?? 0);
+      const startMs = Number(data.startTimeMs ?? 0);
+
+      updateSubFooter(endMs, startMs);
+      updateCancelVisibility(data);   // ← tu decydujemy o guziku
+    });
+
+  } else {
+    updateSubFooter(0, 0);
+    updateCancelVisibility(null);     // ← wylogowany: schowaj guzik
+  }
+});
+
+
+ //=== 16) aktualizuje widoczność guzika „Cancel at period end”===
+function updateCancelVisibility(data){
+  const btn = document.getElementById('btnCancelSub');
+  if (!btn) return;
+
+  const logged = !!window.auth?.currentUser;
+
+  const expiry = Number(data?.expiryTimeMs ?? 0);
+  const status = String(data?.status ?? '').toUpperCase();
+
+  // Pro wg dat/Statusu – bez localStorage
+  const isActiveByDates  = Number.isFinite(expiry) && expiry > Date.now();
+  const isActiveByStatus = (status === 'ACTIVE' || status === 'TRIALING');
+
+  // Pokaż, gdy zalogowany i subskrypcja faktycznie trwa
+  const show = logged && (isActiveByDates || isActiveByStatus);
+
+  // preferuj atrybut hidden zamiast inline display (łatwiejsze do debugowania)
+  btn.hidden = !show;
+
+  // jednorazowe podpięcie modala
+  if (!btn.dataset.wired) {
+    btn.dataset.wired = '1';
+    btn.addEventListener('click', () => openModal('#confirmCancel'));
+  }
+
+  console.debug('[cancel-visibility]', { logged, expiry, status, show, data });
+}
+</script>
+
+</body>
+</html>
 
