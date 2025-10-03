@@ -53,7 +53,7 @@
     a.link{color:var(--accent);text-decoration:none}
     .usage-pill{margin-left:8px;font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:var(--muted)}
     html{scroll-behavior:smooth}
-   .btn-warning{background:#f59e0b;color:#111827;border:0;border-radius:12px;padding:12px 14px;font-weight:800;cursor:pointer}.btn-warning:hover{filter:brightness(0.95)}.btn-warning[disabled]{opacity:.6;cursor:not-allowed}
+   
 
 
     /* Cinematic overlay */
@@ -708,8 +708,10 @@
   <span id="subDaysLeft" class="muted"></span>
 </div>
 
-  <!-- 🔘 Cancel subscription button (start hidden) -->
+
+<!-- 🔘 Cancel subscription button (start hidden) -->
 <div class="subs-footer-actions">
+  <button id="btnCancelSub" class="btn btn-warning">
   <span data-i18n="cancel_sub">Cancel at period end</span>
 </button>
 </div>
