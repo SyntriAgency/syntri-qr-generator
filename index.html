@@ -1088,24 +1088,27 @@ function remainingMs(){
         if (t < 1){
           requestAnimationFrame(frame);
         } else {
-          // ANIMATION DONE → usage gate
-          const gate = tryConsumeUsage();
-          if (!gate.ok){
-            // paywall
-            openModal('#paywallModal');
-            // keep buttons disabled
-          } else {
-            // enable downloads
-            document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions').forEach(el=>{ el.style.display='block'; });
-            btnPng.disabled = false; btnSvg.disabled = false;
-            btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
-            btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
-          }
-          hint.textContent = '';
-        }
-      }
-      requestAnimationFrame(frame);
-    }
+          // --- ANIMATION DONE → usage gate (LOCAL) ---
+const gate = tryConsumeUsage();   // używa poprawionego getUsage/saveUsage
+hint.textContent = '';
+
+if (!gate.ok){
+  // paywall + cooldown
+  openModal('#paywallModal');
+  showCooldownUI(Date.now() + gate.resetMs);
+  // przyciski zostają zablokowane
+} else {
+  // enable downloads
+  document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
+    .forEach(el => { el.style.display='block'; });
+  btnPng.disabled = false; btnSvg.disabled = false;
+  btnPng.onclick = () => downloadCanvasAsPNG(cv, filename('png'));
+  btnSvg.onclick = () => downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+
+  // odśwież UI licznika i ewentualnie home gate
+  renderUsagePill();
+  ensureHomeGate();
+}
 
 // ----------------------------------------------
 // Cooldown UI (zamiana preview na odliczanie + CTA)
