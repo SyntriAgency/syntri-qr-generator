@@ -909,9 +909,15 @@ function saveUsage(u){
 function renderUsagePill(){
   const u = getUsage();
   const plan = getPlan();
-  const left = (u.quota===Infinity) ? '∞' : Math.max(0, u.quota - u.used);
-  usagePill.textContent = (u.quota===Infinity) ? `${plan} • unlimited` : `${left} / ${u.quota}`;
-  usagePill.title = (u.quota===Infinity) ? 'Paid plan' : 'Monthly quota';
+
+  if (u.quota === Infinity) {
+    usagePill.textContent = `${plan} • unlimited`;
+    usagePill.title = 'Paid plan';
+  } else {
+    usagePill.textContent = `${u.used} / ${u.quota}`; // used zamiast left
+    usagePill.title = 'Monthly usage';
+  }
+
   ensureHomeGate();
 }
 // --- Stripe: openCheckout (redirect-based) ---
