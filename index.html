@@ -886,26 +886,27 @@ function planQuota(plan){
 
 // Zwraca {used, quota, resetAt}
 function getUsage(){
-  const plan = getPlan();
+  const plan  = getPlan();
   const quota = planQuota(plan);
-  const resetAt = monthResetAtMs();
-  const def = { used:0, quota, resetAt };
+  const now   = Date.now();
+  const next  = monthResetAtMs();
 
-  try {
-    const raw = JSON.parse(localStorage.getItem(usageKey()) || JSON.stringify(def));
-    raw.quota = quota;
-    raw.resetAt = resetAt;
-    return raw;
-  } catch {
-    return def;
-  }
+  let raw = {};
+  try { raw = JSON.parse(localStorage.getItem(usageKey()) || '{}'); } catch {}
+  let used    = Number.isFinite(raw.used) ? raw.used : 0;
+  let resetAt = Number.isFinite(raw.resetAt) ? raw.resetAt : next;
+
+  if (resetAt <= now) { used = 0; resetAt = next; }
+  return { used, quota, resetAt };  // <— quota zawsze z planu
 }
 
 function saveUsage(u){
-  // zapisujemy dla wszystkich (anon + logged), by front-gate był spójny
-  localStorage.setItem(usageKey(), JSON.stringify(u));
+  localStorage.setItem(usageKey(), JSON.stringify({
+    used: Number(u.used||0),
+    resetAt: Number(u.resetAt)||monthResetAtMs()
+  }));
 }
-
+    
 function renderUsagePill(){
   const u = getUsage();
   const plan = getPlan();
