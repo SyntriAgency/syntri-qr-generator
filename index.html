@@ -1119,7 +1119,7 @@ async function consumeServerUsage() {
       const fgColor = ($('#fg')?.value) || '#000000';
       let lastDrawn = 0;
 
-      async function frame(now){
+      function frame(now){
         const elapsed = Math.max(0, now - t0);
         const t = Math.min(1, elapsed / totalMs);
         const shouldDraw = (N === 0) ? 0 : Math.floor(N * t);
