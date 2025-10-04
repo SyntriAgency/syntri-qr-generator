@@ -984,7 +984,8 @@ function remainingMs(){
     // === Server usage gate toggle ===
 const USE_SERVER_USAGE = true; // ustaw na false, by wrócić do czysto lokalnego licznika  
 // --- Cloud Function: server-side usage limiter ---
-const API_USAGE = 'https://europe-central2-syntri-qr-generator.cloudfunctions.net/consumeUsage';
+const API_USAGE = 'https://us-central1-syntri-qr-generator.cloudfunctions.net/consumeUsage';
+
 
 async function consumeServerUsage() {
   try {
