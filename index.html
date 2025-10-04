@@ -1176,8 +1176,8 @@ function showCooldownUI(resetMs){
 
   const btnUpgrade1 = document.createElement('button');
   btnUpgrade1.className='btn btn-primary';
-  btnUpgrade1.textContent = i18n('cta_subscribe_pro');
-  btnUpgrade1.onclick = () => openCheckout();
+  btnUpgrade1.textContent = i18n?.('cta_subscribe_pro') || 'Subscribe — Plan Pro';
+  btnUpgrade1.onclick = () => window.goToSubscriptionFlow?.();
 
 
   ctaRow.appendChild(btnUpgrade1);
