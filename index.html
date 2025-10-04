@@ -1138,38 +1138,25 @@ async function consumeServerUsage() {
         if (t < 1){
           requestAnimationFrame(frame);
         } else {
-  // ANIMATION DONE → usage gate (SERVER-FIRST + fallback local)
-  let gate;
-  try {
-    const resp = await consumeServerUsage(); // wywołuje Cloud Function
-    if (resp.status === 200 && resp.data?.ok) {
-      gate = { ok: true, remaining: resp.data.remaining, resetMs: Math.max(0, resp.data.resetAt - Date.now()) };
-    } else if (resp.status === 429) {
-      gate = { ok: false, remaining: 0, resetMs: Math.max(0, (resp.data?.resetAt || 0) - Date.now()) };
-    } else {
-      gate = tryConsumeUsage(); // offline / błąd serwera → fallback lokalny
-    }
-  } catch {
-    gate = tryConsumeUsage();
-  }
+        // ANIMATION DONE → usage gate
+          const gate = tryConsumeUsage();
+          if (!gate.ok){
+            // paywall
+            openModal('#paywallModal');
+            // keep buttons disabled
+          } else {
+            // enable downloads
+            document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions').forEach(el=>{ el.style.display='block'; });
+            btnPng.disabled = false; btnSvg.disabled = false;
+            btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
+            btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+          }
+          hint.textContent = '';
+        }
+      }
+      requestAnimationFrame(frame);
+    }     
 
-  hint.textContent = '';
-
-  if (!gate.ok){
-    openModal('#paywallModal');
-    showCooldownUI(Date.now() + (gate.resetMs || 0)); // pokaż licznik
-    // przyciski zostają zablokowane
-  } else {
-    document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
-      .forEach(el => { el.style.display='block'; });
-    btnPng.disabled = false; btnSvg.disabled = false;
-    btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
-    btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
-
-    renderUsagePill();
-    ensureHomeGate();
-  }
-}
 
 // ----------------------------------------------
 // Cooldown UI (zamiana preview na odliczanie + CTA)
