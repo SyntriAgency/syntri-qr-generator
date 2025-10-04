@@ -852,6 +852,23 @@ function renderAuthUI() {
   }
 }
 
+// === Navigate to Subscription tab; require login ===
+window.openSubscriptionPanel = function () {
+  activateSettingsTab?.('subscription');
+  openModal('#settingsModal');
+};
+
+window.goToSubscriptionFlow = function () {
+  const logged = !!window.auth?.currentUser;
+  if (!logged){
+    try { sessionStorage.setItem('postLoginOpenTab','subscription'); } catch {}
+    alert(i18n('login_first'));
+    openModal('#loginModal');
+    return;
+  }
+  window.openSubscriptionPanel();
+};
+
     
     // ----------------------------------------------
 // Usage & Plans (front-gate for anon + logged)
@@ -1159,7 +1176,7 @@ function showCooldownUI(resetMs){
 
   const btnUpgrade1 = document.createElement('button');
   btnUpgrade1.className='btn btn-primary';
-  btnUpgrade1.textContent='Upgrade – Stripe';
+  btnUpgrade1.textContent = i18n('cta_subscribe_pro');
   btnUpgrade1.onclick = () => openCheckout();
 
 
@@ -1656,6 +1673,8 @@ const I18N = {
     // --- KOMUNIKATY / HINTY ---
     alert_generate_first: 'Najpierw wygeneruj QR',
     copied: 'Skopiowano',
+    login_first: 'Zaloguj się, aby przejść do subskrypcji.',
+    cta_subscribe_pro: 'Subskrybuj — Plan Pro',
 
     // --- MODAL: CINEMATIC ---
     modal_title: 'To Twój kod QR',
@@ -1809,7 +1828,9 @@ const I18N = {
     // --- MESSAGES / HINTS ---
     alert_generate_first: 'Generate the QR first',
     copied: 'Copied',
-
+    login_first: 'Log in to manage your subscription.',
+    cta_subscribe_pro: 'Subscribe — Plan Pro',
+    
     // --- MODAL: CINEMATIC ---
     modal_title: "It's your QR code",
     modal_sub: 'Generator by Syntri',
