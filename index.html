@@ -1248,16 +1248,32 @@ function showCooldownUI(resetMs){
 }
     
 function ensureHomeGate(){
-  const ok = canGenerateNow();
+  if (USE_SERVER_USAGE) {
+    // Nie blokuj przycisku lokalnym licznikiem – decyzję podejmie serwer po animacji
+    const btn = document.querySelector('#generate');
+    if (btn) {
+      btn.disabled = false;
+      btn.removeAttribute('aria-disabled');
+      btn.title = '';
+    }
 
-  // blokada guzika
+    // Jeśli wcześniej pokazałeś lokalny cooldown, przywróć preview
+    const preview = document.querySelector('#sec-preview .preview');
+    if (preview && preview.querySelector('#cooldown-timer')) {
+      preview.innerHTML = '<div id="qr" class="qr-box"></div>';
+      render();
+    }
+    return; // pomijamy poniższy lokalny gate
+  }
+
+  // --- stary LOCAL gate (bez zmian) ---
+  const ok = canGenerateNow();
   const btn = document.querySelector('#generate');
   if (btn) { 
     btn.disabled = !ok; 
     btn.setAttribute('aria-disabled', String(!ok));
     btn.title = ok ? '' : (i18n('paywall_title') || 'Free limit reached'); 
   }
-
   if (!ok){
     showCooldownUI(Date.now() + remainingMs());
   } else {
@@ -1267,7 +1283,8 @@ function ensureHomeGate(){
       render();
     }
   }
-}   
+}
+
 
     // ----------------------------------------------
     // URL state / live events / init
