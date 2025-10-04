@@ -981,6 +981,36 @@ function remainingMs(){
   return u.quota === Infinity ? 0 : Math.max(0, u.resetAt - Date.now());
 }
 
+    // === Server usage gate toggle ===
+const USE_SERVER_USAGE = false; // ustaw na false, by wrócić do czysto lokalnego licznika  
+// --- Cloud Function: server-side usage limiter ---
+const API_USAGE = 'https://europe-central2-syntri-qr-generator.cloudfunctions.net/consumeUsage';
+
+async function consumeServerUsage() {
+  try {
+    // unikalny identyfikator urządzenia (zachowany między sesjami)
+    const deviceId = localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID());
+
+    // token jeśli użytkownik zalogowany (Firebase Auth)
+    const token = window.auth?.currentUser ? await window.auth.currentUser.getIdToken() : null;
+
+    const res = await fetch(API_USAGE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ deviceId })
+    });
+
+    const data = await res.json();
+    return { status: res.status, data };
+  } catch (e) {
+    console.warn('consumeServerUsage error', e);
+    return { status: 0, data: null };
+  }
+}
+
     // ----------------------------------------------
     // QR render
     // ----------------------------------------------
@@ -1186,16 +1216,32 @@ function showCooldownUI(resetMs){
 }
     
 function ensureHomeGate(){
-  const ok = canGenerateNow();
+  if (USE_SERVER_USAGE) {
+    // Nie blokuj przycisku lokalnym licznikiem – decyzję podejmie serwer po animacji
+    const btn = document.querySelector('#generate');
+    if (btn) {
+      btn.disabled = false;
+      btn.removeAttribute('aria-disabled');
+      btn.title = '';
+    }
 
-  // blokada guzika
-  const btn = document.querySelector('#generate');
-  if (btn) { 
-    btn.disabled = !ok; 
-    btn.setAttribute('aria-disabled', String(!ok));
-    btn.title = ok ? '' : (i18n('paywall_title') || 'Free limit reached'); 
+    // Jeśli wcześniej był lokalny cooldown → przywróć preview
+    const preview = document.querySelector('#sec-preview .preview');
+    if (preview && preview.querySelector('#cooldown-timer')) {
+      preview.innerHTML = '<div id="qr" class="qr-box"></div>';
+      render();
+    }
+    return; // pomijamy lokalny gate poniżej
   }
 
+  // --- stary LOCAL gate (bez zmian) ---
+  const ok = canGenerateNow();
+  const btn = document.querySelector('#generate');
+  if (btn) {
+    btn.disabled = !ok;
+    btn.setAttribute('aria-disabled', String(!ok));
+    btn.title = ok ? '' : (i18n('paywall_title') || 'Free limit reached');
+  }
   if (!ok){
     showCooldownUI(Date.now() + remainingMs());
   } else {
@@ -1205,7 +1251,8 @@ function ensureHomeGate(){
       render();
     }
   }
-}   
+}
+ 
 
     // ----------------------------------------------
     // URL state / live events / init
