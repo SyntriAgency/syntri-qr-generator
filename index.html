@@ -998,6 +998,9 @@ function remainingMs(){
   return u.quota === Infinity ? 0 : Math.max(0, u.resetAt - Date.now());
 }
 
+
+// === Server usage gate toggle ===
+const USE_SERVER_USAGE = true; // ustaw na false, by wrócić do czysto lokalnego licznika  
 // --- Cloud Function: server-side usage limiter ---
 const API_USAGE = 'https://europe-central2-syntri-qr-generator.cloudfunctions.net/consumeUsage';
 
@@ -1119,7 +1122,7 @@ async function consumeServerUsage() {
       const fgColor = ($('#fg')?.value) || '#000000';
       let lastDrawn = 0;
 
-      function frame(now){
+      async function frame(now){
         const elapsed = Math.max(0, now - t0);
         const t = Math.min(1, elapsed / totalMs);
         const shouldDraw = (N === 0) ? 0 : Math.floor(N * t);
@@ -1138,24 +1141,39 @@ async function consumeServerUsage() {
         if (t < 1){
           requestAnimationFrame(frame);
        } else {
-        // ANIMATION DONE → usage gate
-          const gate = tryConsumeUsage();
-          if (!gate.ok){
-            // paywall
-            openModal('#paywallModal');
-            // keep buttons disabled
-          } else {
-            // enable downloads
-            document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions').forEach(el=>{ el.style.display='block'; });
-            btnPng.disabled = false; btnSvg.disabled = false;
-            btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
-            btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
-          }
-          hint.textContent = '';
-        }
-      }
-      requestAnimationFrame(frame);
-    }     
+  // ANIMATION DONE → usage gate (SERVER-FIRST + fallback local)
+  let gate;
+  try {
+    const resp = await consumeServerUsage(); // wywołuje Cloud Function
+    if (resp.status === 200 && resp.data?.ok) {
+      gate = { ok: true, remaining: resp.data.remaining, resetMs: Math.max(0, resp.data.resetAt - Date.now()) };
+    } else if (resp.status === 429) {
+      gate = { ok: false, remaining: 0, resetMs: Math.max(0, (resp.data?.resetAt || 0) - Date.now()) };
+    } else {
+      gate = tryConsumeUsage(); // offline / błąd serwera → fallback lokalny
+    }
+  } catch {
+    gate = tryConsumeUsage();
+  }
+
+  hint.textContent = '';
+
+  if (!gate.ok){
+    openModal('#paywallModal');
+    showCooldownUI(Date.now() + (gate.resetMs || 0)); // pokaż licznik
+    // przyciski zostają zablokowane
+  } else {
+    document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
+      .forEach(el => { el.style.display='block'; });
+    btnPng.disabled = false; btnSvg.disabled = false;
+    btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
+    btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+
+    renderUsagePill();
+    ensureHomeGate();
+  }
+}
+
 
 // ----------------------------------------------
 // Cooldown UI (zamiana preview na odliczanie + CTA)
