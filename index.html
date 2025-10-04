@@ -999,9 +999,8 @@ function remainingMs(){
 }
 
 
-// === Server usage gate toggle ===
-const USE_SERVER_USAGE = false; // ustaw na false, by wrócić do czysto lokalnego licznika  
-// --- Cloud Function: server-side usage limiter ---
+/ --- Cloud Function: server-side usage limiter ---
+    
 const API_USAGE = 'https://europe-central2-syntri-qr-generator.cloudfunctions.net/consumeUsage';
 
 async function consumeServerUsage() {
@@ -1141,38 +1140,25 @@ async function consumeServerUsage() {
         if (t < 1){
           requestAnimationFrame(frame);
        } else {
-  // ANIMATION DONE → usage gate (SERVER-FIRST + fallback local)
-  let gate;
-  try {
-    const resp = await consumeServerUsage(); // wywołuje Cloud Function
-    if (resp.status === 200 && resp.data?.ok) {
-      gate = { ok: true, remaining: resp.data.remaining, resetMs: Math.max(0, resp.data.resetAt - Date.now()) };
-    } else if (resp.status === 429) {
-      gate = { ok: false, remaining: 0, resetMs: Math.max(0, (resp.data?.resetAt || 0) - Date.now()) };
-    } else {
-      gate = tryConsumeUsage(); // offline / błąd serwera → fallback lokalny
-    }
-  } catch {
-    gate = tryConsumeUsage();
-  }
+        // ANIMATION DONE → usage gate
+          const gate = tryConsumeUsage();
+          if (!gate.ok){
+            // paywall
+            openModal('#paywallModal');
+            // keep buttons disabled
+          } else {
+            // enable downloads
+            document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions').forEach(el=>{ el.style.display='block'; });
+            btnPng.disabled = false; btnSvg.disabled = false;
+            btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
+            btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+          }
+          hint.textContent = '';
+        }
+      }
+      requestAnimationFrame(frame);
+    }     
 
-  hint.textContent = '';
-
-  if (!gate.ok){
-    openModal('#paywallModal');
-    showCooldownUI(Date.now() + (gate.resetMs || 0)); // pokaż licznik
-    // przyciski zostają zablokowane
-  } else {
-    document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
-      .forEach(el => { el.style.display='block'; });
-    btnPng.disabled = false; btnSvg.disabled = false;
-    btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
-    btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
-
-    renderUsagePill();
-    ensureHomeGate();
-  }
-}
 
 
 // ----------------------------------------------
@@ -1248,32 +1234,16 @@ function showCooldownUI(resetMs){
 }
     
 function ensureHomeGate(){
-  if (USE_SERVER_USAGE) {
-    // Nie blokuj przycisku lokalnym licznikiem – decyzję podejmie serwer po animacji
-    const btn = document.querySelector('#generate');
-    if (btn) {
-      btn.disabled = false;
-      btn.removeAttribute('aria-disabled');
-      btn.title = '';
-    }
-
-    // Jeśli wcześniej pokazałeś lokalny cooldown, przywróć preview
-    const preview = document.querySelector('#sec-preview .preview');
-    if (preview && preview.querySelector('#cooldown-timer')) {
-      preview.innerHTML = '<div id="qr" class="qr-box"></div>';
-      render();
-    }
-    return; // pomijamy poniższy lokalny gate
-  }
-
-  // --- stary LOCAL gate (bez zmian) ---
   const ok = canGenerateNow();
+
+  // blokada guzika
   const btn = document.querySelector('#generate');
   if (btn) { 
     btn.disabled = !ok; 
     btn.setAttribute('aria-disabled', String(!ok));
     btn.title = ok ? '' : (i18n('paywall_title') || 'Free limit reached'); 
   }
+
   if (!ok){
     showCooldownUI(Date.now() + remainingMs());
   } else {
