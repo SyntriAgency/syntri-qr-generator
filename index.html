@@ -906,6 +906,25 @@ function saveUsage(u){
   localStorage.setItem(usageKey(), JSON.stringify(u));
 }
 
+// === Usage Limiter (Server Sync UI) ===
+// Funkcje aktualizujące licznik limitów z odpowiedzi backendu (consumeUsage
+function renderQuotaPillFromServer(plan, remaining){
+  if ((plan && String(plan).toUpperCase() === 'PRO') || remaining === 'unlimited' || remaining === Infinity) {
+    usagePill.textContent = 'Pro • unlimited';
+    usagePill.title = 'Paid plan';
+    return;
+  }
+
+  // jeśli backend nie zwraca planu – pokaż same remaining
+  const quotaLabel = localStorage.getItem('syntri.plan') === 'Basic' ? '100' : '15';
+  usagePill.textContent = `${Math.max(0, Number(remaining ?? 0))} / ${quotaLabel}`;
+  usagePill.title = 'Monthly usage (server sync)';
+}
+
+function startResetTimer(resetAt){
+  // tu możesz dodać odliczanie lub zostawić pusto (bo masz już paywall timer)
+}
+    
 function renderUsagePill(){
   const u = getUsage();
   const plan = getPlan();
@@ -984,7 +1003,7 @@ function remainingMs(){
     // === Server usage gate toggle ===
 const USE_SERVER_USAGE = true; // ustaw na false, by wrócić do czysto lokalnego licznika  
 // --- Cloud Function: server-side usage limiter ---
-const API_USAGE = 'https://us-central1-syntri-qr-generator.cloudfunctions.net/consumeUsage';
+const API_USAGE = 'https://consumeusage-kmibp3saqa-uc.a.run.app';
 
 
 async function consumeServerUsage() {
