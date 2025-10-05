@@ -741,7 +741,7 @@
   <script>
     const API_FN_ROOT     = 'https://us-central1-syntri-qr-generator.cloudfunctions.net/api';
     const API_BASE_PUBLIC = API_FN_ROOT;          // publiczne (health, whoami, create-stripe-portal)
-    const API_BASE_PROT   = API_FN_ROOT + '/api';  // chronione (create-checkout-session)
+    const API_BASE_PROT   = API_FN_ROOT;  // chronione (create-checkout-session)
   </script>
       
   <script>
@@ -931,6 +931,11 @@ function renderQuotaPillFromServer(a, b){
   usagePill.title = 'Monthly usage (server sync)';
 }
 
+    // === Reset timer placeholder (opcjonalny) ===
+function startResetTimer(resetAt){
+  // opcjonalnie: odliczanie do resetu w usage pill / paywallu
+  // teraz nic nie robi – ale unikamy ReferenceError
+}
     // Natychmiastowe UI z cache (opcjonalne, ale mega przyjemne w odczuciu)
 function hydrateUsageFromCache(){
   try {
@@ -974,6 +979,20 @@ async function refreshUsageFromServer(){
 }
 // udostępnij dla modułu firebase
 window.refreshUsageFromServer = refreshUsageFromServer;
+
+// === Usage Limiter – Lokalny licznik (fallback / cache) ===
+function renderUsagePill(){
+  const u = getUsage();
+  const plan = getPlan();
+  if (u.quota === Infinity) {
+    usagePill.textContent = `${plan} • unlimited`;
+    usagePill.title = 'Paid plan';
+  } else {
+    usagePill.textContent = `${u.used} / ${u.quota}`;
+    usagePill.title = 'Monthly usage';
+  }
+  ensureHomeGate();
+}
     
 // --- Stripe: openCheckout (redirect-based) ---
     
