@@ -931,6 +931,18 @@ function renderQuotaPillFromServer(a, b){
   usagePill.title = 'Monthly usage (server sync)';
 }
 
+    // Natychmiastowe UI z cache (opcjonalne, ale mega przyjemne w odczuciu)
+function hydrateUsageFromCache(){
+  try {
+    const cached = JSON.parse(localStorage.getItem('syntri.lastUsage') || 'null');
+    if (!cached) return;
+    renderQuotaPillFromServer({
+      plan:  cached.plan,
+      used:  cached.used,
+      quota: cached.quota
+    });
+  } catch {}
+}
     // === 🔄 Server Usage Sync (Firebase + Cloud Function Peek) ===
 async function refreshUsageFromServer(){
   try{
