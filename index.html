@@ -2146,14 +2146,16 @@ const db   = getFirestore(app);
 /* zgodność z resztą kodu (openCheckout itd.) */
 window.auth = auth;
 
+// === Firebase unsub handlers (dla snapshotów) ===
+let unsubUserDoc = null;
+let unsubEnt = null;
+
 /* === 3) UTIL === */
 const $ = (s) => document.querySelector(s);
 function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
 function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-busy', b?'true':'false'); }
 
 /* === 4) LIVE PLAN: users/{uid} → Free/Pro === */
-// na górze pliku/sekcji:
-let unsubUserDoc = null;
 
 onAuthStateChanged(auth, (user) => {
   // wypnij poprzednie nasłuchy
@@ -2484,7 +2486,6 @@ function updateSubFooter(expiryMs, startMs) {
 }
 
 // === nasłuch Firestore – entitlements (z datami start/expiry) ===
-let unsubEnt = null;
 onAuthStateChanged(auth, (user) => {
   if (unsubEnt) { unsubEnt(); unsubEnt = null; }
 
