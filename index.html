@@ -1154,24 +1154,18 @@ async function consumeServerUsage() {
        if (t < 1) {
   requestAnimationFrame(frame);
 } else {
-  // === ANIMATION DONE → usage gate ===
-  const gate = tryConsumeUsage();
-  if (!gate.ok) {
-    // paywall
-    openModal('#paywallModal');
-    // keep buttons disabled
-  } else {
-    // enable downloads
-    document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
-      .forEach(el => { el.style.display = 'block'; });
-    btnPng.disabled = false;
-    btnSvg.disabled = false;
-    btnPng.onclick = () => downloadCanvasAsPNG(cv, filename('png'));
-    btnSvg.onclick = () => downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
-  }
+  // === ANIMATION DONE → tylko reveal + enable downloads (bez gate) ===
+  document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
+    .forEach(el => { el.style.display = 'block'; });
+
+  btnPng.disabled = false;
+  btnSvg.disabled = false;
+
+  btnPng.onclick = () => downloadCanvasAsPNG(cv, filename('png'));
+  btnSvg.onclick = () => downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+
   hint.textContent = '';
 }
-requestAnimationFrame(frame);
 // ----------------------------------------------
 // Cooldown UI (zamiana preview na odliczanie + CTA)
 // ----------------------------------------------
