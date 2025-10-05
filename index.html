@@ -899,37 +899,70 @@ function saveUsage(u){
 
 // === Usage Limiter (Server Sync UI) ===
 // Funkcje aktualizujące licznik limitów z odpowiedzi backendu (consumeUsage
-function renderQuotaPillFromServer(plan, remaining){
+// Akceptuje zarówno {plan, used, quota} jak i (plan, remaining)
+function renderQuotaPillFromServer(a, b){
+  // tryb: obiekt {plan, used, quota}
+  if (a && typeof a === 'object') {
+    const plan  = a.plan;
+    const used  = Number(a.used ?? 0);
+    const quota = (a.quota === Infinity || String(plan).toLowerCase() === 'pro')
+      ? Infinity : Number(a.quota ?? 15);
+
+    if (quota === Infinity) {
+      usagePill.textContent = 'Pro • unlimited';
+      usagePill.title = 'Paid plan';
+    } else {
+      usagePill.textContent = `${used} / ${quota}`;
+      usagePill.title = 'Monthly usage (server)';
+    }
+    return;
+  }
+
+  // tryb: (plan, remaining) – stary wariant
+  const plan  = a;
+  const remaining = b;
   if ((plan && String(plan).toUpperCase() === 'PRO') || remaining === 'unlimited' || remaining === Infinity) {
     usagePill.textContent = 'Pro • unlimited';
     usagePill.title = 'Paid plan';
     return;
   }
-
-  // jeśli backend nie zwraca planu – pokaż same remaining
   const quotaLabel = localStorage.getItem('syntri.plan') === 'Basic' ? '100' : '15';
   usagePill.textContent = `${Math.max(0, Number(remaining ?? 0))} / ${quotaLabel}`;
   usagePill.title = 'Monthly usage (server sync)';
 }
 
-function startResetTimer(resetAt){
-  // tu możesz dodać odliczanie lub zostawić pusto (bo masz już paywall timer)
-}
-    
-function renderUsagePill(){
-  const u = getUsage();
-  const plan = getPlan();
+    // === 🔄 Server Usage Sync (Firebase + Cloud Function Peek) ===
+async function refreshUsageFromServer(){
+  try{
+    const deviceId = localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID());
+    const user  = window.auth?.currentUser;
+    const token = user ? await user.getIdToken() : null;
 
-  if (u.quota === Infinity) {
-    usagePill.textContent = `${plan} • unlimited`;
-    usagePill.title = 'Paid plan';
-  } else {
-    usagePill.textContent = `${u.used} / ${u.quota}`; // used zamiast left
-    usagePill.title = 'Monthly usage';
+    const res = await fetch(API_USAGE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ deviceId, peek: true }) // backend NIE zużywa limitu
+    });
+    const data = await res.json();
+
+    // oczekiwane: { plan, used, quota, resetAt }
+    if (res.ok && data && ('used' in data || 'quota' in data)) {
+      renderQuotaPillFromServer(data);
+      // opcjonalnie: startResetTimer(data.resetAt);
+    } else {
+      renderUsagePill(); // fallback lokalny
+    }
+  }catch(e){
+    console.warn('[refreshUsageFromServer] fallback do lokalnego', e);
+    renderUsagePill();
   }
-
-  ensureHomeGate();
 }
+// udostępnij dla modułu firebase
+window.refreshUsageFromServer = refreshUsageFromServer;
+    
 // --- Stripe: openCheckout (redirect-based) ---
     
 async function openCheckout() {
@@ -1359,8 +1392,19 @@ async function onGenerateClick() {
 
   const { status, data } = await consumeServerUsage();
   if (status === 200 && data?.ok) {
-    renderQuotaPillFromServer(data.plan, data.remaining);
-    startResetTimer(data.resetAt);
+  // aktualizacja wizualnego licznika z backendu
+  renderQuotaPillFromServer(data); 
+  startResetTimer(data.resetAt);
+
+  // synchronizacja cache lokalnego (opcjonalnie)
+  localStorage.setItem('syntri.lastUsage', JSON.stringify({
+    plan: data.plan,
+    used: data.used,
+    quota: data.quota,
+    resetAt: data.resetAt,
+    ts: Date.now()
+  }));
+}
 
     render(); updateShareLink(); saveState(); startCinematic();
     try { await bumpQrCount(); } catch {}
@@ -2054,6 +2098,9 @@ const I18N = {
     document.getElementById('btn-pl')?.addEventListener('click', ()=>{ applyI18n('pl'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
     document.getElementById('btn-en')?.addEventListener('click', ()=>{ applyI18n('en'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
     applyI18n(userLang);
+  if (USE_SERVER_USAGE) {
+  (window.refreshUsageFromServer ?? refreshUsageFromServer)?.();
+}
   </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
@@ -2174,7 +2221,9 @@ onAuthStateChanged(auth, (user) => {
     if (typeof renderUsagePill === 'function') renderUsagePill();
   }
 if (typeof renderAuthUI === 'function') renderAuthUI();
-  
+
+  // 🔄 Zawsze na samym końcu: pobierz licznik z backendu bez zużycia limitu
+  window.refreshUsageFromServer?.();
 });
 
 
