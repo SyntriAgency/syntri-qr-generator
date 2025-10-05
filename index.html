@@ -1133,6 +1133,12 @@ async function consumeServerUsage() {
       const fgColor = ($('#fg')?.value) || '#000000';
       let lastDrawn = 0;
 
+  // === UI Reveal after QR generation (show title + buttons) ===
+function revealCinematicUI(){
+  document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
+    .forEach(el => { el.style.display = 'block'; });
+}      
+      
       function frame(now){
         const elapsed = Math.max(0, now - t0);
         const t = Math.min(1, elapsed / totalMs);
@@ -1149,27 +1155,34 @@ async function consumeServerUsage() {
         const pct = Math.round(t*100);
         hint.textContent = (t < 1) ? `${i18n('modal_hint')} ${pct}%` : '';
 
-        if (t < 1){
-          requestAnimationFrame(frame);
-        } else {
-        // ANIMATION DONE → usage gate
-          const gate = tryConsumeUsage();
-          if (!gate.ok){
-            // paywall
-            openModal('#paywallModal');
-            // keep buttons disabled
-          } else {
-            // enable downloads
-            document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions').forEach(el=>{ el.style.display='block'; });
-            btnPng.disabled = false; btnSvg.disabled = false;
-            btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
-            btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
-          }
-          hint.textContent = '';
-        }
-      }
-      requestAnimationFrame(frame);
+        if (t < 1) {
+  requestAnimationFrame(frame);
+} else {
+  // === ANIMATION DONE → usage gate ===
+  if (!USE_SERVER_USAGE) {
+    const gate = tryConsumeUsage();
+    if (!gate.ok) {
+      // paywall
+      openModal('#paywallModal');
+      // keep buttons disabled
+    } else {
+      // enable downloads + reveal UI
+      revealCinematicUI();
+      btnPng.disabled = false; btnSvg.disabled = false;
+      btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
+      btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
     }
+    hint.textContent = '';
+    return;
+  }
+
+  // === SERVER MODE (usage already consumed) ===
+  revealCinematicUI();
+  btnPng.disabled = false; btnSvg.disabled = false;
+  btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
+  btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+  hint.textContent = '';
+}
 
 // ----------------------------------------------
 // Cooldown UI (zamiana preview na odliczanie + CTA)
