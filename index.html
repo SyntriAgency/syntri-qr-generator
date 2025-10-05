@@ -734,8 +734,8 @@
   </div>
 
    <!-- Firebase compat build – działa w zwykłym <script> -->
-
-
+ <!-- QR lib – ZAŁADUJ RAZ, POZA innymi scriptami -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 
   <!-- ✅ Stałe z adresami API – tuż pod Firebase -->
   <script>
@@ -1117,8 +1117,7 @@ async function consumeServerUsage() {
       qrBox.setAttribute('aria-label', `QR code, size ${width}px, ECC ${ecc.value}, margin ${m}`);
     }
 
-  // QR lib – ZAŁADUJ RAZ, POZA innymi scriptami -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+
     
     // downloads (from animation canvas)
     function downloadCanvasAsPNG(canvas, name){
