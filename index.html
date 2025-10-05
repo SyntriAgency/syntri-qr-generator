@@ -1169,42 +1169,6 @@ async function consumeServerUsage() {
       const fgColor = ($('#fg')?.value) || '#000000';
       let lastDrawn = 0;
 
-  
-      
-     function frame(now){
-  const elapsed = Math.max(0, now - t0);
-  const t = Math.min(1, elapsed / totalMs);
-  const shouldDraw = (N === 0) ? 0 : Math.floor(N * t);
-
-  if (N > 0){
-    ctx.fillStyle = fgColor;
-    for (let i = lastDrawn; i < shouldDraw; i++){
-      const [x,y] = dark[i];
-      ctx.fillRect(quietPx + x*cell, quietPx + y*cell, cell, cell);
-    }
-    lastDrawn = shouldDraw;
-  }
-
-  const pct = Math.round(t*100);
-  hint.textContent = (t < 1) ? `${i18n('modal_hint')} ${pct}%` : '';
-
-  if (t < 1) {
-    requestAnimationFrame(frame);
-  } else {
-    // animacja skończona → pokaż teksty i włącz pobieranie
-    document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
-      .forEach(el => { el.style.display = 'block'; });
-
-    btnPng.disabled = false;
-    btnSvg.disabled = false;
-
-    btnPng.onclick = () => downloadCanvasAsPNG(cv, filename('png'));
-    btnSvg.onclick = () => downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
-
-    hint.textContent = '';
-  }
-}
-
 function frame(now){
   const elapsed = Math.max(0, now - t0);
   const t = Math.min(1, elapsed / totalMs);
@@ -1403,27 +1367,40 @@ async function onGenerateClick() {
   }
 
   const { status, data } = await consumeServerUsage();
+
   if (status === 200 && data?.ok) {
-  // aktualizacja wizualnego licznika z backendu
-  renderQuotaPillFromServer(data); 
-  startResetTimer(data.resetAt);
+    // ✅ aktualizacja wizualnego licznika z backendu
+    renderQuotaPillFromServer(data);
+    if (Number.isFinite(Number(data.resetAt))) startResetTimer(Number(data.resetAt));
 
-  // synchronizacja cache lokalnego (opcjonalnie)
-  localStorage.setItem('syntri.lastUsage', JSON.stringify({
-    plan: data.plan,
-    used: data.used,
-    quota: data.quota,
-    resetAt: data.resetAt,
-    ts: Date.now()
-  }));
-}
+    // 💾 zapis cache (do użycia przy starcie strony)
+    try {
+      localStorage.setItem('syntri.lastUsage', JSON.stringify({
+        plan: data.plan ?? (window.SYNTRI_IS_PRO ? 'Pro' : 'Free'),
+        used: Number.isFinite(Number(data.used)) ? Number(data.used) : 0,
+        quota: (data.quota === Infinity || String(data.plan).toLowerCase() === 'pro')
+                 ? Infinity
+                 : (Number.isFinite(Number(data.quota)) ? Number(data.quota) : 15),
+        resetAt: Number(data.resetAt) || 0,
+        ts: Date.now()
+      }));
+    } catch {}
 
+    // 🎬 generacja QR
     render(); updateShareLink(); saveState(); startCinematic();
     try { await bumpQrCount(); } catch {}
+
   } else if (status === 429) {
+    // 🚫 limit osiągnięty
+    if (data) {
+      renderQuotaPillFromServer(data);
+      if (Number.isFinite(Number(data.resetAt))) startResetTimer(Number(data.resetAt));
+    }
     showCooldownUI(data?.resetAt ?? monthResetAtMs());
     openModal('#paywallModal');
+
   } else {
+    // 🌐 offline lub błąd — fallback lokalny
     const local = tryConsumeUsage();
     if (!local.ok) {
       showCooldownUI(Date.now() + local.resetMs);
@@ -1434,9 +1411,14 @@ async function onGenerateClick() {
   }
 }
 
+// 🧹 przycisk czyszczenia
 $('#clear').addEventListener('click', () => {
-  text.value=''; render(); updateShareLink(); saveState();
+  text.value = '';
+  render();
+  updateShareLink();
+  saveState();
 });
+
 
 // === Shortcut: Cmd/Ctrl + Enter (Generate via Usage Gate) ===
 // Umożliwia generowanie QR przez centralny limiter (onGenerateClick)
@@ -2107,10 +2089,21 @@ const I18N = {
       localStorage.setItem('syntri.lang', lang);
       renderAuthUI();
     }
-    document.getElementById('btn-pl')?.addEventListener('click', ()=>{ applyI18n('pl'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
-    document.getElementById('btn-en')?.addEventListener('click', ()=>{ applyI18n('en'); langPanel.classList.remove('show'); navLanguage.classList.remove('active'); });
-    applyI18n(userLang);
-  if (USE_SERVER_USAGE) {
+   document.getElementById('btn-pl')?.addEventListener('click', () => {
+  applyI18n('pl');
+  langPanel.classList.remove('show');
+  navLanguage.classList.remove('active');
+});
+document.getElementById('btn-en')?.addEventListener('click', () => {
+  applyI18n('en');
+  langPanel.classList.remove('show');
+  navLanguage.classList.remove('active');
+});
+
+applyI18n(userLang);
+hydrateUsageFromCache();
+
+if (USE_SERVER_USAGE) {
   (window.refreshUsageFromServer ?? refreshUsageFromServer)?.();
 }
   </script>
