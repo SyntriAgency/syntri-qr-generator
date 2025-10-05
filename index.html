@@ -1133,11 +1133,7 @@ async function consumeServerUsage() {
       const fgColor = ($('#fg')?.value) || '#000000';
       let lastDrawn = 0;
 
-  // === UI Reveal after QR generation (show title + buttons) ===
-function revealCinematicUI(){
-  document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
-    .forEach(el => { el.style.display = 'block'; });
-}      
+  
       
       function frame(now){
         const elapsed = Math.max(0, now - t0);
