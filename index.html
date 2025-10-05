@@ -1322,31 +1322,48 @@ function ensureHomeGate(){
       [text,size,ecc,margin,fg,transparent].forEach(el=> on(el, ev, liveRender));
     });
 
-    $('#generate').addEventListener('click', async () => {
-  render(); updateShareLink(); saveState(); startCinematic();
-  try { await bumpQrCount(); console.log("QR count incremented"); } 
-  catch (err) { console.error("bumpQrCount error", err); }
-});
+    document.getElementById('generate').addEventListener('click', onGenerateClick);
+
+async function onGenerateClick() {
+  if (!USE_SERVER_USAGE) {
+    render(); updateShareLink(); saveState(); startCinematic();
+    try { await bumpQrCount(); } catch {}
+    return;
+  }
+
+  const { status, data } = await consumeServerUsage();
+  if (status === 200 && data?.ok) {
+    renderQuotaPillFromServer(data.plan, data.remaining);
+    startResetTimer(data.resetAt);
+
+    render(); updateShareLink(); saveState(); startCinematic();
+    try { await bumpQrCount(); } catch {}
+  } else if (status === 429) {
+    showCooldownUI(data?.resetAt ?? monthResetAtMs());
+    openModal('#paywallModal');
+  } else {
+    const local = tryConsumeUsage();
+    if (!local.ok) {
+      showCooldownUI(Date.now() + local.resetMs);
+      openModal('#paywallModal');
+      return;
+    }
+    render(); updateShareLink(); saveState(); startCinematic();
+  }
+}
 
 $('#clear').addEventListener('click', () => {
   text.value=''; render(); updateShareLink(); saveState();
 });
 
-document.addEventListener('keydown', async e => {
-  if ((e.ctrlKey||e.metaKey) && e.key==='Enter'){
-    render(); updateShareLink(); saveState(); startCinematic();
-    try { await bumpQrCount(); } 
-    catch (err){ console.error(err); }
-  }
+// === Shortcut: Cmd/Ctrl + Enter (Generate via Usage Gate) ===
+// Umożliwia generowanie QR przez centralny limiter (onGenerateClick)
+document.addEventListener('keydown', async (e) => {
+  const isShortcut = (e.ctrlKey || e.metaKey) && e.key === 'Enter';
+  if (!isShortcut) return;
+  e.preventDefault();
+  await onGenerateClick();
 });
-    (function initWhenReady(){
-      const start = Date.now();
-      (function check(){
-        if (window.QRCode) { syncFromURL(); restoreState(); render(); updateShareLink(); renderAuthUI(); ensureHomeGate(); }
-        else if (Date.now() - start < 8000) setTimeout(check, 50);
-        else { console.error('QRCode library failed to load'); alert('QR library failed to load. Please refresh (Ctrl/Cmd+F5).'); }
-      })();
-    })();
 
     // ----------------------------------------------
     // Language panel
