@@ -953,7 +953,7 @@ async function refreshUsageFromServer(){
   try{
     const deviceId = localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID());
     const user  = window.auth?.currentUser;
-    const token = user ? await user.getIdToken() : null;
+    const token = user ? await user.getIdToken(true) : null;
 
     const res = await fetch(API_USAGE, {
       method: 'POST',
@@ -1420,15 +1420,28 @@ async function onGenerateClick() {
     showCooldownUI(data?.resetAt ?? monthResetAtMs());
     openModal('#paywallModal');
 
-  } else {
+} else {
     // 🌐 offline lub błąd — fallback lokalny
+    // ⛳️ BYPASS: jeśli wiemy, że user jest Pro (np. z Firestore), pozwól generować mimo błędu serwera
+    if (window.SYNTRI_IS_PRO) {
+      console.warn('[usage] Fallback bypass – user is PRO');
+      render(); updateShareLink(); saveState(); startCinematic();
+      try { await bumpQrCount(); } catch {}
+      return;
+    }
+
     const local = tryConsumeUsage();
     if (!local.ok) {
       showCooldownUI(Date.now() + local.resetMs);
       openModal('#paywallModal');
       return;
     }
-    render(); updateShareLink(); saveState(); startCinematic();
+
+    render();
+    updateShareLink();
+    saveState();
+    startCinematic();
+    try { await bumpQrCount(); } catch {}
   }
 }
 
