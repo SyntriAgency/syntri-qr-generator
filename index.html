@@ -8,8 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIrt8jvQpW9N+MGPbY6rY3s6QCG+YtG1vCvtKo1YFpsioeQq9v7bSIL3V7CwKqVdQ0bV1PpL5x1sI6W7Gd2g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     if(!window.QRCode){
       var s=document.createElement('script');
       s.src='https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js';
@@ -1135,37 +1134,77 @@ async function consumeServerUsage() {
 
   
       
-      function frame(now){
-        const elapsed = Math.max(0, now - t0);
-        const t = Math.min(1, elapsed / totalMs);
-        const shouldDraw = (N === 0) ? 0 : Math.floor(N * t);
+     function frame(now){
+  const elapsed = Math.max(0, now - t0);
+  const t = Math.min(1, elapsed / totalMs);
+  const shouldDraw = (N === 0) ? 0 : Math.floor(N * t);
 
-        if (N > 0){
-          ctx.fillStyle = fgColor;
-          for (let i = lastDrawn; i < shouldDraw; i++){
-            const [x,y] = dark[i];
-            ctx.fillRect(quietPx + x*cell, quietPx + y*cell, cell, cell);
-          }
-          lastDrawn = shouldDraw;
-        }
-        const pct = Math.round(t*100);
-        hint.textContent = (t < 1) ? `${i18n('modal_hint')} ${pct}%` : '';
+  if (N > 0){
+    ctx.fillStyle = fgColor;
+    for (let i = lastDrawn; i < shouldDraw; i++){
+      const [x,y] = dark[i];
+      ctx.fillRect(quietPx + x*cell, quietPx + y*cell, cell, cell);
+    }
+    lastDrawn = shouldDraw;
+  }
 
-       if (t < 1) {
-  requestAnimationFrame(frame);
-} else {
-  // === ANIMATION DONE → tylko reveal + enable downloads (bez gate) ===
-  document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
-    .forEach(el => { el.style.display = 'block'; });
+  const pct = Math.round(t*100);
+  hint.textContent = (t < 1) ? `${i18n('modal_hint')} ${pct}%` : '';
 
-  btnPng.disabled = false;
-  btnSvg.disabled = false;
+  if (t < 1) {
+    requestAnimationFrame(frame);
+  } else {
+    // animacja skończona → pokaż teksty i włącz pobieranie
+    document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
+      .forEach(el => { el.style.display = 'block'; });
 
-  btnPng.onclick = () => downloadCanvasAsPNG(cv, filename('png'));
-  btnSvg.onclick = () => downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+    btnPng.disabled = false;
+    btnSvg.disabled = false;
 
-  hint.textContent = '';
+    btnPng.onclick = () => downloadCanvasAsPNG(cv, filename('png'));
+    btnSvg.onclick = () => downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+
+    hint.textContent = '';
+  }
 }
+
+function frame(now){
+  const elapsed = Math.max(0, now - t0);
+  const t = Math.min(1, elapsed / totalMs);
+  const shouldDraw = (N === 0) ? 0 : Math.floor(N * t);
+
+  if (N > 0){
+    ctx.fillStyle = fgColor;
+    for (let i = lastDrawn; i < shouldDraw; i++){
+      const [x,y] = dark[i];
+      ctx.fillRect(quietPx + x*cell, quietPx + y*cell, cell, cell);
+    }
+    lastDrawn = shouldDraw;
+  }
+
+  const pct = Math.round(t*100);
+  hint.textContent = (t < 1) ? `${i18n('modal_hint')} ${pct}%` : '';
+
+  if (t < 1) {
+    requestAnimationFrame(frame);
+  } else {
+    // ANIMATION DONE → reveal + enable downloads
+    document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
+      .forEach(el => { el.style.display = 'block'; });
+
+    btnPng.disabled = false;
+    btnSvg.disabled = false;
+
+    btnPng.onclick = () => downloadCanvasAsPNG(cv, filename('png'));
+    btnSvg.onclick = () => downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+
+    hint.textContent = '';
+  }
+}
+
+// uruchom animację:
+requestAnimationFrame(frame);
+} // ← zamknięcie startCinematic()
 // ----------------------------------------------
 // Cooldown UI (zamiana preview na odliczanie + CTA)
 // ----------------------------------------------
