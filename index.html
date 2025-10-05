@@ -1155,35 +1155,27 @@ function revealCinematicUI(){
         const pct = Math.round(t*100);
         hint.textContent = (t < 1) ? `${i18n('modal_hint')} ${pct}%` : '';
 
-        if (t < 1) {
+       if (t < 1) {
   requestAnimationFrame(frame);
 } else {
   // === ANIMATION DONE → usage gate ===
-  if (!USE_SERVER_USAGE) {
-    const gate = tryConsumeUsage();
-    if (!gate.ok) {
-      // paywall
-      openModal('#paywallModal');
-      // keep buttons disabled
-    } else {
-      // enable downloads + reveal UI
-      revealCinematicUI();
-      btnPng.disabled = false; btnSvg.disabled = false;
-      btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
-      btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
-    }
-    hint.textContent = '';
-    return;
+  const gate = tryConsumeUsage();
+  if (!gate.ok) {
+    // paywall
+    openModal('#paywallModal');
+    // keep buttons disabled
+  } else {
+    // enable downloads
+    document.querySelectorAll('.syntri-title,.syntri-sub,.syntri-actions')
+      .forEach(el => { el.style.display = 'block'; });
+    btnPng.disabled = false;
+    btnSvg.disabled = false;
+    btnPng.onclick = () => downloadCanvasAsPNG(cv, filename('png'));
+    btnSvg.onclick = () => downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
   }
-
-  // === SERVER MODE (usage already consumed) ===
-  revealCinematicUI();
-  btnPng.disabled = false; btnSvg.disabled = false;
-  btnPng.onclick = ()=> downloadCanvasAsPNG(cv, filename('png'));
-  btnSvg.onclick = ()=> downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
   hint.textContent = '';
 }
-
+requestAnimationFrame(frame);
 // ----------------------------------------------
 // Cooldown UI (zamiana preview na odliczanie + CTA)
 // ----------------------------------------------
