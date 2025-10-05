@@ -989,22 +989,30 @@ const API_USAGE = 'https://us-central1-syntri-qr-generator.cloudfunctions.net/co
 
 async function consumeServerUsage() {
   try {
-    // unikalny identyfikator urządzenia (zachowany między sesjami)
+    // 🔹 Unikalny identyfikator urządzenia (trwały między sesjami)
     const deviceId = localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID());
 
-    // token jeśli użytkownik zalogowany (Firebase Auth)
-    const token = window.auth?.currentUser ? await window.auth.currentUser.getIdToken() : null;
+    // 🔹 Token użytkownika (jeśli zalogowany przez Firebase Auth)
+    const user = window.auth?.currentUser;
+    const token = user ? await user.getIdToken() : null;
 
+    // 🔹 Wywołanie API (z Authorization, jeśli dostępny)
     const res = await fetch(API_USAGE, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
+        ...(token ? { Authorization: `Bearer ${token}` } : {}), // <= kluczowy nagłówek
       },
-      body: JSON.stringify({ deviceId })
+      body: JSON.stringify({ deviceId }),
     });
 
     const data = await res.json();
+
+    // 🔹 (opcjonalnie) log diagnostyczny w dev
+    if (location.search.includes('dev=1')) {
+      console.log('[consumeServerUsage]', { status: res.status, hasAuth: !!token, data });
+    }
+
     return { status: res.status, data };
   } catch (e) {
     console.warn('consumeServerUsage error', e);
