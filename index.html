@@ -1387,24 +1387,20 @@ function showCooldownUI(resetMs){
 
   // === 💳 Upgrade Button (Subscribe / Stripe Checkout, i18n) ===
 const btnUpgrade1 = document.createElement('button');
-btnUpgrade1.className = 'btn btn-primary';
-btnUpgrade1.textContent = i18n('btn_upgrade_subscribe'); // 🔄 tłumaczenie
-
-btnUpgrade1.onclick = async () => {
+btnUpgrade1.className='btn btn-primary';
+btnUpgrade1.textContent = i18n('btn_upgrade_open'); // i18n (niżej dodasz klucze)
+btnUpgrade1.onclick = () => {
   const user = window.auth?.currentUser;
 
   if (!user) {
-    console.log('[upgrade] user not signed in → opening login modal');
-    openModal('#authModal');
+    // zapamiętaj intencję i pokaż login
+    localStorage.setItem('syntri.intent', 'openSubscription');
+    openModal('#loginModal');
     return;
   }
 
-  console.log('[upgrade] user signed in → opening checkout');
-  try {
-    await openCheckout();
-  } catch (err) {
-    console.warn('[upgrade] checkout error', err);
-  }
+  // już zalogowany → otwórz ustawienia na zakładce Subscription
+  openSubscriptionSettings();
 };
 
 ctaRow.appendChild(btnUpgrade1);
@@ -1688,6 +1684,13 @@ on($('#openPortal'),'click', async ()=>{
     on($('#subscribeStripe'),'click', () => openCheckout());
     
 
+// === 💳 Subscription Shortcut (z paywalla do zakładki Subskrypcja) ===
+function openSubscriptionSettings(){
+  if (typeof activateSettingsTab === 'function') {
+    activateSettingsTab('subscription');
+  }
+  openModal('#settingsModal');
+}    
 // === Settings modal ===
 function activateSettingsTab(tab='account'){
   document.querySelectorAll('#settingsModal .settings-nav button')
@@ -2437,15 +2440,17 @@ onAuthStateChanged(auth, (user) => {
     const statusEl = document.getElementById('subStatus');
     if (statusEl) statusEl.textContent = '';
 
-    updateSubFooter(0, 0);
+   updateSubFooter(0, 0);
 
-    if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
-    if (typeof renderUsagePill === 'function') renderUsagePill();
-  }
+if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+if (typeof renderUsagePill === 'function') renderUsagePill();
+}
+
+// 🔐 Odśwież UI logowania / przycisków auth
 if (typeof renderAuthUI === 'function') renderAuthUI();
 
-  // 🔄 Zawsze na samym końcu: pobierz licznik z backendu bez zużycia limitu
-  window.refreshUsageFromServer?.();
+// 🔄 Na końcu: pobierz licznik z backendu bez zużycia limitu
+window.refreshUsageFromServer?.();
 });
 
 
