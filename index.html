@@ -1562,49 +1562,64 @@ async function onGenerateClick() {
     try { await bumpQrCount(); } catch {}
 
   } else if (status === 429) {
-    // 🚫 Limit osiągnięty
-    console.warn('[usage] Quota exhausted');
-    if (data) {
-      renderQuotaPillFromServer(data);
-      if (Number.isFinite(Number(data.resetAt))) startResetTimer(Number(data.resetAt));
-    }
-    showCooldownUI(data?.resetAt ?? monthResetAtMs());
-    openModal('#paywallModal');
+  // 🚫 Limit osiągnięty
+  console.warn('[usage] Quota exhausted');
 
-  } else {
-    // 🔴 Offline / błąd / brak połączenia z backendem
-    if (window.SYNTRI_IS_PRO === true) {
-      console.warn('[usage] Backend error ignored – user is PRO');
-      render();
-      updateShareLink();
-      saveState();
-      startCinematic();
-      try { await bumpQrCount(); } catch {}
-      return;
-    }
-
-    const local = tryConsumeUsage();
-    if (!local.ok) {
-      showCooldownUI(Date.now() + local.resetMs);
-      openModal('#paywallModal');
-      return;
-    }
-
-    render();
-    updateShareLink();
-    saveState();
-    startCinematic();
-    try { await bumpQrCount(); } catch {}
+  // zaktualizuj licznik i (opcjonalnie) timer resetu
+  if (data) {
+    renderQuotaPillFromServer(data);
+    if (Number.isFinite(Number(data.resetAt))) startResetTimer(Number(data.resetAt));
   }
+
+  // pokaż odliczanie w preview (bez starego modala)
+  showCooldownUI(data?.resetAt ?? monthResetAtMs());
+
+  // 👉 Nowy flow: przenieś usera do Subscriptions (albo loginu)
+  if (window.auth?.currentUser) {
+    if (typeof openSubscriptionSettings === 'function') {
+      openSubscriptionSettings();
+    } else {
+      if (typeof activateSettingsTab === 'function') activateSettingsTab('subscription');
+      openModal('#settingsModal');
+    }
+  } else {
+    openModal('#loginModal'); // najpierw logowanie
+  }
+
+  return;
+
+} else {
+  // 🔴 Offline / błąd / brak połączenia z backendem
+  if (window.SYNTRI_IS_PRO === true) {
+    console.warn('[usage] Backend error ignored – user is PRO');
+    render(); updateShareLink(); saveState(); startCinematic();
+    try { await bumpQrCount(); } catch {}
+    return;
+  }
+
+  const local = tryConsumeUsage();
+  if (!local.ok) {
+    // quota lokalna wyczerpana → odliczanie + przejście do subskrypcji/loginu
+    showCooldownUI(Date.now() + local.resetMs);
+
+    if (window.auth?.currentUser) {
+      if (typeof openSubscriptionSettings === 'function') {
+        openSubscriptionSettings();
+      } else {
+        if (typeof activateSettingsTab === 'function') activateSettingsTab('subscription');
+        openModal('#settingsModal');
+      }
+    } else {
+      openModal('#loginModal');
+    }
+    return;
+  }
+
+  // lokalnie OK → generuj
+  render(); updateShareLink(); saveState(); startCinematic();
+  try { await bumpQrCount(); } catch {}
 }
 
-// 🧹 przycisk czyszczenia
-$('#clear').addEventListener('click', () => {
-  text.value = '';
-  render();
-  updateShareLink();
-  saveState();
-});
 
 
 
