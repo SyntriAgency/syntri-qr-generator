@@ -499,7 +499,6 @@
         </div>
         <div style="display:flex;gap:12px;align-items:center;">
           <a class="link" href="#" id="shareLink" data-i18n="link_share" title="Udostępnij parametry w URL">Udostępnij</a>
-          <button id="copyLink" class="btn btn-ghost" data-i18n="btn_copy">Kopiuj link</button>
         </div>
       </footer>
     </div>
@@ -2742,6 +2741,45 @@ function updateCancelVisibility(data){
 
   console.debug('[cancel-visibility]', { logged, expiry, status, show, data });
 }
+
+
+// === 📎 Share link copy handler ===
+const shareLink = document.getElementById('shareLink');
+if (shareLink) {
+  shareLink.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      const url = shareLink.href || window.location.href;
+      await navigator.clipboard.writeText(url);
+      showCopyToast('Link copied! Share it with your friend 👇');
+    } catch (err) {
+      console.warn('Clipboard failed', err);
+      alert('Could not copy the link 😢');
+    }
+  });
+}
+
+// === 💬 Mini toast feedback ===
+function showCopyToast(msg) {
+  const toast = document.createElement('div');
+  toast.textContent = msg;
+  toast.style.position = 'fixed';
+  toast.style.bottom = '24px';
+  toast.style.left = '50%';
+  toast.style.transform = 'translateX(-50%)';
+  toast.style.background = 'rgba(0,0,0,0.8)';
+  toast.style.color = '#fff';
+  toast.style.padding = '10px 18px';
+  toast.style.borderRadius = '12px';
+  toast.style.fontSize = '14px';
+  toast.style.zIndex = '9999';
+  toast.style.transition = 'opacity 0.3s ease';
+  document.body.appendChild(toast);
+
+  setTimeout(() => (toast.style.opacity = '0'), 1800);
+  setTimeout(() => toast.remove(), 2200);
+}
+
 </script>
 
 </body>
