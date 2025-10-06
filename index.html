@@ -1571,51 +1571,35 @@ async function onGenerateClick() {
     if (Number.isFinite(Number(data.resetAt))) startResetTimer(Number(data.resetAt));
   }
 
-  // (opcjonalnie) pokaż odliczanie w preview, ale bez starego modala
+  // tylko odliczanie + CTA, bez żadnych modalów ani settings
   showCooldownUI(data?.resetAt ?? monthResetAtMs());
-
-  // 👉 Nowy flow: przenieś do zakładki Subscription zamiast paywallModal
-  if (window.auth?.currentUser) {
-    // zalogowany → otwórz ustawienia/subskrypcję
-    if (typeof openSubscriptionSettings === 'function') {
-      openSubscriptionSettings();
-    } else {
-      // fallback, gdy helpera nie ma
-      if (typeof activateSettingsTab === 'function') activateSettingsTab('subscription');
-      openModal('#settingsModal');
-    }
-  } else {
-    // niezalogowany → najpierw logowanie
-    openModal('#loginModal');
-  }
-
   return;
 
-  } else {
-    // 🔴 Offline / błąd / brak połączenia z backendem
-    if (window.SYNTRI_IS_PRO === true) {
-      console.warn('[usage] Backend error ignored – user is PRO');
-      render();
-      updateShareLink();
-      saveState();
-      startCinematic();
-      try { await bumpQrCount(); } catch {}
-      return;
-    }
-
-    const local = tryConsumeUsage();
-    if (!local.ok) {
-      showCooldownUI(Date.now() + local.resetMs);
-      openModal('#paywallModal');
-      return;
-    }
-
+} else {
+  // 🔴 Offline / błąd / brak połączenia z backendem
+  if (window.SYNTRI_IS_PRO === true) {
+    console.warn('[usage] Backend error ignored – user is PRO');
     render();
     updateShareLink();
     saveState();
     startCinematic();
     try { await bumpQrCount(); } catch {}
+    return;
   }
+
+  const local = tryConsumeUsage();
+  if (!local.ok) {
+    // tylko odliczanie, żadnego modala
+    showCooldownUI(Date.now() + local.resetMs);
+    return;
+  }
+
+  render();
+  updateShareLink();
+  saveState();
+  startCinematic();
+  try { await bumpQrCount(); } catch {}
+}
 }
 
 // 🧹 przycisk czyszczenia
