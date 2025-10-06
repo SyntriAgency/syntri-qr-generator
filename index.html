@@ -843,6 +843,10 @@ function renderAuthUI() {
   }
 }
 
+    //test - tymwczasowy
+    function isProClient(){
+  return window.SYNTRI_IS_PRO === true || (localStorage.getItem('syntri.plan') === 'Pro');
+}
     
     // ----------------------------------------------
 // Usage & Plans (front-gate for anon + logged)
@@ -897,57 +901,74 @@ function saveUsage(u){
   localStorage.setItem(usageKey(), JSON.stringify(u));
 }
 
+
+
+
+// === Plan limits (SSOT) ===
+const PLAN_LIMITS = {
+  Free: 10,
+  Basic: 15,
+  Pro: Infinity
+};
+
 // === Usage Limiter (Server Sync UI) ===
-// Funkcje aktualizujące licznik limitów z odpowiedzi backendu (consumeUsage
-// Akceptuje zarówno {plan, used, quota} jak i (plan, remaining)
-function renderQuotaPillFromServer(a, b){
-  // tryb: obiekt {plan, used, quota}
+// Aktualizacja licznika na podstawie odpowiedzi backendu lub starszego formatu (plan, remaining)
+function renderQuotaPillFromServer(a, b) {
+  // 1) Nowy format: obiekt { plan, used, quota }
   if (a && typeof a === 'object') {
-    const plan  = a.plan;
-    const used  = Number(a.used ?? 0);
-    const quota = (a.quota === Infinity || String(plan).toLowerCase() === 'pro')
-      ? Infinity : Number(a.quota ?? 15);
+    const plan = a.plan ?? (localStorage.getItem('syntri.plan') || 'Free');
+    const used = Number(a.used ?? 0);
+
+    // Ustal quota: preferuj Infinity dla Pro albo liczby z backendu, inaczej limit z PLAN_LIMITS
+    const quota =
+      a.quota === Infinity || PLAN_LIMITS[plan] === Infinity
+        ? Infinity
+        : (Number.isFinite(Number(a.quota)) ? Number(a.quota) : (PLAN_LIMITS[plan] ?? 10));
 
     if (quota === Infinity) {
       usagePill.textContent = 'Pro • unlimited';
       usagePill.title = 'Paid plan';
     } else {
-      usagePill.textContent = `${used} / ${quota}`;
-      usagePill.title = 'Monthly usage (server)';
+      const shownUsed = Math.min(used, quota);
+      usagePill.textContent = `${shownUsed} / ${quota}`;
+      usagePill.title = `Monthly usage (${plan})`;
     }
     return;
   }
 
-  // tryb: (plan, remaining) – stary wariant
-  const plan  = a;
-  const remaining = b;
-  if ((plan && String(plan).toUpperCase() === 'PRO') || remaining === 'unlimited' || remaining === Infinity) {
+  // 2) Starszy format: (plan, remaining)
+  const plan = a ?? (localStorage.getItem('syntri.plan') || 'Free');
+  const planLimit = PLAN_LIMITS[plan] ?? 10;
+
+  // remaining może być 'unlimited' lub Infinity
+  const remaining = (b === 'unlimited') ? Infinity : Number(b);
+
+  if (PLAN_LIMITS[plan] === Infinity || remaining === Infinity) {
     usagePill.textContent = 'Pro • unlimited';
     usagePill.title = 'Paid plan';
     return;
   }
-  const quotaLabel = localStorage.getItem('syntri.plan') === 'Basic' ? '100' : '15';
-  usagePill.textContent = `${Math.max(0, Number(remaining ?? 0))} / ${quotaLabel}`;
-  usagePill.title = 'Monthly usage (server sync)';
+
+  usagePill.textContent = `${Math.max(0, remaining || 0)} / ${planLimit}`;
+  usagePill.title = `Monthly usage (${plan})`;
 }
 
-    // === Reset timer placeholder (opcjonalny) ===
-function startResetTimer(resetAt){
-  // opcjonalnie: odliczanie do resetu w usage pill / paywallu
-  // teraz nic nie robi – ale unikamy ReferenceError
+// === Reset timer placeholder (opcjonalny) ===
+function startResetTimer(resetAt) {
+  // opcjonalnie: tu możesz dodać odliczanie do resetu miesięcznego
+  // obecnie no-op, aby unikać ReferenceError
 }
-    // Natychmiastowe UI z cache (opcjonalne, ale mega przyjemne w odczuciu)
-function hydrateUsageFromCache(){
+
+// === Natychmiastowe UI z cache (przyjemne UX) ===
+function hydrateUsageFromCache() {
   try {
     const cached = JSON.parse(localStorage.getItem('syntri.lastUsage') || 'null');
     if (!cached) return;
-    renderQuotaPillFromServer({
-      plan:  cached.plan,
-      used:  cached.used,
-      quota: cached.quota
-    });
+    // cached ma { plan, used, quota, resetAt, ts }
+    renderQuotaPillFromServer(cached);
   } catch {}
 }
+
   // === 🔄 Server Usage Sync (Firebase + Cloud Function Peek) ===
 async function refreshUsageFromServer(){
   try {
@@ -1406,20 +1427,40 @@ function ensureHomeGate(){
     document.getElementById('generate').addEventListener('click', onGenerateClick);
 
 async function onGenerateClick() {
-  if (!USE_SERVER_USAGE) {
-    render(); updateShareLink(); saveState(); startCinematic();
+  // 🟢 1️⃣ Użytkownik PRO – pełny bypass limitów i serwera
+  if (window.SYNTRI_IS_PRO === true || localStorage.getItem('syntri.plan') === 'Pro') {
+    console.info('[usage] PRO user – bypassing limits');
+    usagePill.textContent = 'Pro • unlimited';
+    usagePill.title = 'Paid plan';
+
+    render();
+    updateShareLink();
+    saveState();
+    startCinematic();
     try { await bumpQrCount(); } catch {}
     return;
   }
 
+  // 🟡 2️⃣ Tryb lokalny (brak serwera)
+  if (!USE_SERVER_USAGE) {
+    render();
+    updateShareLink();
+    saveState();
+    startCinematic();
+    try { await bumpQrCount(); } catch {}
+    return;
+  }
+
+  // 🟠 3️⃣ Tryb serwerowy – zużycie limitu w Cloud Function
   const { status, data } = await consumeServerUsage();
+  console.info('[consumeServerUsage]', { status, data });
 
   if (status === 200 && data?.ok) {
-    // ✅ aktualizacja wizualnego licznika z backendu
+    // ✅ Aktualizacja wizualnego licznika z backendu
     renderQuotaPillFromServer(data);
     if (Number.isFinite(Number(data.resetAt))) startResetTimer(Number(data.resetAt));
 
-    // 💾 zapis cache (do użycia przy starcie strony)
+    // 💾 Cache lokalny (do natychmiastowego UI po starcie)
     try {
       localStorage.setItem('syntri.lastUsage', JSON.stringify({
         plan: data.plan ?? (window.SYNTRI_IS_PRO ? 'Pro' : 'Free'),
@@ -1430,14 +1471,20 @@ async function onGenerateClick() {
         resetAt: Number(data.resetAt) || 0,
         ts: Date.now()
       }));
-    } catch {}
+    } catch (e) {
+      console.warn('[usage] Cache save failed', e);
+    }
 
-    // 🎬 generacja QR
-    render(); updateShareLink(); saveState(); startCinematic();
+    // 🎬 Generacja QR
+    render();
+    updateShareLink();
+    saveState();
+    startCinematic();
     try { await bumpQrCount(); } catch {}
 
   } else if (status === 429) {
-    // 🚫 limit osiągnięty
+    // 🚫 Limit osiągnięty
+    console.warn('[usage] Quota exhausted');
     if (data) {
       renderQuotaPillFromServer(data);
       if (Number.isFinite(Number(data.resetAt))) startResetTimer(Number(data.resetAt));
@@ -1445,12 +1492,14 @@ async function onGenerateClick() {
     showCooldownUI(data?.resetAt ?? monthResetAtMs());
     openModal('#paywallModal');
 
-} else {
-    // 🌐 offline lub błąd — fallback lokalny
-    // ⛳️ BYPASS: jeśli wiemy, że user jest Pro (np. z Firestore), pozwól generować mimo błędu serwera
-    if (window.SYNTRI_IS_PRO) {
-      console.warn('[usage] Fallback bypass – user is PRO');
-      render(); updateShareLink(); saveState(); startCinematic();
+  } else {
+    // 🔴 Offline / błąd / brak połączenia z backendem
+    if (window.SYNTRI_IS_PRO === true) {
+      console.warn('[usage] Backend error ignored – user is PRO');
+      render();
+      updateShareLink();
+      saveState();
+      startCinematic();
       try { await bumpQrCount(); } catch {}
       return;
     }
@@ -1477,6 +1526,7 @@ $('#clear').addEventListener('click', () => {
   updateShareLink();
   saveState();
 });
+
 
 
 // === Shortcut: Cmd/Ctrl + Enter (Generate via Usage Gate) ===
