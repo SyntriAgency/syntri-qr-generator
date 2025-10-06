@@ -1385,13 +1385,29 @@ function showCooldownUI(resetMs){
   ctaRow.style.gap='10px';
   ctaRow.style.justifyContent='center';
 
-  const btnUpgrade1 = document.createElement('button');
-  btnUpgrade1.className='btn btn-primary';
-  btnUpgrade1.textContent='Upgrade – Stripe';
-  btnUpgrade1.onclick = () => openCheckout();
+  // === 💳 Upgrade Button (Subscribe / Stripe Checkout, i18n) ===
+const btnUpgrade1 = document.createElement('button');
+btnUpgrade1.className = 'btn btn-primary';
+btnUpgrade1.textContent = i18n('btn_upgrade_subscribe'); // 🔄 tłumaczenie
 
+btnUpgrade1.onclick = async () => {
+  const user = window.auth?.currentUser;
 
-  ctaRow.appendChild(btnUpgrade1);
+  if (!user) {
+    console.log('[upgrade] user not signed in → opening login modal');
+    openModal('#authModal');
+    return;
+  }
+
+  console.log('[upgrade] user signed in → opening checkout');
+  try {
+    await openCheckout();
+  } catch (err) {
+    console.warn('[upgrade] checkout error', err);
+  }
+};
+
+ctaRow.appendChild(btnUpgrade1);
 
   wrap.appendChild(h); wrap.appendChild(p); wrap.appendChild(timer); wrap.appendChild(ctaRow);
   preview.appendChild(wrap);
