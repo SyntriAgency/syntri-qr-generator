@@ -855,12 +855,6 @@ function isProClient(){
   return window.SYNTRI_IS_PRO === true || (localStorage.getItem('syntri.plan') === 'Pro');
 }
 
-    // Po zalogowaniu: czy mamy intencję z paywalla, by otworzyć Subskrypcję?
-const intent = localStorage.getItem('syntri.intent');
-if (user && intent === 'openSubscription') {
-  localStorage.removeItem('syntri.intent');
-  openSubscriptionSettings();
-}
     
     // ----------------------------------------------
 // Usage & Plans (front-gate for anon + logged)
