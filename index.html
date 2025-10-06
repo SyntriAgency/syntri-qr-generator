@@ -953,7 +953,8 @@ async function refreshUsageFromServer(){
   try {
     const deviceId = localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID());
     const user  = window.auth?.currentUser;
-    const token = user ? await user.getIdToken(true) : null;
+    const token = user ? await user.getIdToken(/* forceRefresh */ false) : null;
+if (!token) console.warn('[refreshUsageFromServer] no token despite auth user', user?.email); token = user ? await user.getIdToken(true) : null;
 
     const res = await fetch(API_USAGE, {
       method: 'POST',
