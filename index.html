@@ -2354,12 +2354,12 @@ function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-b
 /* === 4) LIVE PLAN: users/{uid} → Free/Pro === */
 
 onAuthStateChanged(auth, (user) => {
-  // wypnij poprzednie nasłuchy
+  // 🧹 Wypnij poprzednie nasłuchy
   if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
   if (unsubEnt)     { unsubEnt();     unsubEnt     = null; }
 
   if (user) {
-    // === users/{uid} → tylko plan / UI ogólne
+    // === users/{uid} → plan i UI ogólne ===
     const ref = doc(db, 'users', user.uid);
     unsubUserDoc = onSnapshot(ref, (snap) => {
       const d = snap.data() || {};
@@ -2370,6 +2370,7 @@ onAuthStateChanged(auth, (user) => {
       window.SYNTRI_IS_PRO = !!isPro;
       localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
 
+      // UI: etykiety i przyciski
       const planName = document.getElementById('planName');
       if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
 
@@ -2378,15 +2379,20 @@ onAuthStateChanged(auth, (user) => {
 
       if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
       if (typeof renderUsagePill === 'function') renderUsagePill();
+
+      // 🔁 Auto-refresh licznika po zmianie planu lub loginie
+      if (window.USE_SERVER_USAGE) {
+        setUsagePillLoading(true);
+        (window.refreshUsageFromServer ?? refreshUsageFromServer)?.();
+      }
     });
 
-    // === entitlements/{uid} → daty + status + widoczność guzika
+    // === entitlements/{uid} → status, daty, widoczność guzika ===
     const refEnt = doc(db, 'entitlements', user.uid);
     unsubEnt = onSnapshot(refEnt, (snap) => {
       const data   = snap.data() || {};
       const status = data.status || 'ACTIVE';
 
-      // Status label (opcjonalnie — jeśli masz <strong id="subStatus">)
       const statusEl = document.getElementById('subStatus');
       if (statusEl) {
         statusEl.textContent = (status === 'CANCELED')
@@ -2394,20 +2400,16 @@ onAuthStateChanged(auth, (user) => {
           : i18n('status_active');
       }
 
-      // Daty w stopce
       const endMs   = Number(data.expiryTimeMs || 0);
       const startMs = Number(data.startTimeMs || 0);
       updateSubFooter(endMs, startMs);
-
-      // 🔘 widoczność guzika
       updateCancelVisibility(data);
-
-    
     });
 
   } else {
-    // wylogowany → Free + schowaj guzik + wyczyść status + wyzeruj daty
+    // 🔴 WYLOGOWANY → reset wszystkiego
     localStorage.setItem('syntri.plan', 'Free');
+    localStorage.removeItem('syntri.lastUsage'); // usuń cache licznika
 
     const planName = document.getElementById('planName');
     if (planName) planName.textContent = 'Free';
@@ -2419,14 +2421,21 @@ onAuthStateChanged(auth, (user) => {
     if (statusEl) statusEl.textContent = '';
 
     updateSubFooter(0, 0);
+    updateCancelVisibility(null);
 
     if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
     if (typeof renderUsagePill === 'function') renderUsagePill();
   }
-if (typeof renderAuthUI === 'function') renderAuthUI();
 
-  // 🔄 Zawsze na samym końcu: pobierz licznik z backendu bez zużycia limitu
-  window.refreshUsageFromServer?.();
+  if (typeof renderAuthUI === 'function') renderAuthUI();
+
+  // 🕓 Na końcu – pobierz licznik z backendu po krótkim opóźnieniu
+  if (window.USE_SERVER_USAGE && user) {
+    setUsagePillLoading(true);
+    setTimeout(() => {
+      (window.refreshUsageFromServer ?? refreshUsageFromServer)?.();
+    }, 300); // małe opóźnienie = unikanie wyścigu po loginie
+  }
 });
 
 
