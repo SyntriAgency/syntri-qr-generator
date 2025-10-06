@@ -1685,6 +1685,13 @@ on($('#openPortal'),'click', async ()=>{
     on($('#subscribeStripe'),'click', () => openCheckout());
     
 
+function openSubscriptionSettings(){
+  if (typeof activateSettingsTab === 'function') {
+    activateSettingsTab('subscription');
+  }
+  openModal('#settingsModal');
+}
+    
 // === Settings modal ===
 function activateSettingsTab(tab='account'){
   document.querySelectorAll('#settingsModal .settings-nav button')
