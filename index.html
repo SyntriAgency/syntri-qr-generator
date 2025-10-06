@@ -1038,8 +1038,39 @@ window.refreshUsageFromServer = refreshUsageFromServer;
 
 // === Usage Limiter – Lokalny licznik (fallback / cache) ===
 function renderUsagePill(){
+  // 1) Jeśli mamy cache z backendu → użyj go najpierw (bez migania 0/x)
+  try {
+    const cached = JSON.parse(localStorage.getItem('syntri.lastUsage') || 'null');
+    if (cached && (('used' in cached) || ('quota' in cached))) {
+      const planFromCache = cached.plan ?? (localStorage.getItem('syntri.plan') || 'Free');
+      const quotaFromCache =
+        cached.quota === Infinity || String(planFromCache).toLowerCase() === 'pro'
+          ? Infinity
+          : (Number.isFinite(Number(cached.quota)) ? Number(cached.quota) : undefined);
+
+      renderQuotaPillFromServer({
+        plan:  planFromCache,
+        used:  Number(cached.used ?? 0),
+        quota: quotaFromCache
+      });
+      ensureHomeGate();
+      return;
+    }
+  } catch {}
+
+  // 2) Jeżeli wiemy, że user jest PRO → pokaż unlimited natychmiast
+  const planLS = localStorage.getItem('syntri.plan') || 'Free';
+  const isPro  = window.SYNTRI_IS_PRO === true || planLS === 'Pro';
+  if (isPro) {
+    usagePill.textContent = 'Pro • unlimited';
+    usagePill.title = 'Paid plan';
+    ensureHomeGate();
+    return;
+  }
+
+  // 3) Fallback lokalny (brak cache i nie-PRO)
   const u = getUsage();
-  const plan = getPlan();
+  const plan = planLS;
   if (u.quota === Infinity) {
     usagePill.textContent = `${plan} • unlimited`;
     usagePill.title = 'Paid plan';
@@ -2221,6 +2252,7 @@ document.getElementById('btn-en')?.addEventListener('click', () => {
 
 applyI18n(userLang);
 hydrateUsageFromCache();
+renderUsagePill();
 
 if (USE_SERVER_USAGE) {
   (window.refreshUsageFromServer ?? refreshUsageFromServer)?.();
