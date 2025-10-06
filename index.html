@@ -948,9 +948,9 @@ function hydrateUsageFromCache(){
     });
   } catch {}
 }
-    // === 🔄 Server Usage Sync (Firebase + Cloud Function Peek) ===
+  // === 🔄 Server Usage Sync (Firebase + Cloud Function Peek) ===
 async function refreshUsageFromServer(){
-  try{
+  try {
     const deviceId = localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID());
     const user  = window.auth?.currentUser;
     const token = user ? await user.getIdToken(true) : null;
@@ -963,20 +963,44 @@ async function refreshUsageFromServer(){
       },
       body: JSON.stringify({ deviceId, peek: true }) // backend NIE zużywa limitu
     });
-    const data = await res.json();
 
-    // oczekiwane: { plan, used, quota, resetAt }
-    if (res.ok && data && ('used' in data || 'quota' in data)) {
-      renderQuotaPillFromServer(data);
-      // opcjonalnie: startResetTimer(data.resetAt);
-    } else {
-      renderUsagePill(); // fallback lokalny
+    // --- bezpieczny parse JSON + log ---
+    const isDev = location.search.includes('dev=1');
+    let data = null;
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      try { data = await res.json(); } catch {}
     }
-  }catch(e){
+    if (isDev) {
+      console.info('[refreshUsageFromServer]',
+        'status=', res.status, 'hasAuth=', !!token, 'data=', data);
+    }
+
+    // --- logika UI ---
+    if (res.ok && data && ('used' in data || 'quota' in data)) {
+      const norm = {
+        plan:    String(data.plan ?? (window.SYNTRI_IS_PRO ? 'Pro' : 'Free')),
+        used:    Number(data.used ?? 0),
+        quota:   (data.quota === Infinity || String(data.plan).toLowerCase() === 'pro')
+                   ? Infinity
+                   : Number(data.quota ?? 15),
+        resetAt: Number(data.resetAt) || 0
+      };
+
+      renderQuotaPillFromServer(norm);
+      startResetTimer(norm.resetAt);
+      try { localStorage.setItem('syntri.lastUsage', JSON.stringify(norm)); } catch {}
+
+    } else {
+      renderUsagePill();
+    }
+
+  } catch(e) {
     console.warn('[refreshUsageFromServer] fallback do lokalnego', e);
     renderUsagePill();
   }
 }
+
 // udostępnij dla modułu firebase
 window.refreshUsageFromServer = refreshUsageFromServer;
 
