@@ -854,6 +854,13 @@ function setUsagePillLoading(isLoading){
 function isProClient(){
   return window.SYNTRI_IS_PRO === true || (localStorage.getItem('syntri.plan') === 'Pro');
 }
+
+    // Po zalogowaniu: czy mamy intencję z paywalla, by otworzyć Subskrypcję?
+const intent = localStorage.getItem('syntri.intent');
+if (user && intent === 'openSubscription') {
+  localStorage.removeItem('syntri.intent');
+  openSubscriptionSettings();
+}
     
     // ----------------------------------------------
 // Usage & Plans (front-gate for anon + logged)
@@ -1387,24 +1394,20 @@ function showCooldownUI(resetMs){
 
   // === 💳 Upgrade Button (Subscribe / Stripe Checkout, i18n) ===
 const btnUpgrade1 = document.createElement('button');
-btnUpgrade1.className = 'btn btn-primary';
-btnUpgrade1.textContent = i18n('btn_upgrade_subscribe'); // 🔄 tłumaczenie
-
-btnUpgrade1.onclick = async () => {
+btnUpgrade1.className='btn btn-primary';
+btnUpgrade1.textContent = i18n('btn_upgrade_open'); // i18n (niżej dodasz klucze)
+btnUpgrade1.onclick = () => {
   const user = window.auth?.currentUser;
 
   if (!user) {
-    console.log('[upgrade] user not signed in → opening login modal');
-    openModal('#authModal');
+    // zapamiętaj intencję i pokaż login
+    localStorage.setItem('syntri.intent', 'openSubscription');
+    openModal('#loginModal');
     return;
   }
 
-  console.log('[upgrade] user signed in → opening checkout');
-  try {
-    await openCheckout();
-  } catch (err) {
-    console.warn('[upgrade] checkout error', err);
-  }
+  // już zalogowany → otwórz ustawienia na zakładce Subscription
+  openSubscriptionSettings();
 };
 
 ctaRow.appendChild(btnUpgrade1);
@@ -2001,6 +2004,7 @@ const I18N = {
     link_share: 'Udostępnij',
     btn_subscribe_price: 'Subskrybuj £3.99',
     btn_subscribed: 'Zasubskrybowano',
+    btn_upgrade_open: 'Ulepsz — Subskrypcja',
 
     // --- KOMUNIKATY / HINTY ---
     alert_generate_first: 'Najpierw wygeneruj QR',
@@ -2154,6 +2158,7 @@ const I18N = {
     link_share: 'Share',
     btn_subscribe_price: 'Subscribe £3.99',
     btn_subscribed: 'Subscribed',
+    btn_upgrade_open: 'Upgrade — Subscription',
     
     // --- MESSAGES / HINTS ---
     alert_generate_first: 'Generate the QR first',
