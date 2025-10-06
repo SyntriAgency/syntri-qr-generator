@@ -1591,40 +1591,31 @@ async function onGenerateClick() {
 
   return;
 
-} else {
-  // 🔴 Offline / błąd / brak połączenia z backendem
-  if (window.SYNTRI_IS_PRO === true) {
-    console.warn('[usage] Backend error ignored – user is PRO');
+  } else {
+    // 🔴 Offline / błąd / brak połączenia z backendem
+    if (window.SYNTRI_IS_PRO === true) {
+      console.warn('[usage] Backend error ignored – user is PRO');
+      render();
+      updateShareLink();
+      saveState();
+      startCinematic();
+      try { await bumpQrCount(); } catch {}
+      return;
+    }
+
+    const local = tryConsumeUsage();
+    if (!local.ok) {
+      showCooldownUI(Date.now() + local.resetMs);
+      openModal('#paywallModal');
+      return;
+    }
+
     render();
     updateShareLink();
     saveState();
     startCinematic();
     try { await bumpQrCount(); } catch {}
-    return;
   }
-
-  const local = tryConsumeUsage();
-  if (!local.ok) {
-    showCooldownUI(Date.now() + local.resetMs);
-    // 🟢 zamiast starego paywallModal
-    if (window.auth?.currentUser) {
-      if (typeof openSubscriptionSettings === 'function') {
-        openSubscriptionSettings();
-      } else {
-        if (typeof activateSettingsTab === 'function') activateSettingsTab('subscription');
-        openModal('#settingsModal');
-      }
-    } else {
-      openModal('#loginModal');
-    }
-    return;
-  }
-
-  render();
-  updateShareLink();
-  saveState();
-  startCinematic();
-  try { await bumpQrCount(); } catch {}
 }
 
 // 🧹 przycisk czyszczenia
