@@ -719,19 +719,6 @@
 </div>
 
   
-  <!-- Paywall modal -->
-  <div id="paywallModal" class="modal" aria-hidden="true">
-    <div class="modal-card">
-      <h3 data-i18n="paywall_title">Free limit reached</h3>
-      <p class="muted" data-i18n="paywall_copy">You used all free codes this month. Choose a plan to continue.</p>
-      <div class="modal-actions" style="justify-content:space-between">
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-primary" id="subscribeStripe">Subscribe – Stripe</button>
-        </div>
-        <button class="btn btn-ghost" id="paywallClose" data-i18n="btn_close">Close</button>
-      </div>
-    </div>
-  </div>
 
    <!-- Firebase compat build – działa w zwykłym <script> -->
  <!-- QR lib – ZAŁADUJ RAZ, POZA innymi scriptami -->
@@ -1684,7 +1671,7 @@ on($('#openPortal'),'click', async ()=>{
     on($('#paywallClose'),'click',()=> closeModal('#paywallModal'));
     on($('#subscribeStripe'),'click', () => openCheckout());
     
-
+// === 💳 Subscription Shortcut (z paywalla do zakładki Subskrypcja) ===
 function openSubscriptionSettings(){
   if (typeof activateSettingsTab === 'function') {
     activateSettingsTab('subscription');
