@@ -979,13 +979,13 @@ function hydrateUsageFromCache() {
   } catch {}
 }
 
-  // === 🔄 Server Usage Sync (Firebase + Cloud Function Peek) ===
+// === 🔄 Server Usage Sync (Firebase + Cloud Function Peek) ===
 async function refreshUsageFromServer(){
   try {
     const deviceId = localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID());
     const user  = window.auth?.currentUser;
-    const token = user ? await user.getIdToken(/* forceRefresh */ false) : null;
-if (!token) console.warn('[refreshUsageFromServer] no token despite auth user', user?.email); token = user ? await user.getIdToken(true) : null;
+    let token   = user ? await user.getIdToken(false) : null;
+    if (user && !token) token = await user.getIdToken(true); // force refresh, gdyby brakło
 
     const res = await fetch(API_USAGE, {
       method: 'POST',
@@ -996,7 +996,7 @@ if (!token) console.warn('[refreshUsageFromServer] no token despite auth user', 
       body: JSON.stringify({ deviceId, peek: true }) // backend NIE zużywa limitu
     });
 
-    // --- bezpieczny parse JSON + log ---
+    // --- bezpieczny parse JSON + log dev ---
     const isDev = location.search.includes('dev=1');
     let data = null;
     const ct = res.headers.get('content-type') || '';
@@ -1004,36 +1004,54 @@ if (!token) console.warn('[refreshUsageFromServer] no token despite auth user', 
       try { data = await res.json(); } catch {}
     }
     if (isDev) {
-      console.info('[refreshUsageFromServer]',
-        'status=', res.status, 'hasAuth=', !!token, 'data=', data);
+      console.info('[refreshUsageFromServer]', { status: res.status, hasAuth: !!token, data });
     }
 
-    // --- logika UI ---
+    // --- 200: poprawna odpowiedź z licznikami ---
     if (res.ok && data && ('used' in data || 'quota' in data)) {
       const norm = {
         plan:    String(data.plan ?? (window.SYNTRI_IS_PRO ? 'Pro' : 'Free')),
         used:    Number(data.used ?? 0),
         quota:   (data.quota === Infinity || String(data.plan).toLowerCase() === 'pro')
                    ? Infinity
-                   : Number(data.quota ?? 15),
+                   : Number.isFinite(Number(data.quota)) ? Number(data.quota) : 15,
         resetAt: Number(data.resetAt) || 0
       };
 
       renderQuotaPillFromServer(norm);
       startResetTimer(norm.resetAt);
       try { localStorage.setItem('syntri.lastUsage', JSON.stringify(norm)); } catch {}
-
-    } else {
-      renderUsagePill();
+      return;
     }
+
+    // --- 429: quota_exhausted → pokaż pełne zużycie zamiast 0/x ---
+    if (res.status === 429) {
+      const plan = (data?.plan) || localStorage.getItem('syntri.plan') || 'Free';
+      const quotaMap = { Free: 10, Basic: 15, Pro: Infinity };
+      const quota = (data?.quota === Infinity || String(plan).toLowerCase() === 'pro')
+        ? Infinity
+        : (Number.isFinite(Number(data?.quota)) ? Number(data.quota) : (quotaMap[plan] ?? 10));
+
+      if (quota === Infinity) {
+        usagePill.textContent = 'Pro • unlimited';
+        usagePill.title = 'Paid plan';
+      } else {
+        usagePill.textContent = `${quota} / ${quota}`;
+        usagePill.title = `Monthly usage (${plan})`;
+      }
+
+      if (Number.isFinite(Number(data?.resetAt))) startResetTimer(Number(data.resetAt));
+      return;
+    }
+
+    // --- fallback: błąd/timeout/inny status ---
+    renderUsagePill();
 
   } catch(e) {
     console.warn('[refreshUsageFromServer] fallback do lokalnego', e);
     renderUsagePill();
   }
 }
-
-// udostępnij dla modułu firebase
 window.refreshUsageFromServer = refreshUsageFromServer;
 
 // === Usage Limiter – Lokalny licznik (fallback / cache) ===
