@@ -912,51 +912,61 @@ const PLAN_LIMITS = {
 };
 
 // === Usage Limiter (Server Sync UI) ===
-// Aktualizacja licznika na podstawie odpowiedzi backendu lub starszego formatu (plan, remaining)
+// Akceptuje zarówno obiekt {plan, used, quota} LUB {plan, remaining, quota},
+// jak i stary format (plan, remaining)
 function renderQuotaPillFromServer(a, b) {
-  // 1) Nowy format: obiekt { plan, used, quota }
+  // -- Nowy format: obiekt --
   if (a && typeof a === 'object') {
-    const plan = a.plan ?? (localStorage.getItem('syntri.plan') || 'Free');
-    const used = Number(a.used ?? 0);
+    const planFromLS = localStorage.getItem('syntri.plan') || 'Free';
+    const plan  = a.plan ?? planFromLS;
 
-    // Ustal quota: preferuj Infinity dla Pro albo liczby z backendu, inaczej limit z PLAN_LIMITS
-    const quota =
-      a.quota === Infinity || PLAN_LIMITS[plan] === Infinity
-        ? Infinity
-        : (Number.isFinite(Number(a.quota)) ? Number(a.quota) : (PLAN_LIMITS[plan] ?? 10));
+    // quota: preferuj wartość z backendu, w przeciwnym razie z mapy planów
+    let quota = (a.quota === Infinity || PLAN_LIMITS[plan] === Infinity)
+      ? Infinity
+      : (Number.isFinite(Number(a.quota)) ? Number(a.quota) : (PLAN_LIMITS[plan] ?? 10));
+
+    // used: jeśli brak 'used', a jest 'remaining', przelicz
+    let used = 0;
+    if ('used' in a) {
+      used = Number(a.used ?? 0);
+    } else if ('remaining' in a) {
+      used = (quota === Infinity) ? 0 : Math.max(0, Number(quota) - Number(a.remaining ?? 0));
+    }
+
+    // dopnij do granic
+    if (quota !== Infinity) {
+      used = Math.min(Math.max(0, Math.floor(used)), quota);
+    }
 
     if (quota === Infinity) {
       usagePill.textContent = 'Pro • unlimited';
       usagePill.title = 'Paid plan';
     } else {
-      const shownUsed = Math.min(used, quota);
-      usagePill.textContent = `${shownUsed} / ${quota}`;
+      usagePill.textContent = `${used} / ${quota}`;
       usagePill.title = `Monthly usage (${plan})`;
     }
     return;
   }
 
-  // 2) Starszy format: (plan, remaining)
+  // -- Stary format: (plan, remaining) --
   const plan = a ?? (localStorage.getItem('syntri.plan') || 'Free');
-  const planLimit = PLAN_LIMITS[plan] ?? 10;
+  const quota = PLAN_LIMITS[plan] ?? 10;
 
-  // remaining może być 'unlimited' lub Infinity
   const remaining = (b === 'unlimited') ? Infinity : Number(b);
-
-  if (PLAN_LIMITS[plan] === Infinity || remaining === Infinity) {
+  if (quota === Infinity || remaining === Infinity) {
     usagePill.textContent = 'Pro • unlimited';
     usagePill.title = 'Paid plan';
     return;
   }
 
-  usagePill.textContent = `${Math.max(0, remaining || 0)} / ${planLimit}`;
+  const used = Math.max(0, quota - Math.max(0, Number(remaining) || 0));
+  usagePill.textContent = `${used} / ${quota}`;
   usagePill.title = `Monthly usage (${plan})`;
 }
 
 // === Reset timer placeholder (opcjonalny) ===
 function startResetTimer(resetAt) {
-  // opcjonalnie: tu możesz dodać odliczanie do resetu miesięcznego
-  // obecnie no-op, aby unikać ReferenceError
+  // opcjonalne odliczanie do resetu
 }
 
 // === Natychmiastowe UI z cache (przyjemne UX) ===
