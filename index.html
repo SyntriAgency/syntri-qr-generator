@@ -843,8 +843,15 @@ function renderAuthUI() {
   }
 }
 
-    //test - tymwczasowy
-    function isProClient(){
+// === UI helper: tymczasowe ukrycie licznika (lazy reveal) ===
+function setUsagePillLoading(isLoading){
+  if (!usagePill) return;
+  usagePill.style.visibility = isLoading ? 'hidden' : 'visible';
+  usagePill.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+}
+
+  // === Helper: szybkie sprawdzenie statusu PRO (local + global) ===
+function isProClient(){
   return window.SYNTRI_IS_PRO === true || (localStorage.getItem('syntri.plan') === 'Pro');
 }
     
@@ -1047,9 +1054,11 @@ async function refreshUsageFromServer(){
     // --- fallback: błąd/timeout/inny status ---
     renderUsagePill();
 
-  } catch(e) {
+ } catch (e) {
     console.warn('[refreshUsageFromServer] fallback do lokalnego', e);
     renderUsagePill();
+  } finally {
+    setUsagePillLoading(false); // 👈 pokaż licznik po zakończeniu
   }
 }
 window.refreshUsageFromServer = refreshUsageFromServer;
@@ -2269,11 +2278,29 @@ document.getElementById('btn-en')?.addEventListener('click', () => {
 });
 
 applyI18n(userLang);
-hydrateUsageFromCache();
-renderUsagePill();
 
+// === Lazy reveal dla licznika użycia (usage pill) ===
+setUsagePillLoading(true); // ukryj licznik na starcie
+
+// 🔹 szybki cache (jeśli mamy dane z poprzedniej sesji)
+hydrateUsageFromCache();
+
+// 🔹 watchdog – jeśli nic się nie pojawi w 1200 ms, pokaż fallback lokalny
+setTimeout(() => {
+  if (usagePill && usagePill.style.visibility === 'hidden') {
+    renderUsagePill();              // lokalny/fallback
+    setUsagePillLoading(false);
+  }
+}, 1200);
+
+// 🔹 backend – pobiera świeże dane (nadpisze cache)
 if (USE_SERVER_USAGE) {
-  (window.refreshUsageFromServer ?? refreshUsageFromServer)?.();
+  (window.refreshUsageFromServer ?? refreshUsageFromServer)?.()
+    .finally(() => setUsagePillLoading(false));
+} else {
+  // brak backendu – pokaż od razu
+  renderUsagePill();
+  setUsagePillLoading(false);
 }
   </script>
 <script type="module">
