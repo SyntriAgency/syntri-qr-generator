@@ -499,6 +499,7 @@
         </div>
         <div style="display:flex;gap:12px;align-items:center;">
           <a class="link" href="#" id="shareLink" data-i18n="link_share" title="Udostępnij parametry w URL">Udostępnij</a>
+          <button id="copyLink" class="btn btn-ghost" data-i18n="btn_copy">Kopiuj link</button>
         </div>
       </footer>
     </div>
@@ -1384,25 +1385,13 @@ function showCooldownUI(resetMs){
   ctaRow.style.gap='10px';
   ctaRow.style.justifyContent='center';
 
-  // === 💳 Upgrade Button (Subscribe / Stripe Checkout, i18n) ===
-const btnUpgrade1 = document.createElement('button');
-btnUpgrade1.className='btn btn-primary';
-btnUpgrade1.textContent = i18n('btn_upgrade_open'); // i18n (niżej dodasz klucze)
-btnUpgrade1.onclick = () => {
-  const user = window.auth?.currentUser;
+  const btnUpgrade1 = document.createElement('button');
+  btnUpgrade1.className='btn btn-primary';
+  btnUpgrade1.textContent='Upgrade – Stripe';
+  btnUpgrade1.onclick = () => openCheckout();
 
-  if (!user) {
-    // zapamiętaj intencję i pokaż login
-    localStorage.setItem('syntri.intent', 'openSubscription');
-    openModal('#loginModal');
-    return;
-  }
 
-  // już zalogowany → otwórz ustawienia na zakładce Subscription
-  openSubscriptionSettings();
-};
-
-ctaRow.appendChild(btnUpgrade1);
+  ctaRow.appendChild(btnUpgrade1);
 
   wrap.appendChild(h); wrap.appendChild(p); wrap.appendChild(timer); wrap.appendChild(ctaRow);
   preview.appendChild(wrap);
@@ -1608,8 +1597,6 @@ $('#clear').addEventListener('click', () => {
 
 
 
-
-
 // === Shortcut: Cmd/Ctrl + Enter (Generate via Usage Gate) ===
 // Umożliwia generowanie QR przez centralny limiter (onGenerateClick)
 document.addEventListener('keydown', async (e) => {
@@ -1685,13 +1672,6 @@ on($('#openPortal'),'click', async ()=>{
     on($('#subscribeStripe'),'click', () => openCheckout());
     
 
-// === 💳 Subscription Shortcut (z paywalla do zakładki Subskrypcja) ===
-function openSubscriptionSettings(){
-  if (typeof activateSettingsTab === 'function') {
-    activateSettingsTab('subscription');
-  }
-  openModal('#settingsModal');
-}    
 // === Settings modal ===
 function activateSettingsTab(tab='account'){
   document.querySelectorAll('#settingsModal .settings-nav button')
@@ -2005,9 +1985,6 @@ const I18N = {
     link_share: 'Udostępnij',
     btn_subscribe_price: 'Subskrybuj £3.99',
     btn_subscribed: 'Zasubskrybowano',
-    btn_upgrade_subscribe: 'Ulepsz – Subskrybuj',
-    btn_upgrade_open: 'Ulepsz — Subskrypcja',
-
 
     // --- KOMUNIKATY / HINTY ---
     alert_generate_first: 'Najpierw wygeneruj QR',
@@ -2161,9 +2138,7 @@ const I18N = {
     link_share: 'Share',
     btn_subscribe_price: 'Subscribe £3.99',
     btn_subscribed: 'Subscribed',
-    btn_upgrade_subscribe: 'Upgrade – Subscribe',
-    btn_upgrade_open: 'Upgrade — Subscription',
-      
+    
     // --- MESSAGES / HINTS ---
     alert_generate_first: 'Generate the QR first',
     copied: 'Copied',
@@ -2443,17 +2418,15 @@ onAuthStateChanged(auth, (user) => {
     const statusEl = document.getElementById('subStatus');
     if (statusEl) statusEl.textContent = '';
 
-   updateSubFooter(0, 0);
+    updateSubFooter(0, 0);
 
-if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
-if (typeof renderUsagePill === 'function') renderUsagePill();
-}
-
-// 🔐 Odśwież UI logowania / przycisków auth
+    if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+    if (typeof renderUsagePill === 'function') renderUsagePill();
+  }
 if (typeof renderAuthUI === 'function') renderAuthUI();
 
-// 🔄 Na końcu: pobierz licznik z backendu bez zużycia limitu
-window.refreshUsageFromServer?.();
+  // 🔄 Zawsze na samym końcu: pobierz licznik z backendu bez zużycia limitu
+  window.refreshUsageFromServer?.();
 });
 
 
@@ -2764,5 +2737,6 @@ function updateCancelVisibility(data){
 
 </body>
 </html>
+
 
 
