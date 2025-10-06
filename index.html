@@ -1561,35 +1561,15 @@ async function onGenerateClick() {
     startCinematic();
     try { await bumpQrCount(); } catch {}
 
- } else if (status === 429) {
-  // 🚫 Limit osiągnięty
-  console.warn('[usage] Quota exhausted');
-
-  // zaktualizuj licznik i (opcjonalnie) timer resetu
-  if (data) {
-    renderQuotaPillFromServer(data);
-    if (Number.isFinite(Number(data.resetAt))) startResetTimer(Number(data.resetAt));
-  }
-
-  // (opcjonalnie) pokaż odliczanie w preview, ale bez starego modala
-  showCooldownUI(data?.resetAt ?? monthResetAtMs());
-
-  // 👉 Nowy flow: przenieś do zakładki Subscription zamiast paywallModal
-  if (window.auth?.currentUser) {
-    // zalogowany → otwórz ustawienia/subskrypcję
-    if (typeof openSubscriptionSettings === 'function') {
-      openSubscriptionSettings();
-    } else {
-      // fallback, gdy helpera nie ma
-      if (typeof activateSettingsTab === 'function') activateSettingsTab('subscription');
-      openModal('#settingsModal');
+  } else if (status === 429) {
+    // 🚫 Limit osiągnięty
+    console.warn('[usage] Quota exhausted');
+    if (data) {
+      renderQuotaPillFromServer(data);
+      if (Number.isFinite(Number(data.resetAt))) startResetTimer(Number(data.resetAt));
     }
-  } else {
-    // niezalogowany → najpierw logowanie
-    openModal('#loginModal');
-  }
-
-  return;
+    showCooldownUI(data?.resetAt ?? monthResetAtMs());
+    openModal('#paywallModal');
 
   } else {
     // 🔴 Offline / błąd / brak połączenia z backendem
