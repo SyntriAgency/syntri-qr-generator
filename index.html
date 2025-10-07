@@ -2180,6 +2180,7 @@ const I18N = {
     policy_children_h: 'Dzieci',
     policy_children_p: 'Usługa dla dorosłych; nie zbieramy danych dzieci.',
     policy_contact_h: 'Kontakt'
+    login_policy_notice: 'Kontynuując, akceptujesz naszą <a href="#" data-tab="policy" class="link">Politykę prywatności</a>.',
         
   },
 
@@ -2337,6 +2338,7 @@ const I18N = {
     policy_children_h: 'Children',
     policy_children_p: 'Service intended for adults; no data knowingly collected from children.',
     policy_contact_h: 'Contact'
+    login_policy_notice: 'By continuing, you agree to our <a href="#" data-tab="policy" class="link">Privacy Policy</a>.'
     
   }
 };
@@ -2513,7 +2515,7 @@ if (typeof renderAuthUI === 'function') renderAuthUI();
 });
 
 
-/* === 6) Rejestracja === */
+/* === 5) Rejestracja === */
 $('#btnRegister')?.addEventListener('click', async () => {
   const btn   = $('#btnRegister');
   const email = ($('#loginEmail')?.value || '').trim();
@@ -2539,7 +2541,7 @@ $('#btnRegister')?.addEventListener('click', async () => {
   }
 });
 
-/* === 7) Logowanie === */
+/* === 6) Logowanie === */
 $('#btnLogin')?.addEventListener('click', async () => {
   const btn   = $('#btnLogin');
   const email = ($('#loginEmail')?.value || '').trim();
@@ -2567,7 +2569,44 @@ $('#btnLogin')?.addEventListener('click', async () => {
   }
 });
 
-/* === 8) Reset hasła (Forgot password) – z własną stroną resetu === */
+  /* === 7) Zapamiętywanie akceptacji polityki po pierwszym logowaniu*/
+  $('#btnLogin')?.addEventListener('click', async () => {
+  const btn   = $('#btnLogin');
+  const email = ($('#loginEmail')?.value || '').trim();
+  const pass  = ($('#loginPass')?.value  || '').trim();
+
+  if (!email || !pass){
+    alert(i18n('login_missing_fields') || 'Podaj email i hasło.');
+    return;
+  }
+
+  try {
+    setBusy(btn, true);
+
+    // 🔹 logowanie
+    await signInWithEmailAndPassword(AUTH.app, email, pass);
+
+    // ✅ zapamiętaj, że użytkownik już widział politykę
+    localStorage.setItem('syntri.seenPolicy', '1');
+
+    // zamknij modal po sukcesie
+    closeModal('#loginModal');
+
+  } catch (err) {
+    console.error(err);
+    alert('Logowanie nieudane: ' + (err?.code || err?.message || err));
+  } finally {
+    setBusy(btn, false);
+  }
+});
+
+/* === 8) zapamiętaj, że użytkownik już widział politykę === */
+localStorage.setItem('syntri.seenPolicy', '1');
+
+// zamknij modal po sukcesie
+closeModal('#loginModal');
+  
+/* === 10) Reset hasła (Forgot password) – z własną stroną resetu === */
 $('#btnForgot')?.addEventListener('click', async () => {
   const btn   = $('#btnForgot');
   const email = ($('#loginEmail')?.value || '').trim();
@@ -2764,7 +2803,7 @@ function updateSubFooter(expiryMs, startMs) {
     : `(${ i18n('plan_pro_expired') })`;
 }
 
-// === nasłuch Firestore – entitlements (z datami start/expiry) ===
+// === 15) nasłuch Firestore – entitlements (z datami start/expiry) ===
 onAuthStateChanged(auth, (user) => {
   if (unsubEnt) { unsubEnt(); unsubEnt = null; }
 
