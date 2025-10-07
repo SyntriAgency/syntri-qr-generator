@@ -681,14 +681,18 @@
 </div>
 
   <!-- ✅ Support jako osobna zakładka (sibling) -->
-    <div class="tab support">
-  <p>Masz pytania lub zgłoszenia błędów? Napisz do nas:</p>
-  <p>Email:
-    <a class="link" href="mailto:syntri.business.agency@gmail.com">
+   <div class="tab support">
+  <h4 data-i18n="support_title">Support</h4>
+  <p data-i18n="support_intro">Have questions or found a bug? Contact us:</p>
+  <p><span data-i18n="support_email_label">Email:</span>
+    <a class="link" href="mailto:syntri.business.agency@gmail.com"
+       data-i18n="support_email_address">
       syntri.business.agency@gmail.com
     </a>
   </p>
-  <p class="muted">Odpowiadamy zwykle w ciągu 1–2 dni roboczych.</p>
+  <p class="muted" data-i18n="support_response_time">
+    We usually respond within 1–2 business days.
+  </p>
 </div>
     
 
@@ -2072,6 +2076,7 @@ const I18N = {
     account_delete: 'Usuń konto',
     
     
+    
 
     // --- MODAL: SETTINGS ---
     settings_title: 'Ustawienia',
@@ -2138,10 +2143,12 @@ const I18N = {
       'Wykorzystałeś/aś wszystkie darmowe kody w tym miesiącu. Wybierz plan, aby kontynuować.',
 
     // --- Support--- 
-    "support_title": "Wsparcie",
-    "support_intro": "Masz pytania, uwagi lub chcesz zgłosić problem? Napisz do nas.",
-    "support_email_label": "E-mail",
-    "support_reply_hint": "Odpowiadamy zwykle w ciągu 1–2 dni roboczych.",
+   support_title: 'Wsparcie',
+   support_intro: 'Masz pytania lub zgłoszenia błędów? Napisz do nas:',
+   support_email_label: 'E-mail:',
+   support_email_address: 'syntri.business.agency@gmail.com',
+   support_response_time: 'Odpowiadamy zwykle w ciągu 1–2 dni roboczych.',
+    
 
     // --- Policy ---
     policy_title: 'Polityka prywatności',
@@ -2256,8 +2263,12 @@ const I18N = {
     cancel_sub: 'Cancel at period end',
     
     // --- SETTINGS / SUPPORT TAB ---
-    settings_support_title:   'Support',
-    settings_support_contact: 'Contact: support@syntri.app',
+    support_title: 'Support',
+    support_intro: 'Have questions or found a bug? Contact us:',
+    support_email_label: 'Email:',
+    support_email_address: 'syntri.business.agency@gmail.com',
+    support_response_time: 'We usually respond within 1–2 business days.',
+    
 
    // --- ACCOUNT TAB — login errors ---
     err_wrong_pass: 'Incorrect password – please try again.',
