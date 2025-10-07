@@ -1320,10 +1320,11 @@ function downloadVectorSVGFromQR(qObj, {
       if (!$('#transparent')?.checked){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height); }
 
       const actions = document.createElement('div'); actions.className='syntri-actions';
-      const btnPng = document.createElement('button'); btnPng.className='btn btn-ghost'; btnPng.textContent = i18n('btn_png'); btnPng.disabled = true;
-      const btnSvg = document.createElement('button'); btnSvg.className='btn btn-ghost'; btnSvg.textContent = i18n('btn_svg'); btnSvg.disabled = true;
-      actions.appendChild(btnPng); actions.appendChild(btnSvg);
-
+      const btnPng = document.createElement('button'); btnPng.className = 'btn btn-ghost'; btnPng.textContent = i18n('btn_png'); btnPng.disabled = true;
+      const btnSvg = document.createElement('button'); btnSvg.className = 'btn btn-ghost'; btnSvg.textContent = i18n('btn_svg'); btnSvg.disabled = true;
+      const isPro = (typeof isProClient === 'function' && isProClient()) || window.SYNTRI_IS_PRO === true || localStorage.getItem('syntri.plan') === 'Pro';
+      actions.appendChild(btnPng); if (isPro) actions.appendChild(btnSvg);
+      
       // 🧩 Handlery pobierania (PNG / SVG vector)
       btnPng.onclick = () => downloadCanvasAsPNG(cv, filename('png'));
 
