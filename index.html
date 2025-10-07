@@ -2560,8 +2560,16 @@ $('#btnLogin')?.addEventListener('click', async () => {
     // Firebase Auth login
     const cred = await signInWithEmailAndPassword(auth, email, pass);
 
-    // 🔖 zapamiętaj, że user widział/zaakceptował politykę
+    // 🔖 sprawdź, czy user widzi politykę po raz pierwszy
+    const firstTime = !localStorage.getItem('syntri.seenPolicy');
     localStorage.setItem('syntri.seenPolicy', '1');
+
+    if (firstTime) {
+      closeModal('#loginModal');
+      openModal('#settingsModal');
+      activateSettingsTab?.('policy');
+      return; // zakończ tu, żeby nie pokazywać alertu
+    }
 
     alert('Zalogowano jako: ' + (cred.user?.email || email));
 
