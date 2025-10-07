@@ -1221,26 +1221,58 @@ async function consumeServerUsage() {
 
 
     
-    // downloads (from animation canvas)
-    function downloadCanvasAsPNG(canvas, name){
-      const scale = 2;
-      const off = document.createElement('canvas');
-      off.width = canvas.width*scale; off.height = canvas.height*scale;
-      const ctx = off.getContext('2d');
-      if(!transparent.checked){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,off.width,off.height); }
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(canvas, 0, 0, off.width, off.height);
-      const a = document.createElement('a'); a.download = name; a.href = off.toDataURL('image/png'); a.click();
-    }
-    function downloadCanvasAsSVG(canvas, name, transparentBg){
-      const pngData = canvas.toDataURL('image/png');
-      const bg = transparentBg ? '' : '<rect width="100%" height="100%" fill="#fff"/>';
-      const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">${bg}<image href="${pngData}" width="100%" height="100%"/></svg>`;
-      const blob = new Blob([svg], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = name; a.click();
-      URL.revokeObjectURL(url);
-    }
+    
+   // Downloads (from animation canvas) — eksport w dokładnym rozmiarze z #size
+function downloadCanvasAsPNG(canvas, name){
+  const target = clamp(parseInt(size.value || 100, 10), 64, 2048); // docelowe px
+  const off = document.createElement('canvas');
+  off.width = target; 
+  off.height = target;
+  const ctx = off.getContext('2d');
+
+  if (!transparent.checked) {
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, target, target);
+  }
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(canvas, 0, 0, target, target);
+
+  const a = document.createElement('a');
+  a.download = name;
+  a.href = off.toDataURL('image/png');
+  a.click();
+}
+
+function downloadCanvasAsSVG(canvas, name, transparentBg){
+  // też przeskaluj do wybranego rozmiaru, żeby meta width/height i bitmapa się zgadzały
+  const target = clamp(parseInt(size.value || 100, 10), 64, 2048);
+
+  // przygotuj PNG w target px (osadzone w SVG)
+  const off = document.createElement('canvas');
+  off.width = target; 
+  off.height = target;
+  const octx = off.getContext('2d');
+  if (!transparentBg) {
+    octx.fillStyle = '#fff';
+    octx.fillRect(0, 0, target, target);
+  }
+  octx.imageSmoothingEnabled = false;
+  octx.drawImage(canvas, 0, 0, target, target);
+  const pngData = off.toDataURL('image/png');
+
+  const bg = transparentBg ? '' : '<rect width="100%" height="100%" fill="#fff"/>';
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>\n` +
+              `<svg xmlns="http://www.w3.org/2000/svg" width="${target}" height="${target}">` +
+              `${bg}<image href="${pngData}" width="100%" height="100%"/></svg>`;
+
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
     // ----------------------------------------------
     // Cinematic modal + usage gate
