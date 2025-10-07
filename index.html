@@ -676,38 +676,41 @@
       </article>
     </div>
     
-<div class="subs-footer">
-  <div class="subs-footer-info">
-    <span data-i18n="started_label">Started:</span>
-    <strong id="subStarted">—</strong>
-    |
-    <span data-i18n="expires_label">Expiring:</span>
-    <strong id="subExpires">—</strong>
-    <span id="subDaysLeft" class="muted"></span>
-  </div>
+<!-- 🔚 Footer subskrypcji -->
+    <div class="subs-footer">
+      <div class="subs-footer-info">
+        <span data-i18n="started_label">Started:</span>
+        <strong id="subStarted">—</strong>
+        |
+        <span data-i18n="expires_label">Expiring:</span>
+        <strong id="subExpires">—</strong>
+        <span id="subDaysLeft" class="muted"></span>
+      </div>
 
-  <!-- 🔘 Cancel subscription button (start hidden) -->
-  <div class="subs-footer-actions">
-    <button id="btnCancelSub" class="btn btn-warning">
-      <span data-i18n="cancel_sub">Cancel at period end</span>
-    </button>
-  </div>
-</div>
+      <!-- 🔘 Cancel subscription button -->
+      <div class="subs-footer-actions">
+        <button id="btnCancelSub" class="btn btn-warning">
+          <span data-i18n="cancel_sub">Cancel at period end</span>
+        </button>
+      </div>
+    </div><!-- /.subs-footer -->
 
-  <!-- ✅ Support jako osobna zakładka (sibling) -->
-   <div class="tab support">
+  </div><!-- /.subs-wrap -->
+</div><!-- /.tab.subscription -->
+
+<!-- ✅ Support jako osobna zakładka -->
+<div class="tab support">
   <h4 data-i18n="support_title">Support</h4>
   <p data-i18n="support_intro">Have questions or found a bug? Contact us:</p>
-  <p><span data-i18n="support_email_label">Email:</span>
+  <p>
+    <span data-i18n="support_email_label">Email:</span>
     <a class="link" href="mailto:syntri.business.agency@gmail.com"
-       data-i18n="support_email_address">
-      syntri.business.agency@gmail.com
-    </a>
+       data-i18n="support_email_address">syntri.business.agency@gmail.com</a>
   </p>
   <p class="muted" data-i18n="support_response_time">
     We usually respond within 1–2 business days.
   </p>
-</div>
+</div><!-- /.tab.support -->
     
 
 <!--
