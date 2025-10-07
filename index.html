@@ -1243,33 +1243,45 @@ function downloadCanvasAsPNG(canvas, name){
   a.click();
 }
 
-function downloadCanvasAsSVG(canvas, name, transparentBg){
-  // też przeskaluj do wybranego rozmiaru, żeby meta width/height i bitmapa się zgadzały
-  const target = clamp(parseInt(size.value || 100, 10), 64, 2048);
+// === TRUE-VECTOR SVG from QR matrix ===
+function downloadVectorSVGFromQR(qObj, {
+  px = 100,           // docelowy rozmiar w pikselach (taki jak "size" w UI)
+  margin = 2,         // margines w „komórkach”
+  colorDark = '#000', // kolor ciemnych modułów
+  transparent = false // true => brak białego tła
+} = {}) {
+  if (!qObj || !qObj.modules) { alert('QR not ready'); return; }
 
-  // przygotuj PNG w target px (osadzone w SVG)
-  const off = document.createElement('canvas');
-  off.width = target; 
-  off.height = target;
-  const octx = off.getContext('2d');
-  if (!transparentBg) {
-    octx.fillStyle = '#fff';
-    octx.fillRect(0, 0, target, target);
+  const modules = qObj.modules;
+  const n = qObj.moduleCount;
+  const totalCells = n + margin * 2;
+  const cell = px / totalCells; // skala jednej komórki
+
+  // budujemy <rect> dla każdego ciemnego modułu
+  let rects = '';
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      if (modules[y][x]) {
+        const X = (x + margin) * cell;
+        const Y = (y + margin) * cell;
+        rects += `<rect x="${X}" y="${Y}" width="${cell}" height="${cell}" />`;
+      }
+    }
   }
-  octx.imageSmoothingEnabled = false;
-  octx.drawImage(canvas, 0, 0, target, target);
-  const pngData = off.toDataURL('image/png');
 
-  const bg = transparentBg ? '' : '<rect width="100%" height="100%" fill="#fff"/>';
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>\n` +
-              `<svg xmlns="http://www.w3.org/2000/svg" width="${target}" height="${target}">` +
-              `${bg}<image href="${pngData}" width="100%" height="100%"/></svg>`;
+  const bg = transparent ? '' : `<rect width="${px}" height="${px}" fill="#fff"/>`;
+  const svg =
+    `<?xml version="1.0" encoding="UTF-8"?>` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 ${px} ${px}">` +
+      bg +
+      `<g fill="${colorDark}" shape-rendering="crispEdges">${rects}</g>` +
+    `</svg>`;
 
   const blob = new Blob([svg], { type: 'image/svg+xml' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = name;
+  a.download = filename('svg'); // masz już tę funkcję
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -1312,6 +1324,18 @@ function downloadCanvasAsSVG(canvas, name, transparentBg){
       const btnSvg = document.createElement('button'); btnSvg.className='btn btn-ghost'; btnSvg.textContent = i18n('btn_svg'); btnSvg.disabled = true;
       actions.appendChild(btnPng); actions.appendChild(btnSvg);
 
+      // 🧩 Handlery pobierania (PNG / SVG vector)
+      btnPng.onclick = () => downloadCanvasAsPNG(cv, filename('png'));
+
+      btnSvg.onclick = () => {
+      const q = qr?._oQRCode;
+      const px = clamp(parseInt(size.value || 100, 10), 64, 2048);
+      const m  = clamp(parseInt(margin.value || 2, 10), 0, 16);
+      const c  = fg.value || '#000000';
+      const t  = transparent?.checked;
+      downloadVectorSVGFromQR(q, { px, margin: m, colorDark: c, transparent: t });
+      };
+      
       grid.appendChild(cv);
       modal.appendChild(closeBtn); modal.appendChild(title); modal.appendChild(sub);
       modal.appendChild(grid); modal.appendChild(actions); modal.appendChild(hint);
