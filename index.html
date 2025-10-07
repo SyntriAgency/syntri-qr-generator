@@ -1376,7 +1376,15 @@ function frame(now){
     btnSvg.disabled = false;
 
     btnPng.onclick = () => downloadCanvasAsPNG(cv, filename('png'));
-    btnSvg.onclick = () => downloadCanvasAsSVG(cv, filename('svg'), $('#transparent')?.checked);
+    btnSvg.onclick = () => {
+    const q = qr?._oQRCode;
+    const px = clamp(parseInt(size.value || 100, 10), 64, 2048);
+    const m  = clamp(parseInt(margin.value || 2, 10), 0, 16);
+    const c  = fg.value || '#000000';
+    const t  = transparent?.checked;
+    downloadVectorSVGFromQR(q, { px, margin: m, colorDark: c, transparent: t });
+    };
+
 
     hint.textContent = '';
   }
@@ -1385,6 +1393,7 @@ function frame(now){
 // uruchom animację:
 requestAnimationFrame(frame);
 } // ← zamknięcie startCinematic()
+    
 // ----------------------------------------------
 // Cooldown UI (zamiana preview na odliczanie + CTA)
 // ----------------------------------------------
