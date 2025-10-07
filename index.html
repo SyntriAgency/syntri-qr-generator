@@ -677,14 +677,20 @@
     </div>
     
 <div class="subs-footer">
-  <span data-i18n="started_label">Started:</span>
-  <strong id="subStarted">—</strong>
-  |
-  <span data-i18n="expires_label">Expiring:</span>
-  <strong id="subExpires">—</strong>
-  <span id="subDaysLeft" class="muted"></span>
-  
-</div>    
+  <div class="subs-footer-info">
+    <span data-i18n="started_label">Started:</span>
+    <strong id="subStarted">—</strong>
+    |
+    <span data-i18n="expires_label">Expiring:</span>
+    <strong id="subExpires">—</strong>
+    <span id="subDaysLeft" class="muted"></span>
+  </div>
+
+  <!-- 🔘 Cancel subscription button (start hidden) -->
+  <div class="subs-footer-actions">
+    <button id="btnCancelSub" class="btn btn-warning">
+      <span data-i18n="cancel_sub">Cancel at period end</span>
+    </button>
   </div>
 </div>
 
@@ -712,13 +718,6 @@
 -->
 
 
-
-<!-- 🔘 Cancel subscription button (start hidden) -->
-<div class="subs-footer-actions">
-  <button id="btnCancelSub" class="btn btn-warning">
-  <span data-i18n="cancel_sub">Cancel at period end</span>
-</button>
-</div>
 
   
 
