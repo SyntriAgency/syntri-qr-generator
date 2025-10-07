@@ -829,8 +829,8 @@ function renderAuthUI() {
 
   // ✅ odśwież licznik „days left”, gdy menu/zakładka jest już w DOM
   if (logged) {
-    updateSubFooter(lastExpiryMs);
-  }
+  window.updateSubFooter?.(lastExpiryMs);
+ }
 }
 
 // === UI helper: tymczasowe ukrycie licznika (lazy reveal) ===
@@ -2780,6 +2780,7 @@ function updateSubFooter(expiryMs, startMs) {
     ? `(${ i18n('plan_pro_days_left').replace('{n}', days) })`
     : `(${ i18n('plan_pro_expired') })`;
 }
+  window.updateSubFooter = updateSubFooter; // ✅ eksport do globalnego scope
 
 // === 15) nasłuch Firestore – entitlements (z datami start/expiry) ===
 onAuthStateChanged(auth, (user) => {
