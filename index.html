@@ -2543,13 +2543,13 @@ $('#btnRegister')?.addEventListener('click', async () => {
   }
 });
 
-  /* === 6) jedno miejsce + zapamiętanie akceptacji polityki === */
+  /* === 6) Login (1 miejsce) + zapamiętanie akceptacji polityki === */
 $('#btnLogin')?.addEventListener('click', async () => {
   const btn   = $('#btnLogin');
   const email = ($('#loginEmail')?.value || '').trim();
   const pass  = ($('#loginPass')?.value  || '').trim();
 
-  if (!email || !pass){
+  if (!email || !pass) {
     alert(i18n('login_missing_fields') || 'Podaj email i hasło.');
     return;
   }
@@ -2557,19 +2557,19 @@ $('#btnLogin')?.addEventListener('click', async () => {
   try {
     setBusy(btn, true);
 
-    // Logowanie przez Firebase Auth
+    // Firebase Auth login
     const cred = await signInWithEmailAndPassword(auth, email, pass);
 
-    // 🔖 zapamiętaj, że user widział/zaakceptował politykę przy 1. logowaniu
+    // 🔖 zapamiętaj, że user widział/zaakceptował politykę
     localStorage.setItem('syntri.seenPolicy', '1');
 
-    alert('Zalogowano jako: ' + (cred.user.email || email));
+    alert('Zalogowano jako: ' + (cred.user?.email || email));
 
     // odśwież UI i zamknij modal
     if (typeof renderAuthUI === 'function') renderAuthUI();
     closeModal('#loginModal');
   } catch (err) {
-    console.error(err);
+    console.error('[LOGIN]', err);
     let msg;
     switch (err?.code) {
       case 'auth/wrong-password':   msg = i18n('err_wrong_pass'); break;
