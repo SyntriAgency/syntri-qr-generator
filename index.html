@@ -2543,34 +2543,6 @@ $('#btnRegister')?.addEventListener('click', async () => {
   }
 });
 
-/* === 6) Logowanie === */
-$('#btnLogin')?.addEventListener('click', async () => {
-  const btn   = $('#btnLogin');
-  const email = ($('#loginEmail')?.value || '').trim();
-  const pass  = ($('#loginPass')?.value  || '').trim();
-
-  if (!email || !pass){ alert(i18n('login_missing_fields') || 'Podaj email i hasło.'); return; }
-
-  try {
-    setBusy(btn, true);
-    const cred = await signInWithEmailAndPassword(auth, email, pass);
-    alert('Zalogowano jako: ' + (cred.user.email || email));
-    closeModal('#loginModal');
-  } catch (err) {
-    console.error(err);
-    let msg;
-    switch (err.code) {
-      case 'auth/wrong-password':   msg = i18n('err_wrong_pass'); break;
-      case 'auth/user-not-found':   msg = i18n('err_user_not_found'); break;
-      case 'auth/invalid-email':    msg = i18n('err_invalid_email'); break;
-      default:                      msg = i18n('login_failed_generic') || 'Logowanie nieudane.';
-    }
-    alert(msg);
-  } finally {
-    setBusy(btn, false);
-  }
-});
-
   /* === 6) jedno miejsce + zapamiętanie akceptacji polityki === */
 $('#btnLogin')?.addEventListener('click', async () => {
   const btn   = $('#btnLogin');
