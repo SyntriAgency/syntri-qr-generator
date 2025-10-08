@@ -481,6 +481,33 @@
   </div>
 </div>          
 
+          <!-- === Confirm Cancel Subscription Modal === -->
+<div id="confirmCancel" class="modal">
+  <div class="modal-card">
+    <h3 data-i18n="cancel_confirm_title">Cancel subscription?</h3>
+    <p data-i18n="cancel_confirm_body">
+      Your subscription will stay active until the end of the current billing period.
+      Do you really want to cancel?
+    </p>
+    <div class="modal-actions">
+      <button id="cancelNo"  class="btn btn-ghost"   data-i18n="cancel_no">No</button>
+      <button id="cancelYes" class="btn btn-warning" data-i18n="cancel_yes">Yes, cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- === First-login Policy Popup === -->
+<div id="policyPopup" class="modal" style="display:none;">
+  <div class="modal-card" style="max-width:520px; text-align:center;">
+    <h3 data-i18n="policy_title">Privacy Policy</h3>
+    <p class="muted" data-i18n="policy_prompt">
+      Before using Syntri QR Generator, please accept our Privacy Policy.
+    </p>
+    <div class="modal-actions" style="justify-content:center; gap:10px;">
+      <button id="btnViewPolicy"   class="btn btn-ghost"   data-i18n="policy_view">View details</button>
+      <button id="btnDeclinePolicy" class="btn btn-ghost"  data-i18n="policy_decline">Decline</button>
+      <butto
+
           
 <!-- DEV panel – widoczny tylko z ?dev=1 -->
 <div id="dev-panel" style="display:none; margin-top:8px; display:flex; gap:8px;">
@@ -636,6 +663,8 @@
  <p><a class="link" href="mailto:syntri.business.agency@gmail.com">syntri.business.agency@gmail.com</a></p>
 </div>  
 
+
+      
  <!-- === Subscription cards styl -->
       <div class="tab subscription">
   <div class="subs-wrap">
@@ -2489,14 +2518,16 @@ onAuthStateChanged(auth, (user) => {
       updateCancelVisibility(data);
     });
 
-    // ✅ 🔖 Pierwsze zalogowanie → pokaż kartę „Policy” w Settings
+    // ✅ Pierwsze zalogowanie → POKAŻ POPUP, ale NIE ustawiaj flagi tu
     if (!localStorage.getItem('syntri.seenPolicy')) {
-      localStorage.setItem('syntri.seenPolicy', '1'); // oznacz jako obejrzaną
-      console.log('[POLICY] first login → opening Policy tab');
+      console.log('[POLICY] first login → showing popup');
       setTimeout(() => {
-        // najpierw ustaw aktywną kartę, potem otwórz modal
-        if (typeof activateSettingsTab === 'function') activateSettingsTab('policy');
-        if (typeof openModal === 'function') openModal('#settingsModal');
+        // jeśli chcesz lekki "pope"
+        window.showPolicyPopup?.();
+    
+        // a jeśli zamiast popupu wolisz od razu kartę w Settings:
+        // activateSettingsTab?.('policy');
+        // openModal?.('#settingsModal');
       }, 250);
     }
 
@@ -2525,6 +2556,43 @@ onAuthStateChanged(auth, (user) => {
   window.refreshUsageFromServer?.();
 });
 
+/* === 5) First-login Privacy Policy popup (pope) === */
+function showPolicyPopup() {
+  const el = document.getElementById('policyPopup');
+  if (!el) return;
+  el.style.display = 'flex';
+}
+
+function closePolicyPopup() {
+  const el = document.getElementById('policyPopup');
+  if (el) el.style.display = 'none';
+}
+
+// Handlery guzików
+document.getElementById('btnViewPolicy')?.addEventListener('click', () => {
+  closePolicyPopup();
+  if (typeof openModal === 'function') openModal('#settingsModal');
+  if (typeof activateSettingsTab === 'function') activateSettingsTab('policy');
+});
+
+document.getElementById('btnAcceptPolicy')?.addEventListener('click', () => {
+  localStorage.setItem('syntri.seenPolicy', '1');
+  closePolicyPopup();
+});
+
+document.getElementById('btnDeclinePolicy')?.addEventListener('click', () => {
+  alert('You need to accept the Privacy Policy to use the app.');
+  closePolicyPopup();
+  AUTH.signOut?.(); // opcjonalnie, jeśli chcesz wylogować
+});
+
+// 🔄 Pokaż popup po pierwszym zalogowaniu
+onAuthStateChanged(auth, (user) => {
+  if (user && !localStorage.getItem('syntri.seenPolicy')) {
+    setTimeout(showPolicyPopup, 800);
+  }
+});
+  
 
 /* === 5) Rejestracja === */
 $('#btnRegister')?.addEventListener('click', async () => {
@@ -2552,7 +2620,7 @@ $('#btnRegister')?.addEventListener('click', async () => {
   }
 });
 
-  /* === 6) Login (1 miejsce) + zapamiętanie akceptacji polityki === */
+ /* === 6) Login (1 miejsce) — BEZ ustawiania seenPolicy === */
 $('#btnLogin')?.addEventListener('click', async () => {
   const btn   = $('#btnLogin');
   const email = ($('#loginEmail')?.value || '').trim();
@@ -2566,27 +2634,23 @@ $('#btnLogin')?.addEventListener('click', async () => {
   try {
     setBusy(btn, true);
 
-    // Firebase Auth login
     const cred = await signInWithEmailAndPassword(auth, email, pass);
-    
-    // 🔖 sprawdź, czy user widzi politykę po raz pierwszy
-    const firstTime = !localStorage.getItem('syntri.seenPolicy');
-    console.log('[POLICY] firstTime =', firstTime); // 🔍 log diagnostyczny
-    localStorage.setItem('syntri.seenPolicy', '1');
-    
-    if (firstTime) {
-      console.log('[POLICY] Opening policy modal...');
-      closeModal('#loginModal');
-      openModal('#settingsModal');
-      activateSettingsTab?.('policy');
-      return;
-    }
 
-    alert('Zalogowano jako: ' + (cred.user?.email || email));
-
-    // odśwież UI i zamknij modal
+    // zamknij login, odśwież UI
     if (typeof renderAuthUI === 'function') renderAuthUI();
     closeModal('#loginModal');
+
+    // pokaż popup polityki TYLKO jeśli brak flagi
+    if (!localStorage.getItem('syntri.seenPolicy')) {
+      // Jeśli chcesz kartę Settings/Policy:
+      // openModal('#settingsModal'); activateSettingsTab?.('policy');
+
+      // Jeśli masz lekki „pope” z Yes/No:
+      setTimeout(() => window.showPolicyPopup?.(), 300);
+    } else {
+      alert('Zalogowano jako: ' + (cred.user?.email || email));
+    }
+
   } catch (err) {
     console.error('[LOGIN]', err);
     let msg;
@@ -2601,6 +2665,7 @@ $('#btnLogin')?.addEventListener('click', async () => {
     setBusy(btn, false);
   }
 });
+
 
   
 /* === 10) Reset hasła (Forgot password) – z własną stroną resetu === */
@@ -2891,6 +2956,21 @@ function updateCancelVisibility(data){
 }
 </script>
 
+//=== 17) 🔒 First-login Policy Popup===
+<div id="policyPopup" class="modal" style="display:none;">
+  <div class="modal-content small center">
+    <h3 data-i18n="policy_title">Privacy Policy</h3>
+    <p data-i18n="policy_prompt">
+      Before using Syntri QR Generator, please accept our Privacy Policy.
+    </p>
+    <div class="actions">
+      <button id="btnViewPolicy" class="btn link" data-i18n="policy_view">View details</button>
+      <button id="btnAcceptPolicy" class="btn btn-primary" data-i18n="policy_accept">Accept</button>
+      <button id="btnDeclinePolicy" class="btn btn-warning" data-i18n="policy_decline">Decline</button>
+    </div>
+  </div>
+</div>
+      
 </body>
 </html>
 
