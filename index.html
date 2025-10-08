@@ -2438,8 +2438,7 @@ const $ = (s) => document.querySelector(s);
 function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
 function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-busy', b?'true':'false'); }
 
-/* === 4) LIVE PLAN: users/{uid} → Free/Pro === */
-
+/* === 4) LIVE PLAN: users/{uid} → Free/Pro + first-login policy popup === */
 onAuthStateChanged(auth, (user) => {
   // wypnij poprzednie nasłuchy
   if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
@@ -2467,7 +2466,6 @@ onAuthStateChanged(auth, (user) => {
       if (typeof renderUsagePill === 'function') renderUsagePill();
     });
 
-
     // === entitlements/{uid} → daty + status + widoczność guzika
     const refEnt = doc(db, 'entitlements', user.uid);
     unsubEnt = onSnapshot(refEnt, (snap) => {
@@ -2482,16 +2480,25 @@ onAuthStateChanged(auth, (user) => {
           : i18n('status_active');
       }
 
-      // Daty w stopce
+      // Daty w stopce (użyj ochronnego wywołania)
       const endMs   = Number(data.expiryTimeMs || 0);
       const startMs = Number(data.startTimeMs || 0);
-      updateSubFooter(endMs, startMs);
+      window.updateSubFooter?.(endMs, startMs);
 
       // 🔘 widoczność guzika
       updateCancelVisibility(data);
-
-    
     });
+
+    // ✅ 🔖 Pierwsze zalogowanie → pokaż kartę „Policy” w Settings
+    if (!localStorage.getItem('syntri.seenPolicy')) {
+      localStorage.setItem('syntri.seenPolicy', '1'); // oznacz jako obejrzaną
+      console.log('[POLICY] first login → opening Policy tab');
+      setTimeout(() => {
+        // najpierw ustaw aktywną kartę, potem otwórz modal
+        if (typeof activateSettingsTab === 'function') activateSettingsTab('policy');
+        if (typeof openModal === 'function') openModal('#settingsModal');
+      }, 250);
+    }
 
   } else {
     // wylogowany → Free + schowaj guzik + wyczyść status + wyzeruj daty
@@ -2506,14 +2513,15 @@ onAuthStateChanged(auth, (user) => {
     const statusEl = document.getElementById('subStatus');
     if (statusEl) statusEl.textContent = '';
 
-    updateSubFooter(0, 0);
+    window.updateSubFooter?.(0, 0);
 
     if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
     if (typeof renderUsagePill === 'function') renderUsagePill();
   }
-if (typeof renderAuthUI === 'function') renderAuthUI();
 
-  // 🔄 Zawsze na samym końcu: pobierz licznik z backendu bez zużycia limitu
+  if (typeof renderAuthUI === 'function') renderAuthUI();
+
+  // 🔄 Zawsze na końcu: pobierz licznik z backendu bez zużycia limitu
   window.refreshUsageFromServer?.();
 });
 
