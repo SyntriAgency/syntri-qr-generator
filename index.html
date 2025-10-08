@@ -2446,37 +2446,27 @@ onAuthStateChanged(auth, (user) => {
   if (unsubEnt)     { unsubEnt();     unsubEnt     = null; }
 
   if (user) {
-  // === users/{uid} → tylko plan / UI ogólne
-  const ref = doc(db, 'users', user.uid);
-  unsubUserDoc = onSnapshot(ref, (snap) => {
-    const d = snap.data() || {};
-    const isPro =
-      d.subActive === true ||
-      (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
+    // === users/{uid} → tylko plan / UI ogólne
+    const ref = doc(db, 'users', user.uid);
+    unsubUserDoc = onSnapshot(ref, (snap) => {
+      const d = snap.data() || {};
+      const isPro =
+        d.subActive === true ||
+        (typeof d.plan === 'string' && d.plan.toLowerCase() === 'pro');
 
-    window.SYNTRI_IS_PRO = !!isPro;
-    localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
+      window.SYNTRI_IS_PRO = !!isPro;
+      localStorage.setItem('syntri.plan', isPro ? 'Pro' : 'Free');
 
-    const planName = document.getElementById('planName');
-    if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
+      const planName = document.getElementById('planName');
+      if (planName) planName.textContent = isPro ? 'Pro' : 'Free';
 
-    const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
-    if (btnPro) btnPro.textContent = isPro ? 'Subscribed' : 'Subscribe £3.99';
+      const btnPro = document.querySelector('.plan-btn[data-plan="Pro"]');
+      if (btnPro) btnPro.textContent = isPro ? 'Subscribed' : 'Subscribe £3.99';
 
-    if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
-    if (typeof renderUsagePill === 'function') renderUsagePill();
-  });
+      if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
+      if (typeof renderUsagePill === 'function') renderUsagePill();
+    });
 
-  // ✅ 🔖 Pokazanie Polityki prywatności przy pierwszym zalogowaniu
-  if (!localStorage.getItem('syntri.seenPolicy')) {
-    localStorage.setItem('syntri.seenPolicy', '1');
-    console.log('[POLICY] showing after first login...');
-    setTimeout(() => {
-      if (typeof openModal === 'function') openModal('#settingsModal');
-      if (typeof activateSettingsTab === 'function') activateSettingsTab('policy');
-    }, 300); // mały delay, żeby UI się zdążył załadować
-  }
-}
 
     // === entitlements/{uid} → daty + status + widoczność guzika
     const refEnt = doc(db, 'entitlements', user.uid);
