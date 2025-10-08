@@ -496,17 +496,28 @@
   </div>
 </div>
 
-<!-- === First-login Policy Popup === -->
+
+<!-- === First-login Policy Notice === -->
 <div id="policyPopup" class="modal" style="display:none;">
-  <div class="modal-card" style="max-width:520px; text-align:center;">
+  <div class="modal-card" style="max-width:520px; text-align:center; position:relative;">
+    <!-- X -->
+    <button class="modal-close" data-target="#policyPopup"
+            aria-label="Close"
+            style="position:absolute;top:10px;right:14px;background:none;border:0;font-size:22px;cursor:pointer;">×</button>
+
     <h3 data-i18n="policy_title">Privacy Policy</h3>
-    <p class="muted" data-i18n="policy_prompt">
-      Before using Syntri QR Generator, please accept our Privacy Policy.
+    <p class="muted" data-i18n="policy_notice_inline">
+      By continuing, you agree to our
+      <a href="#" id="policyOpenLink" class="link">Privacy Policy</a>.
     </p>
+
     <div class="modal-actions" style="justify-content:center; gap:10px;">
-      <button id="btnViewPolicy"   class="btn btn-ghost"   data-i18n="policy_view">View details</button>
-      <button id="btnDeclinePolicy" class="btn btn-ghost"  data-i18n="policy_decline">Decline</button>
-      <butto
+      <button id="btnPolicyOk" class="btn btn-primary" data-i18n="policy_continue">
+        OK, continue
+      </button>
+    </div>
+  </div>
+</div>
 
           
 <!-- DEV panel – widoczny tylko z ?dev=1 -->
@@ -2562,34 +2573,39 @@ function showPolicyPopup() {
   if (!el) return;
   el.style.display = 'flex';
 }
-
-function closePolicyPopup() {
+function closePolicyPopup(setSeen = true) {
   const el = document.getElementById('policyPopup');
-  if (el) el.style.display = 'none';
+  if (!el) return;
+  el.style.display = 'none';
+  if (setSeen) localStorage.setItem('syntri.seenPolicy', '1'); // „kontynuując” = akceptujesz
 }
 
-// Handlery guzików
-document.getElementById('btnViewPolicy')?.addEventListener('click', () => {
-  closePolicyPopup();
+// Link "Privacy Policy" → otwórz kartę Policy w Settings
+document.getElementById('policyOpenLink')?.addEventListener('click', (e) => {
+  e.preventDefault();
   if (typeof openModal === 'function') openModal('#settingsModal');
   if (typeof activateSettingsTab === 'function') activateSettingsTab('policy');
 });
 
-document.getElementById('btnAcceptPolicy')?.addEventListener('click', () => {
-  localStorage.setItem('syntri.seenPolicy', '1');
-  closePolicyPopup();
+// Przycisk „OK, continue”
+document.getElementById('btnPolicyOk')?.addEventListener('click', () => {
+  closePolicyPopup(true);
 });
 
-document.getElementById('btnDeclinePolicy')?.addEventListener('click', () => {
-  alert('You need to accept the Privacy Policy to use the app.');
-  closePolicyPopup();
-  AUTH.signOut?.(); // opcjonalnie, jeśli chcesz wylogować
+// Zamknięcie krzyżykiem też traktujemy jako kontynuację (= akceptacja)
+document.querySelector('#policyPopup .modal-close')?.addEventListener('click', () => {
+  closePolicyPopup(true);
 });
 
-// 🔄 Pokaż popup po pierwszym zalogowaniu
+// (opcjonalnie) Zamknięcie kliknięciem w tło jako kontynuacja
+document.getElementById('policyPopup')?.addEventListener('click', (e) => {
+  if (e.target.id === 'policyPopup') closePolicyPopup(true);
+});
+
+// 🔄 Pokaż raz po pierwszym zalogowaniu (flagi nie ustawiamy „na start”, tylko dopiero przy zamknięciu/OK)
 onAuthStateChanged(auth, (user) => {
   if (user && !localStorage.getItem('syntri.seenPolicy')) {
-    setTimeout(showPolicyPopup, 800);
+    setTimeout(showPolicyPopup, 500);
   }
 });
   
