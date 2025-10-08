@@ -174,6 +174,12 @@
 #settingsModal .settings-content .tab.active{
   display:block;
 }
+/* Ukryj footer subskrypcji, gdy karta Subscription nieaktywna */
+.tab.subscription:not(.active) .subs-footer,
+.tab.subscription:not(.active) .subs-footer-actions {
+  display: none;
+}
+    
 /* === Change Password – te same style co login === */
 #loginModal .modal-card,
 #changePassModal .modal-card{
@@ -250,6 +256,8 @@
   #loginModal .btn-ghost,
   #changePassModal .btn-ghost{ border-color:#334155; }
 }
+
+    
 /* === Subscription cards === */
 .subs-wrap{padding:6px}
 .subs-header{ text-align:center; margin:8px 0 14px }
@@ -363,8 +371,8 @@
 
       <!-- Simplified nav: Login / Language -->
       <nav class="subnav" aria-label="App navigation">
+        <a href="#" id="nav-login" data-i18n="nav_login">Login</a>
         <a href="#" id="nav-account" style="display:none" data-i18n="nav_account">Account</a>
-        <a href="#" id="nav-account" hidden data-i18n="nav_account">Account</a>
         <a href="#" id="nav-settings" style="display:none" data-i18n="nav_settings">Settings</a>
         <a href="#" id="nav-signout" style="display:none" data-i18n="nav_signout">Sign out</a>
         <a href="#" id="nav-language" data-i18n="nav_language" style="margin-left:auto">Language</a>
@@ -473,6 +481,44 @@
   </div>
 </div>          
 
+          <!-- === Confirm Cancel Subscription Modal === -->
+<div id="confirmCancel" class="modal">
+  <div class="modal-card">
+    <h3 data-i18n="cancel_confirm_title">Cancel subscription?</h3>
+    <p data-i18n="cancel_confirm_body">
+      Your subscription will stay active until the end of the current billing period.
+      Do you really want to cancel?
+    </p>
+    <div class="modal-actions">
+      <button id="cancelNo"  class="btn btn-ghost"   data-i18n="cancel_no">No</button>
+      <button id="cancelYes" class="btn btn-warning" data-i18n="cancel_yes">Yes, cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- === First-login Policy Notice === -->
+<div id="policyPopup" class="modal" style="display:none;">
+  <div class="modal-card" style="max-width:520px; text-align:center; position:relative;">
+    <!-- X -->
+    <button class="modal-close" data-target="#policyPopup"
+            aria-label="Close"
+            style="position:absolute;top:10px;right:14px;background:none;border:0;font-size:22px;cursor:pointer;">×</button>
+
+    <h3 data-i18n="policy_title">Privacy Policy</h3>
+    <p class="muted" data-i18n="policy_notice_inline">
+      By continuing, you agree to our
+      <a href="#" id="policyOpenLink" class="link">Privacy Policy</a>.
+    </p>
+
+    <div class="modal-actions" style="justify-content:center; gap:10px;">
+      <button id="btnPolicyOk" class="btn btn-primary" data-i18n="policy_continue">
+        OK, continue
+      </button>
+    </div>
+  </div>
+</div>
+
           
 <!-- DEV panel – widoczny tylko z ?dev=1 -->
 <div id="dev-panel" style="display:none; margin-top:8px; display:flex; gap:8px;">
@@ -508,7 +554,6 @@
  <!-- Login / Register modal (Email + Password) -->
 <div id="loginModal" class="modal" aria-hidden="true">
   <div class="modal-card">
-    <h3 data-i18n="login_title">Account</h3>
 
     <div class="field-row">
       <label for="loginEmail" class="muted" data-i18n="login_email_label">Email</label>
@@ -533,19 +578,6 @@
     </div>
   </div>
 </div>
-
-  <!-- Account modal -->
-  <div id="accountModal" class="modal" aria-hidden="true">
-    <div class="modal-card">
-      <h3 data-i18n="account_title">Account</h3>
-      <p class="muted" id="accountEmail"></p>
-      <p class="muted" id="accountPlan"></p>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="openPortal" data-i18n="btn_manage_billing">Manage billing</button>
-        <button class="btn btn-primary" id="accountClose" data-i18n="btn_close">Close</button>
-      </div>
-    </div>
-  </div>
 
 
  <div id="settingsModal" class="modal" aria-hidden="true">
@@ -640,8 +672,10 @@
 
   <h5 data-i18n="policy_contact_h">Contact</h5>
  <p><a class="link" href="mailto:syntri.business.agency@gmail.com">syntri.business.agency@gmail.com</a></p>
-</div>
+</div>  
 
+
+      
  <!-- === Subscription cards styl -->
       <div class="tab subscription">
   <div class="subs-wrap">
@@ -681,7 +715,43 @@
                 data-i18n="cta_pro">Subscribe £3.99/month</button>
       </article>
     </div>
+    
+<!-- 🔚 Footer subskrypcji -->
+    <div class="subs-footer">
+      <div class="subs-footer-info">
+        <span data-i18n="started_label">Started:</span>
+        <strong id="subStarted">—</strong>
+        |
+        <span data-i18n="expires_label">Expiring:</span>
+        <strong id="subExpires">—</strong>
+        <span id="subDaysLeft" class="muted"></span>
+      </div>
 
+      <!-- 🔘 Cancel subscription button -->
+      <div class="subs-footer-actions">
+        <button id="btnCancelSub" class="btn btn-warning">
+          <span data-i18n="cancel_sub">Cancel at period end</span>
+        </button>
+      </div>
+    </div><!-- /.subs-footer -->
+
+  </div><!-- /.subs-wrap -->
+</div><!-- /.tab.subscription -->
+
+<!-- ✅ Support jako osobna zakładka -->
+<div class="tab support">
+  <h4 data-i18n="support_title">Support</h4>
+  <p data-i18n="support_intro">Have questions or found a bug? Contact us:</p>
+  <p>
+    <span data-i18n="support_email_label">Email:</span>
+    <a class="link" href="mailto:syntri.business.agency@gmail.com"
+       data-i18n="support_email_address">syntri.business.agency@gmail.com</a>
+  </p>
+  <p class="muted" data-i18n="support_response_time">
+    We usually respond within 1–2 business days.
+  </p>
+</div><!-- /.tab.support -->
+    
 
 <!--
   ===== Subscription footer & actions =====
@@ -690,33 +760,7 @@
   • Zawiera guzik „Cancel at period end” (anuluje subskrypcję po zakończeniu okresu)
 -->
 
-<div class="subs-footer">
-  <span data-i18n="started_label">Started:</span>
-  <strong id="subStarted">—</strong>
-  |
-  <span data-i18n="expires_label">Expiring:</span>
-  <strong id="subExpires">—</strong>
-  <span id="subDaysLeft" class="muted"></span>
-</div>
 
-
-<!-- 🔘 Cancel subscription button (start hidden) -->
-<div class="subs-footer-actions">
-  <button id="btnCancelSub" class="btn btn-warning">
-  <span data-i18n="cancel_sub">Cancel at period end</span>
-</button>
-</div>
-
-  
-<div class="tab support">
-  <p>Masz pytania lub zgłoszenia błędów? Napisz do nas:</p>
-  <p>Email:
-    <a class="link" href="mailto:syntri.business.agency@gmail.com">
-      syntri.business.agency@gmail.com
-    </a>
-  </p>
-  <p class="muted">Odpowiadamy zwykle w ciągu 1–2 dni roboczych.</p>
-</div>
 
   
 
@@ -726,9 +770,9 @@
 
   <!-- ✅ Stałe z adresami API – tuż pod Firebase -->
   <script>
-    const API_FN_ROOT     = 'https://us-central1-syntri-qr-generator.cloudfunctions.net/api';
-    const API_BASE_PUBLIC = API_FN_ROOT;          // publiczne (health, whoami, create-stripe-portal)
-    const API_BASE_PROT   = API_FN_ROOT;  // chronione (create-checkout-session)
+    const API_FN_ROOT     = 'https://us-central1-syntri-qr-generator.cloudfunctions.net';
+    const API_BASE_PUBLIC = API_FN_ROOT + '/api';
+    const API_BASE_PROT   = API_FN_ROOT + '/api';
   </script>
       
   <script>
@@ -817,7 +861,6 @@ let lastExpiryMs = 0;   // zapamiętamy ostatnią wartość
 function renderAuthUI() {
   const logged = AUTH.isLoggedIn();
   $('#nav-login').style.display   = logged ? 'none' : 'inline-block';
-  $('#nav-account').style.display = logged ? 'inline-block' : 'none';
   $('#nav-settings').style.display = logged ? 'inline-block' : 'none';
   $('#nav-signout').style.display = logged ? 'inline-block' : 'none';
   // logged → liczenie usage na serwerze (tu: unlimited until backend)
@@ -826,8 +869,8 @@ function renderAuthUI() {
 
   // ✅ odśwież licznik „days left”, gdy menu/zakładka jest już w DOM
   if (logged) {
-    updateSubFooter(lastExpiryMs);
-  }
+  window.updateSubFooter?.(lastExpiryMs);
+ }
 }
 
 // === UI helper: tymczasowe ukrycie licznika (lazy reveal) ===
@@ -2083,6 +2126,7 @@ const I18N = {
     account_delete: 'Usuń konto',
     
     
+    
 
     // --- MODAL: SETTINGS ---
     settings_title: 'Ustawienia',
@@ -2149,10 +2193,12 @@ const I18N = {
       'Wykorzystałeś/aś wszystkie darmowe kody w tym miesiącu. Wybierz plan, aby kontynuować.',
 
     // --- Support--- 
-    "support_title": "Wsparcie",
-    "support_intro": "Masz pytania, uwagi lub chcesz zgłosić problem? Napisz do nas.",
-    "support_email_label": "E-mail",
-    "support_reply_hint": "Odpowiadamy zwykle w ciągu 1–2 dni roboczych.",
+   support_title: 'Wsparcie',
+   support_intro: 'Masz pytania lub zgłoszenia błędów? Napisz do nas:',
+   support_email_label: 'E-mail:',
+   support_email_address: 'syntri.business.agency@gmail.com',
+   support_response_time: 'Odpowiadamy zwykle w ciągu 1–2 dni roboczych.',
+    
 
     // --- Policy ---
     policy_title: 'Polityka prywatności',
@@ -2175,7 +2221,8 @@ const I18N = {
     policy_security_p: 'Serwis po HTTPS. Przetwarzanie po stronie klienta. Dostawcy zewnętrzni będą spełniać standardy bezpieczeństwa.',
     policy_children_h: 'Dzieci',
     policy_children_p: 'Usługa dla dorosłych; nie zbieramy danych dzieci.',
-    policy_contact_h: 'Kontakt'
+    policy_contact_h: 'Kontakt',
+    login_policy_notice: 'Kontynuując, akceptujesz naszą <a href="#" data-tab="policy" class="link">Politykę prywatności</a>.',
         
   },
 
@@ -2267,8 +2314,12 @@ const I18N = {
     cancel_sub: 'Cancel at period end',
     
     // --- SETTINGS / SUPPORT TAB ---
-    settings_support_title:   'Support',
-    settings_support_contact: 'Contact: support@syntri.app',
+    support_title: 'Support',
+    support_intro: 'Have questions or found a bug? Contact us:',
+    support_email_label: 'Email:',
+    support_email_address: 'syntri.business.agency@gmail.com',
+    support_response_time: 'We usually respond within 1–2 business days.',
+    
 
    // --- ACCOUNT TAB — login errors ---
     err_wrong_pass: 'Incorrect password – please try again.',
@@ -2328,7 +2379,8 @@ const I18N = {
     policy_security_p: 'Served over HTTPS. Client-side processing. External providers will meet security standards.',
     policy_children_h: 'Children',
     policy_children_p: 'Service intended for adults; no data knowingly collected from children.',
-    policy_contact_h: 'Contact'
+    policy_contact_h: 'Contact',
+    login_policy_notice: 'By continuing, you agree to our <a href="#" data-tab="policy" class="link">Privacy Policy</a>.'
     
   }
 };
@@ -2426,8 +2478,7 @@ const $ = (s) => document.querySelector(s);
 function closeModal(sel){ const m=$(sel); if(!m) return; m.classList.remove('show'); m.setAttribute('aria-hidden','true'); }
 function setBusy(el,b){ if(!el) return; el.disabled=!!b; el.setAttribute('aria-busy', b?'true':'false'); }
 
-/* === 4) LIVE PLAN: users/{uid} → Free/Pro === */
-
+/* === 4) LIVE PLAN: users/{uid} → Free/Pro + first-login policy popup === */
 onAuthStateChanged(auth, (user) => {
   // wypnij poprzednie nasłuchy
   if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
@@ -2469,16 +2520,27 @@ onAuthStateChanged(auth, (user) => {
           : i18n('status_active');
       }
 
-      // Daty w stopce
+      // Daty w stopce (użyj ochronnego wywołania)
       const endMs   = Number(data.expiryTimeMs || 0);
       const startMs = Number(data.startTimeMs || 0);
-      updateSubFooter(endMs, startMs);
+      window.updateSubFooter?.(endMs, startMs);
 
       // 🔘 widoczność guzika
       updateCancelVisibility(data);
-
-    
     });
+
+    // ✅ Pierwsze zalogowanie → POKAŻ POPUP, ale NIE ustawiaj flagi tu
+    if (!localStorage.getItem('syntri.seenPolicy')) {
+      console.log('[POLICY] first login → showing popup');
+      setTimeout(() => {
+        // jeśli chcesz lekki "pope"
+        window.showPolicyPopup?.();
+    
+        // a jeśli zamiast popupu wolisz od razu kartę w Settings:
+        // activateSettingsTab?.('policy');
+        // openModal?.('#settingsModal');
+      }, 250);
+    }
 
   } else {
     // wylogowany → Free + schowaj guzik + wyczyść status + wyzeruj daty
@@ -2493,19 +2555,62 @@ onAuthStateChanged(auth, (user) => {
     const statusEl = document.getElementById('subStatus');
     if (statusEl) statusEl.textContent = '';
 
-    updateSubFooter(0, 0);
+    window.updateSubFooter?.(0, 0);
 
     if (typeof highlightSelectedPlan === 'function') highlightSelectedPlan();
     if (typeof renderUsagePill === 'function') renderUsagePill();
   }
-if (typeof renderAuthUI === 'function') renderAuthUI();
 
-  // 🔄 Zawsze na samym końcu: pobierz licznik z backendu bez zużycia limitu
+  if (typeof renderAuthUI === 'function') renderAuthUI();
+
+  // 🔄 Zawsze na końcu: pobierz licznik z backendu bez zużycia limitu
   window.refreshUsageFromServer?.();
 });
 
+/* === 5) First-login Privacy Policy popup (pope) === */
+function showPolicyPopup() {
+  const el = document.getElementById('policyPopup');
+  if (!el) return;
+  el.style.display = 'flex';
+}
+function closePolicyPopup(setSeen = true) {
+  const el = document.getElementById('policyPopup');
+  if (!el) return;
+  el.style.display = 'none';
+  if (setSeen) localStorage.setItem('syntri.seenPolicy', '1'); // „kontynuując” = akceptujesz
+}
 
-/* === 6) Rejestracja === */
+// Link "Privacy Policy" → otwórz kartę Policy w Settings
+document.getElementById('policyOpenLink')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  if (typeof openModal === 'function') openModal('#settingsModal');
+  if (typeof activateSettingsTab === 'function') activateSettingsTab('policy');
+});
+
+// Przycisk „OK, continue”
+document.getElementById('btnPolicyOk')?.addEventListener('click', () => {
+  closePolicyPopup(true);
+});
+
+// Zamknięcie krzyżykiem też traktujemy jako kontynuację (= akceptacja)
+document.querySelector('#policyPopup .modal-close')?.addEventListener('click', () => {
+  closePolicyPopup(true);
+});
+
+// (opcjonalnie) Zamknięcie kliknięciem w tło jako kontynuacja
+document.getElementById('policyPopup')?.addEventListener('click', (e) => {
+  if (e.target.id === 'policyPopup') closePolicyPopup(true);
+});
+
+// 🔄 Pokaż raz po pierwszym zalogowaniu (flagi nie ustawiamy „na start”, tylko dopiero przy zamknięciu/OK)
+onAuthStateChanged(auth, (user) => {
+  if (user && !localStorage.getItem('syntri.seenPolicy')) {
+    setTimeout(showPolicyPopup, 500);
+  }
+});
+  
+
+/* === 5) Rejestracja === */
 $('#btnRegister')?.addEventListener('click', async () => {
   const btn   = $('#btnRegister');
   const email = ($('#loginEmail')?.value || '').trim();
@@ -2531,23 +2636,41 @@ $('#btnRegister')?.addEventListener('click', async () => {
   }
 });
 
-/* === 7) Logowanie === */
+ /* === 6) Login (1 miejsce) — BEZ ustawiania seenPolicy === */
 $('#btnLogin')?.addEventListener('click', async () => {
   const btn   = $('#btnLogin');
   const email = ($('#loginEmail')?.value || '').trim();
   const pass  = ($('#loginPass')?.value  || '').trim();
 
-  if (!email || !pass){ alert(i18n('login_missing_fields') || 'Podaj email i hasło.'); return; }
+  if (!email || !pass) {
+    alert(i18n('login_missing_fields') || 'Podaj email i hasło.');
+    return;
+  }
 
   try {
     setBusy(btn, true);
+
     const cred = await signInWithEmailAndPassword(auth, email, pass);
-    alert('Zalogowano jako: ' + (cred.user.email || email));
+
+    // zamknij login, odśwież UI
+    if (typeof renderAuthUI === 'function') renderAuthUI();
     closeModal('#loginModal');
+
+    // pokaż popup polityki TYLKO jeśli brak flagi
+    if (!localStorage.getItem('syntri.seenPolicy')) {
+      // Jeśli chcesz kartę Settings/Policy:
+      // openModal('#settingsModal'); activateSettingsTab?.('policy');
+
+      // Jeśli masz lekki „pope” z Yes/No:
+      setTimeout(() => window.showPolicyPopup?.(), 300);
+    } else {
+      alert('Zalogowano jako: ' + (cred.user?.email || email));
+    }
+
   } catch (err) {
-    console.error(err);
+    console.error('[LOGIN]', err);
     let msg;
-    switch (err.code) {
+    switch (err?.code) {
       case 'auth/wrong-password':   msg = i18n('err_wrong_pass'); break;
       case 'auth/user-not-found':   msg = i18n('err_user_not_found'); break;
       case 'auth/invalid-email':    msg = i18n('err_invalid_email'); break;
@@ -2559,7 +2682,9 @@ $('#btnLogin')?.addEventListener('click', async () => {
   }
 });
 
-/* === 8) Reset hasła (Forgot password) – z własną stroną resetu === */
+
+  
+/* === 10) Reset hasła (Forgot password) – z własną stroną resetu === */
 $('#btnForgot')?.addEventListener('click', async () => {
   const btn   = $('#btnForgot');
   const email = ($('#loginEmail')?.value || '').trim();
@@ -2755,8 +2880,9 @@ function updateSubFooter(expiryMs, startMs) {
     ? `(${ i18n('plan_pro_days_left').replace('{n}', days) })`
     : `(${ i18n('plan_pro_expired') })`;
 }
+  window.updateSubFooter = updateSubFooter; // ✅ eksport do globalnego scope
 
-// === nasłuch Firestore – entitlements (z datami start/expiry) ===
+// === 15) nasłuch Firestore – entitlements (z datami start/expiry) ===
 onAuthStateChanged(auth, (user) => {
   if (unsubEnt) { unsubEnt(); unsubEnt = null; }
 
@@ -2846,6 +2972,21 @@ function updateCancelVisibility(data){
 }
 </script>
 
+<!--17) 🔒 First-login Policy Popup --->
+<div id="policyPopup" class="modal" style="display:none;">
+  <div class="modal-content small center">
+    <h3 data-i18n="policy_title">Privacy Policy</h3>
+    <p data-i18n="policy_prompt">
+      Before using Syntri QR Generator, please accept our Privacy Policy.
+    </p>
+    <div class="actions">
+      <button id="btnViewPolicy" class="btn link" data-i18n="policy_view">View details</button>
+      <button id="btnAcceptPolicy" class="btn btn-primary" data-i18n="policy_accept">Accept</button>
+      <button id="btnDeclinePolicy" class="btn btn-warning" data-i18n="policy_decline">Decline</button>
+    </div>
+  </div>
+</div>
+      
 </body>
 </html>
 
