@@ -2491,7 +2491,7 @@ onAuthStateChanged(auth, (user) => {
 
     // ✅ 🔖 Pierwsze zalogowanie → pokaż kartę „Policy” w Settings
     if (!localStorage.getItem('syntri.seenPolicy')) {
-      localStorage.setItem('syntri.seenPolicy', '0'); // oznacz jako obejrzaną
+      localStorage.setItem('syntri.seenPolicy', '1'); // oznacz jako obejrzaną
       console.log('[POLICY] first login → opening Policy tab');
       setTimeout(() => {
         // najpierw ustaw aktywną kartę, potem otwórz modal
