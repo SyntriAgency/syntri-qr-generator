@@ -2559,16 +2559,18 @@ $('#btnLogin')?.addEventListener('click', async () => {
 
     // Firebase Auth login
     const cred = await signInWithEmailAndPassword(auth, email, pass);
-
+    
     // 🔖 sprawdź, czy user widzi politykę po raz pierwszy
     const firstTime = !localStorage.getItem('syntri.seenPolicy');
+    console.log('[POLICY] firstTime =', firstTime); // 🔍 log diagnostyczny
     localStorage.setItem('syntri.seenPolicy', '1');
-
+    
     if (firstTime) {
+      console.log('[POLICY] Opening policy modal...');
       closeModal('#loginModal');
       openModal('#settingsModal');
       activateSettingsTab?.('policy');
-      return; // zakończ tu, żeby nie pokazywać alertu
+      return;
     }
 
     alert('Zalogowano jako: ' + (cred.user?.email || email));
