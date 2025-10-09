@@ -770,11 +770,12 @@
 
   <!-- ✅ Stałe z adresami API – tuż pod Firebase -->
 <script>
-  // użyj URL z deploya: Function URL (api)
+  // URL z deploya — Function URL (api)
   const API_FN_ROOT     = 'https://api-kmibp3saqa-uc.a.run.app';
-  // bez dopisywania /api/api tutaj
-  const API_BASE_PUBLIC = API_FN_ROOT;
-  const API_BASE_PROT   = API_FN_ROOT;
+  
+  // 🔥 dodaj /api/api – żeby trafić do tras Expressa (np. /api/api/create-checkout-session)
+  const API_BASE_PUBLIC = API_FN_ROOT + '/api/api';
+  const API_BASE_PROT   = API_FN_ROOT + '/api/api';
 </script>
       
   <script>
