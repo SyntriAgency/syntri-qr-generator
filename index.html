@@ -769,11 +769,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 
   <!-- ✅ Stałe z adresami API – tuż pod Firebase -->
-  <script>
-    const API_FN_ROOT     = 'https://us-central1-syntri-qr-generator.cloudfunctions.net';
-    const API_BASE_PUBLIC = API_FN_ROOT + '/api/api';
-    const API_BASE_PROT   = API_FN_ROOT + '/api/api';
-  </script>
+<script>
+  // użyj URL z deploya: Function URL (api)
+  const API_FN_ROOT     = 'https://api-kmibp3saqa-uc.a.run.app';
+  // bez dopisywania /api/api tutaj
+  const API_BASE_PUBLIC = API_FN_ROOT;
+  const API_BASE_PROT   = API_FN_ROOT;
+</script>
       
   <script>
     // ----------------------------------------------
