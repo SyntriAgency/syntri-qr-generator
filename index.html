@@ -774,8 +774,8 @@
   const API_FN_ROOT     = 'https://api-kmibp3saqa-uc.a.run.app';
   
   // 🔥 dodaj /api/api – żeby trafić do tras Expressa (np. /api/api/create-checkout-session)
-  const API_BASE_PUBLIC = API_FN_ROOT + '/api/api';
-  const API_BASE_PROT   = API_FN_ROOT + '/api/api';
+  const API_BASE_PUBLIC = API_FN_ROOT + '/api';
+  const API_BASE_PROT   = API_FN_ROOT + '/api';
 </script>
       
   <script>
@@ -1148,31 +1148,50 @@ async function openCheckout() {
   const btn = document.activeElement;
   if (btn) {
     btn.disabled = true;
-    btn.setAttribute('aria-busy','true');
+    btn.setAttribute('aria-busy', 'true');
   }
+
   try {
-    // >>> POBIERZ ID TOKEN UŻYTKOWNIKA <<<
-    const token = await auth.currentUser.getIdToken();
+    // Upewnij się, że auth istnieje globalnie
+    const user = window.auth?.currentUser;
+    if (!user) throw new Error("User not signed in");
 
-    const res = await fetch(`${API_BASE_PROT}/create-checkout-session`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
-  },
-  body: JSON.stringify({})
-});
+    // Force refresh tokena, by uniknąć 401
+    const idToken = await user.getIdToken(true);
 
-    const data = await res.json();
-    if (!res.ok || !data?.url) throw new Error(data?.error || `HTTP ${res.status}`);
+    // 🔧 Najczęstszy błąd 404: podwójne /api
+    const endpoint = `${API_BASE_PROT}/create-checkout-session`;
+
+    console.log("[checkout] POST", endpoint);
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({}), // możesz dodać np. { plan: "pro" }
+    });
+
+    const text = await res.text();
+    if (!res.ok) {
+      console.error("Checkout response:", text);
+      throw new Error(`HTTP ${res.status}: ${text}`);
+    }
+
+    const data = JSON.parse(text || "{}");
+    if (!data.url) throw new Error("Missing checkout URL in response");
+
+    console.log("[checkout] Redirecting to:", data.url);
     window.location.href = data.url;
+
   } catch (e) {
-    console.error('Checkout error:', e);
-    alert('Could not start checkout. Please try again.');
+    console.error("Checkout error:", e);
+    alert("Could not start checkout. Please try again.");
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.removeAttribute('aria-busy');
+      btn.removeAttribute("aria-busy");
     }
   }
 }
