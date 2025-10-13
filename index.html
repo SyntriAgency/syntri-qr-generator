@@ -768,14 +768,14 @@
  <!-- QR lib – ZAŁADUJ RAZ, POZA innymi scriptami -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 
-  <!-- ✅ Stałe z adresami API – tuż pod Firebase -->
+ <!-- ✅ Stałe z adresami API – tuż pod Firebase -->
 <script>
   // URL z deploya — Function URL (api)
-  const API_FN_ROOT     = 'https://api-kmibp3saqa-uc.a.run.app';
-  
-  // 🔥 dodaj /api/api – żeby trafić do tras Expressa (np. /api/api/create-checkout-session)
-  const API_BASE_PUBLIC = API_FN_ROOT + '/api';
-  const API_BASE_PROT   = API_FN_ROOT + '/api';
+  const API_FN_ROOT   = 'https://api-kmibp3saqa-uc.a.run.app';
+
+  // ❗️BEZ dopisywania /api — trasy są pod korzeniem
+  const API_BASE_PUBLIC = API_FN_ROOT;
+  const API_BASE_PROT   = API_FN_ROOT;
 </script>
       
   <script>
