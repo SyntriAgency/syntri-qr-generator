@@ -860,6 +860,7 @@ on($('#settingsClose'),'click',()=> closeModal('#settingsModal'));
 
 // zapamiętuje ostatnią wartość expiryTimeMs z Firestore
 let lastExpiryMs = 0;   // zapamiętamy ostatnią wartość
+let lastStartMs = 0;    // 👈 zapamiętamy też startTimeMs
     
 function renderAuthUI() {
   const logged = AUTH.isLoggedIn();
@@ -2913,12 +2914,16 @@ onAuthStateChanged(auth, (user) => {
     unsubEnt = onSnapshot(ref, (snap) => {
       console.log('[entitlements]', snap.exists(), snap.data());
 
-      const data = snap.data() || {};
-      const endMs   = Number(data.expiryTimeMs ?? 0);
-      const startMs = Number(data.startTimeMs ?? 0);
-
-      updateSubFooter(endMs, startMs);
-      updateCancelVisibility(data);   // ← tu decydujemy o guziku
+    const data = snap.data() || {};
+    const endMs   = Number(data.expiryTimeMs ?? 0);
+    const startMs = Number(data.startTimeMs ?? 0);
+    
+    // 🧠 zapamiętaj ostatnie daty, żeby użyć ich przy odświeżeniu
+    lastExpiryMs = endMs;
+    lastStartMs  = startMs;
+    
+    updateSubFooter(endMs, startMs);
+    updateCancelVisibility(data); 
     });
 
   } else {
