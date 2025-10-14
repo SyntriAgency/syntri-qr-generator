@@ -2540,7 +2540,23 @@ const firebaseConfig = {
   measurementId: "G-D1V72QVK11"
 };
 
-/* === 2) INIT === */
+/* === 2) helpery do dat subskrypcji  === */
+
+let lastExpiryMs = 0;
+let lastStartMs  = 0;
+
+function pickStartMs(data) {
+  const s = Number(data?.startTimeMs ?? 0);
+  const f = Number(data?.firstStartTimeMs ?? 0);
+  return (s > 0 ? s : (f > 0 ? f : (lastStartMs > 0 ? lastStartMs : 0)));
+}
+
+function pickExpiryMs(data) {
+  const e = Number(data?.expiryTimeMs ?? 0);
+  return (e > 0 ? e : (lastExpiryMs > 0 ? lastExpiryMs : 0));
+} 
+
+/* === 3) INIT === */
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
