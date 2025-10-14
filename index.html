@@ -685,36 +685,54 @@
     </div>
 
     <div class="plans">
-      <!-- FREE -->
-      <article class="plan-card" data-plan="Free">
-        <div class="plan-head">
-          <div class="plan-name">Free</div>
-          <div class="plan-price" data-i18n="price_free">Free</div>
-        </div>
-        <ul class="plan-feats">
-          <li>15 QR codes / month</li>
-          <li>PNG &amp; SVG export</li>
-          <li>1 device</li>
-        </ul>
-        <button class="plan-btn secondary" data-action="choose" data-plan="Free"
-                data-i18n="cta_free">Free plan</button>
-      </article>
-
-      <!-- PRO £3.99 -->
-      <article class="plan-card" data-plan="Pro">
-        <div class="plan-head">
-          <div class="plan-name">Pro</div>
-          <div class="plan-price">£3.99 / <span data-i18n="price_month">month</span></div>
-        </div>
-        <ul class="plan-feats">
-          <li>Unlimited QR codes</li>
-          <li>No watermark</li>
-          <li>Priority support</li>
-        </ul>
-        <button class="plan-btn" data-action="choose" data-plan="Pro"
-                data-i18n="cta_pro">Subscribe £3.99/month</button>
-      </article>
+  <!-- FREE -->
+  <article class="plan-card" data-plan="Free">
+    <div class="plan-head">
+      <div class="plan-name">Free</div>
+      <div class="plan-price" data-i18n="price_free">Free</div>
     </div>
+    <ul class="plan-feats">
+      <li data-i18n="feat_free_limit">10 QR / month</li>
+      <li data-i18n="feat_free_png">PNG export</li>
+      <li data-i18n="feat_free_devices">1 device</li>
+    </ul>
+    <button class="plan-btn secondary" data-action="choose" data-plan="Free"
+            data-i18n="cta_free">Free plan</button>
+  </article>
+
+  <!-- PRO £3.99 -->
+  <article class="plan-card" data-plan="Pro">
+    <div class="plan-head">
+      <div class="plan-name">Pro</div>
+      <div class="plan-price">£3.99 / <span data-i18n="price_month">month</span></div>
+    </div>
+    <ul class="plan-feats">
+      <!-- 🔁 Smart QR (dynamiczny redirect przez backend/Firebase) -->
+      <li data-i18n="feat_smartqr">Smart QR (dynamic destination)</li>
+
+      <!-- ☁️ Backup w chmurze (Firestore/Storage) -->
+      <li data-i18n="feat_cloud_backup">Cloud backup (QR history)</li>
+
+      <!-- 🎨 Personalizacja (kolory/gradient/logo) -->
+      <li data-i18n="feat_custom_colors">Custom colors, gradients & logo</li>
+
+      <!-- 📄 Eksporty -->
+      <li data-i18n="feat_exports">PNG &amp; SVG export</li>
+
+      <!-- 🖥️ Urządzenia -->
+      <li data-i18n="feat_unlimited_devices">Unlimited devices</li>
+
+      <!-- 🎫 Limit -->
+      <li data-i18n="feat_unlimited_qr">Unlimited QR codes</li>
+
+      <!-- 🛟 Support -->
+      <li data-i18n="feat_priority_support">Priority support</li>
+    </ul>
+    <button class="plan-btn" data-action="choose" data-plan="Pro"
+            data-i18n="cta_pro">Subscribe £3.99/month</button>
+  </article>
+</div>
+
     
 <!-- 🔚 Footer subskrypcji -->
     <div class="subs-footer">
@@ -2209,6 +2227,25 @@ const I18N = {
     cancel_no: 'Nie',
     cancel_yes: 'Tak, anuluj',
 
+    plans_section_title: 'Plany i funkcje',
+    plan_free_title: 'Plan Free',
+    plan_pro_title: 'Plan Pro',
+    plan_free_desc: 'Podstawowe funkcje generowania QR — idealne do testów i użytku osobistego.',
+    plan_pro_desc: 'Pełna moc: Smart QR, personalizacja, backup i brak limitów.',
+    
+    feat_smartqr: 'Smart QR (zmienny cel po wydruku)',
+    feat_cloud_backup: 'Backup w chmurze (historia kodów)',
+    feat_custom_colors: 'Personalizacja (kolory, gradient, logo)',
+    feat_exports: 'Eksport PNG i SVG',
+    feat_unlimited_devices: 'Brak limitu urządzeń',
+    feat_unlimited_qr: 'Nielimitowane kody QR',
+    feat_priority_support: 'Priorytetowe wsparcie',
+    feat_free_limit: '10 QR / miesiąc',
+    feat_free_png: 'Eksport PNG',
+    feat_free_devices: '1 urządzenie',
+    plan_note_pro_only: 'Dostępne tylko w planie Pro',
+    
+
     
     // --- PAYWALL ---
     paywall_title: 'Wyczerpano limit darmowy',
@@ -2369,6 +2406,24 @@ const I18N = {
     cancel_confirm_body: 'Your subscription will stay active until the end of the current billing period. Do you really want to cancel?',
     cancel_no: 'No',
     cancel_yes: 'Yes, cancel',
+
+    plans_section_title_en: 'Plans and features',
+    plan_free_title_en: 'Free Plan',
+    plan_pro_title_en: 'Pro Plan',
+    plan_free_desc_en: 'Basic QR generator — perfect for testing and personal use.',
+    plan_pro_desc_en: 'Full power: Smart QR, customization, backup and no limits.',
+    
+    feat_smartqr_en: 'Smart QR (dynamic destination)',
+    feat_cloud_backup_en: 'Cloud backup (QR history)',
+    feat_custom_colors_en: 'Customization (colors, gradients, logo)',
+    feat_exports_en: 'PNG & SVG export',
+    feat_unlimited_devices_en: 'Unlimited devices',
+    feat_unlimited_qr_en: 'Unlimited QR codes',
+    feat_priority_support_en: 'Priority support',
+    feat_free_limit_en: '10 QR / month',
+    feat_free_png_en: 'PNG export',
+    feat_free_devices_en: '1 device',
+    plan_note_pro_only_en: 'Available only in the Pro plan',   
     
     // --- PAYWALL ---
     paywall_title: 'Free limit reached',
