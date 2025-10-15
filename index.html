@@ -3089,25 +3089,18 @@ function updateCancelVisibility(data){
 
   <!-- 🔹 Skrypt statusu płatności -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+(function () {
   const url = new URL(window.location.href);
   const status = (url.searchParams.get('status') || '').toLowerCase();
 
-  console.log('[checkout-status]', status); // debug
-
   if (status === 'success') {
-    alert('✅ Payment successful! Your subscription is active.');
+    window.location.href = '/success.html';
   } else if (status === 'cancel') {
-    alert('❌ Payment canceled.');
+    window.location.href = '/cancel.html';
   }
-
-  // usuń parametr, żeby alert nie powtarzał się po odświeżeniu
-  if (status) {
-    url.searchParams.delete('status');
-    window.history.replaceState({}, '', url.toString());
-  }
-});
+})();
 </script>
+
 </body>
 </html>
 
