@@ -771,6 +771,8 @@
 </div><!-- /.tab.support -->
     
 
+
+      
 <!--
   ===== Subscription footer & actions =====
   • Wyświetla daty startu i końca subskrypcji
@@ -3084,7 +3086,20 @@ function updateCancelVisibility(data){
     </div>
   </div>
 </div>
-      
+
+  <!-- 🔹 Skrypt statusu płatności -->
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get("status");
+
+  if (status === "success") {
+    alert("✅ Payment successful! Your subscription is active.");
+  }
+
+  if (status === "cancel") {
+    alert("❌ Payment canceled.");
+  }
+</script>
 </body>
 </html>
 
