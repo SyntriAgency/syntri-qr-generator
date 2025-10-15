@@ -3089,29 +3089,24 @@ function updateCancelVisibility(data){
 
   <!-- 🔹 Skrypt statusu płatności -->
 <script>
-(function () {
-  try {
-    const url = new URL(window.location.href);
-    const status = (url.searchParams.get('status') || '').toLowerCase();
+document.addEventListener('DOMContentLoaded', function() {
+  const url = new URL(window.location.href);
+  const status = (url.searchParams.get('status') || '').toLowerCase();
 
-    if (!status) return; // brak paramu → nic nie rób
+  console.log('[checkout-status]', status); // debug
 
-    // ✅ pokaż info
-    if (status === 'success') {
-      alert('✅ Payment successful! Your subscription is active.');
-      // np. możesz otworzyć kartę Subscriptions:
-      // openModal?.('#settingsModal'); activateSettingsTab?.('subscription');
-    } else if (status === 'cancel') {
-      alert('❌ Payment canceled.');
-    }
+  if (status === 'success') {
+    alert('✅ Payment successful! Your subscription is active.');
+  } else if (status === 'cancel') {
+    alert('❌ Payment canceled.');
+  }
 
-    // 🧹 usuń ?status=... z paska adresu, żeby nie dublować alertu po odświeżeniu
+  // usuń parametr, żeby alert nie powtarzał się po odświeżeniu
+  if (status) {
     url.searchParams.delete('status');
     window.history.replaceState({}, '', url.toString());
-  } catch (e) {
-    console.error('[status-handler] Error:', e);
   }
-})();
+});
 </script>
 </body>
 </html>
