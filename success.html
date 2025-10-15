@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Payment Successful – Syntri</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- (opcjonalnie) Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --text: #0b0f14;
+      --muted:#5b6b78;
+      --accent:#2196F3;
+    }
+    @media (prefers-color-scheme: dark){
+      :root { --bg:#0b0f14; --panel:#111722; --text:#e8eef6; --muted:#90a3b3; --accent:#22d3ee; }
+    }
+    *{ box-sizing: border-box }
+    body{
+      margin:0; min-height:100dvh; display:flex; align-items:center; justify-content:center;
+      background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      padding: 24px;
+    }
+    .card{
+      width:min(720px, 92vw);
+      background: var(--panel);
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.08);
+      padding: 28px;
+      text-align: center;
+    }
+    .icon{ font-size:64px; margin: 4px 0 18px }
+    h1{ margin:0 0 10px; font-size: 28px; font-weight: 700; letter-spacing:.2px }
+    p{ margin: 0 0 22px; color: var(--muted); font-size: 16px }
+    .btn{
+      appearance: none; border: 0; cursor: pointer;
+      background: var(--accent); color:#fff; font-weight:700; font-size:16px;
+      padding: 12px 28px; border-radius: 10px;
+      transition: transform .02s ease-in, opacity .15s ease;
+    }
+    .btn:active{ transform: translateY(1px) }
+    .kbd{ display:inline-block; border:1px solid rgba(0,0,0,.15); border-radius:8px; padding:4px 8px; font-size:12px; color:var(--muted) }
+    .hint{ margin-top:10px; color:var(--muted); font-size:13px }
+    @media (prefers-color-scheme: dark){
+      .card{ border-color: rgba(255,255,255,.10); box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+      .kbd{ border-color: rgba(255,255,255,.25); }
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="main" aria-labelledby="title">
+    <div class="icon" aria-hidden="true">✅</div>
+    <h1 id="title">Thank you!</h1>
+    <p>Your subscription has been activated successfully.</p>
+
+    <button id="continueButton" class="btn" type="button">
+      Continue
+    </button>
+    <div class="hint">
+      Tip: press <span class="kbd">Enter</span> to continue
+    </div>
+  </main>
+
+  <script>
+    const TARGET_URL = "https://syntriagency.github.io/syntri-qr-generator/";
+    document.getElementById('continueButton')?.addEventListener('click', () => {
+      window.location.href = TARGET_URL;
+    });
+    // Enter = Continue
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        window.location.href = TARGET_URL;
+      }
+    });
+  </script>
+</body>
+</html>
