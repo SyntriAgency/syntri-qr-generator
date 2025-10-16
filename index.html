@@ -3087,24 +3087,6 @@ function updateCancelVisibility(data){
   </div>
 </div>
 
-<!-- 🔹 Skrypt: przekierowanie wg statusu płatności -->
-<script>
-(function () {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const status = (params.get('status') || '').toLowerCase();
-
-    if (status === 'success') {
-      window.location.href = `${window.location.origin}/success.html`;
-    } else if (status === 'cancel') {
-      window.location.href = `${window.location.origin}/cancel.html`;
-    }
-  } catch (err) {
-    console.error('[PaymentStatusRedirect] Error:', err);
-  }
-})();
-</script>
-
 </body>
 </html>
 
