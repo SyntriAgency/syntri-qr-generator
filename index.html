@@ -3087,16 +3087,20 @@ function updateCancelVisibility(data){
   </div>
 </div>
 
-  <!-- 🔹 Skrypt statusu płatności -->
+<!-- 🔹 Skrypt: przekierowanie wg statusu płatności -->
 <script>
 (function () {
-  const url = new URL(window.location.href);
-  const status = (url.searchParams.get('status') || '').toLowerCase();
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const status = (params.get('status') || '').toLowerCase();
 
-  if (status === 'success') {
-    window.location.href = '/success.html';
-  } else if (status === 'cancel') {
-    window.location.href = '/cancel.html';
+    if (status === 'success') {
+      window.location.href = `${window.location.origin}/success.html`;
+    } else if (status === 'cancel') {
+      window.location.href = `${window.location.origin}/cancel.html`;
+    }
+  } catch (err) {
+    console.error('[PaymentStatusRedirect] Error:', err);
   }
 })();
 </script>
