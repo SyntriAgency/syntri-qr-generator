@@ -90,6 +90,17 @@
       align-items:flex-end;   /* wyrównanie do dołu */
       flex-wrap:wrap;         /* na wąskich ekranach łamie się w dół */
     }
+    /* 🚫 Ukrycie strzałek z input[type=number] */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    input[type="number"] {
+      -moz-appearance: textfield; /* Firefox */
+    }
+    
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .btn{appearance:none;border:none;cursor:pointer;padding:12px 14px;border-radius:12px;font-weight:700}
     .btn-primary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.14)}
