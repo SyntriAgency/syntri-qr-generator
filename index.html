@@ -436,7 +436,7 @@
         <button type="button" class="btn btn-ghost" id="btn-en">EN</button>
       </div>
 
-       <!-- Single section: Input + compact options + preview -->
+       <!-- 🧩 Single section: Input + compact options + preview -->
       <div class="grid">
         <section>
           <div class="field" style="max-width:480px;">
@@ -446,7 +446,7 @@
             </div>
           </div>
 
-          <!-- Numeric input fields: Rozmiar + Margines (Photoshop-style box z px) -->
+          <!-- 🧩 Numeric input fields: Rozmiar + Margines (Photoshop-style box z px) -->
           <div class="row" style="margin-top:12px;">
             <div class="field" style="max-width:180px;">
               <label for="size" id="label-size" data-i18n="label_size">Rozmiar</label>
@@ -456,15 +456,17 @@
               </div>
             </div>
           
-            <div class="field" style="max-width:180px;">
-              <label for="margin" id="label-margin" data-i18n="label_margin">Margines</label>
-              <div class="input-frame">
-                <input id="margin" type="number" min="0" max="16" step="1" value="2" />
-                <span class="input-affix">px</span>
-              </div>
+           <!-- 🧩 Syntri UI: NumericInput (px) – Margines -->
+          <div class="field" style="max-width:180px;">
+            <label for="margin" id="label-margin" data-i18n="label_margin">Margines</label>
+            <div class="input-frame">
+              <input id="margin" type="number" min="0" max="16" step="1" value="2" />
+              <span class="input-affix">px</span>
             </div>
           </div>
-
+          
+          
+          <!-- 🧩 Syntri UI: Select – Korekcja błędów (ECC Level) -->
           <div class="row" style="margin-top:12px;">
             <div>
               <label for="ecc" id="label-ecc" data-i18n="label_ecc">Korekcja błędów</label>
@@ -475,16 +477,23 @@
                 <option value="H">H (30%)</option>
               </select>
             </div>
+          
+            <!-- 🧩 Syntri UI: ColorInput – Kolor kodu QR -->
             <div>
               <label for="fg" id="label-color" data-i18n="label_color">Kolor kodu</label>
               <input id="fg" type="color" value="#000000" />
             </div>
           </div>
-
+          
+          
+          <!-- 🧩 Syntri UI: Checkbox – Przezroczyste tło -->
           <label style="display:flex;align-items:center;gap:8px;margin-top:8px;">
-            <input id="transparent" type="checkbox"> <span class="muted" data-i18n="label_transparent">Przezroczyste tło</span>
+            <input id="transparent" type="checkbox">
+            <span class="muted" data-i18n="label_transparent">Przezroczyste tło</span>
           </label>
-
+          
+          
+          <!-- 🧩 Syntri UI: Actions – Generuj / Wyczyść / Quota -->
           <div style="display:flex; gap:10px; align-items:center; margin-top:16px;">
             <button id="generate" class="btn btn-primary" data-i18n="btn_generate">Generuj</button>
             <button id="clear" class="btn btn-ghost" data-i18n="btn_clear">Wyczyść</button>
