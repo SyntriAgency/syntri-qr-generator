@@ -1220,7 +1220,7 @@ async function refreshUsageFromServer(){
 
       renderQuotaPillFromServer(norm);
       startResetTimer(norm.resetAt);
-      try { localStorage.setItem('syntri.lastUsage', JSON.stringify(norm)); } catch {}
+      saveLastUsageCache(norm);
       return;
     }
 
@@ -1818,20 +1818,15 @@ async function onGenerateClick() {
     renderQuotaPillFromServer(data);
     if (Number.isFinite(Number(data.resetAt))) startResetTimer(Number(data.resetAt));
 
-    // 💾 Cache lokalny (do natychmiastowego UI po starcie)
-    try {
-      localStorage.setItem('syntri.lastUsage', JSON.stringify({
-        plan: data.plan ?? (window.SYNTRI_IS_PRO ? 'Pro' : 'Free'),
-        used: Number.isFinite(Number(data.used)) ? Number(data.used) : 0,
-        quota: (data.quota === Infinity || String(data.plan).toLowerCase() === 'pro')
-                 ? Infinity
-                 : (Number.isFinite(Number(data.quota)) ? Number(data.quota) : 15),
-        resetAt: Number(data.resetAt) || 0,
-        ts: Date.now()
-      }));
-    } catch (e) {
-      console.warn('[usage] Cache save failed', e);
-    }
+   // 💾 Cache lokalny (do natychmiastowego UI po starcie)
+saveLastUsageCache({
+  plan:  data.plan ?? (window.SYNTRI_IS_PRO ? 'Pro' : 'Free'),
+  used:  Number(data.used ?? 0),
+  quota: (data.quota === Infinity || String(data.plan).toLowerCase() === 'pro')
+           ? Infinity
+           : Number(data.quota ?? 15),
+  resetAt: Number(data.resetAt) || 0
+});
 
     // 🎬 Generacja QR
     render();
