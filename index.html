@@ -436,14 +436,15 @@
         <button type="button" class="btn btn-ghost" id="btn-en">EN</button>
       </div>
 
-      <!-- Single section: Input + compact options + preview -->
-          <div class="grid">
-            <section>
-              <div class="field">
-                <label for="text" id="label-text" data-i18n="label_text">Treść (URL / tekst)</label>
-                <input id="text" type="text" placeholder="https://syntriagency.github.io/syntri-qr-generator/" value="https://syntri.app" />
-              </div>
-            </section>
+       <!-- Single section: Input + compact options + preview -->
+      <div class="grid">
+        <section>
+          <div class="field">
+            <label for="text" id="label-text" data-i18n="label_text">Treść (URL / tekst)</label>
+            <div class="input-frame" data-focus="#text">
+              <span class="input-affix">https://</span>
+              <input id="text" type="text" placeholder="syntri.app" value="https://syntri.app" />
+            </div>
           </div>
 
           <div class="row" style="margin-top:12px;">
