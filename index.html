@@ -82,7 +82,14 @@
     }
     @media (prefers-color-scheme: light){
       .input-frame input[type="color"]{ border-color:#e5e7eb; }
-    }    
+    } 
+    /*  Layout pól: Rozmiar + Margines */
+    .row.inputs{
+      display:flex;
+      gap:16px;
+      align-items:flex-end;   /* wyrównanie do dołu */
+      flex-wrap:wrap;         /* na wąskich ekranach łamie się w dół */
+    }
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .btn{appearance:none;border:none;cursor:pointer;padding:12px 14px;border-radius:12px;font-weight:700}
     .btn-primary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.14)}
@@ -446,26 +453,28 @@
             </div>
           </div>
 
-         <!-- 🧩 Numeric input field: Rozmiar (Photoshop-style box z px + suwak) -->
-          <div class="field" style="max-width:150px;">
-            <label for="size" id="label-size" data-i18n="label_size">Rozmiar</label>
-            <div class="input-frame">
-              <input id="size" type="number" min="64" max="2048" step="16" value="100" />
-              <span class="input-affix">px</span>
-            </div>
-            <input id="size-slider" type="range" min="64" max="2048" step="16" value="100" style="width:100%;margin-top:6px;">
-          </div>
 
-          
-           <!-- 🧩 Syntri UI: NumericInput (px) – Margines -->
-          <div class="field" style="max-width:180px;">
-            <label for="margin" id="label-margin" data-i18n="label_margin">Margines</label>
-            <div class="input-frame">
-              <input id="margin" type="number" min="0" max="16" step="1" value="2" />
-              <span class="input-affix">px</span>
-            </div>
-          </div>
-          
+          <div class="row inputs" style="margin-top:12px;">
+                <!-- 🧩 Numeric input field: Rozmiar (Photoshop-style box z px + suwak) -->
+                <div class="field" style="max-width:150px;">
+                  <label for="size" id="label-size" data-i18n="label_size">Rozmiar</label>
+                  <div class="input-frame">
+                    <input id="size" type="number" min="64" max="2048" step="16" value="100" />
+                    <span class="input-affix">px</span>
+                  </div>
+                  <input id="size-slider" type="range" min="64" max="2048" step="16" value="100" style="width:100%;margin-top:6px;">
+                </div>
+              
+                <!-- 🧩 Syntri UI: NumericInput (px) – Margines -->
+                <div class="field" style="max-width:180px;">
+                  <label for="margin" id="label-margin" data-i18n="label_margin">Margines</label>
+                  <div class="input-frame">
+                    <input id="margin" type="number" min="0" max="16" step="1" value="2" />
+                    <span class="input-affix">px</span>
+                  </div>
+                </div>
+              </div>
+                        
           
           <!-- 🧩 Syntri UI: Select – Korekcja błędów (ECC Level) -->
           <div class="row" style="margin-top:12px;">
