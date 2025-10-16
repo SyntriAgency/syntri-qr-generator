@@ -1088,7 +1088,18 @@ function saveUsage(u){
 }
 
 
-
+// === Zapisuje ostatni stan licznika (plan, użycie, limit, resetAt) w localStorage, ===
+function saveLastUsageCache({ plan, used, quota, resetAt }) {
+  try {
+    localStorage.setItem('syntri.lastUsage', JSON.stringify({
+      plan: String(plan || (localStorage.getItem('syntri.plan') || 'Free')),
+      used: Number(used ?? 0),
+      quota: (quota === Infinity) ? Infinity : Number(quota ?? 15),
+      resetAt: Number(resetAt || 0),
+      ts: Date.now()
+    }));
+  } catch {}
+}    
 
 // === Plan limits (SSOT) ===
 const PLAN_LIMITS = {
@@ -1124,6 +1135,9 @@ function renderQuotaPillFromServer(a, b) {
       used = Math.min(Math.max(0, Math.floor(used)), quota);
     }
 
+    // 💾 Zapisz ostatni stan do cache
+    saveLastUsageCache({ plan, used, quota, resetAt: Number(a.resetAt) || 0 });
+    
     if (quota === Infinity) {
       usagePill.textContent = 'Pro • unlimited';
       usagePill.title = 'Paid plan';
