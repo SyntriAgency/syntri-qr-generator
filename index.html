@@ -3087,6 +3087,19 @@ function updateCancelVisibility(data){
   </div>
 </div>
 
+
+ <script>
+  (function () {
+    const url = new URL(window.location.href);
+    const status = (url.searchParams.get('status') || '').toLowerCase();
+
+    // absolutne URL-e do Twojego repo:
+    const BASE = 'https://syntriagency.github.io/syntri-qr-generator/';
+    if (status === 'success') window.location.href = BASE + 'success.html';
+    else if (status === 'cancel') window.location.href = BASE + 'cancel.html';
+  })();
+</script>     
+      
 </body>
 </html>
 
