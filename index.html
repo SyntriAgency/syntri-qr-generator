@@ -29,6 +29,60 @@
     label{display:block;font-size:12px;color:var(--muted);margin-bottom:8px;letter-spacing:.2px}
     input[type="text"],textarea,select,input[type="number"]{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:transparent;color:var(--text);outline:none}
     input::placeholder{color:#7a8a98}
+
+        /* Uni box dla inputs */
+    .field .input-frame{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 14px;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:12px;
+      background:rgba(255,255,255,.04);
+      transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    @media (prefers-color-scheme: light){
+      .field .input-frame{ background:#f8fafc; border-color:#e5e7eb; }
+    }
+    .field .input-frame:hover{
+      background:rgba(255,255,255,.06);
+      border-color:rgba(255,255,255,.22);
+    }
+    .field .input-frame:focus-within{
+      background:rgba(125,211,252,.06);
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(125,211,252,.25);
+    }
+    
+    /* Wnętrze: same inputs bez własnej ramki */
+    .input-frame input[type="text"],
+    .input-frame input[type="number"],
+    .input-frame textarea,
+    .input-frame select{
+      flex:1 1 auto;
+      border:0; outline:none; background:transparent;
+      color:var(--text);
+      padding:6px 0; /* większy hit-area */
+      font:inherit;
+    }
+    
+    /* Sufiksy/prefiksy typu „px”, „https://” */
+    .input-affix{
+      user-select:none; white-space:nowrap;
+      padding:4px 8px; border-radius:8px;
+      border:1px solid rgba(255,255,255,.14);
+      color:var(--muted); font-weight:700; font-size:12px;
+    }
+    @media (prefers-color-scheme: light){
+      .input-affix{ border-color:#e5e7eb; }
+    }
+    
+    /* Żeby color input nie rozwalał wysokości */
+    .input-frame input[type="color"]{
+      width:42px; height:28px; padding:0; border-radius:8px;
+      border:1px solid rgba(255,255,255,.14);
+    }
+    @media (prefers-color-scheme: light){
+      .input-frame input[type="color"]{ border-color:#e5e7eb; }
+    }    
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .btn{appearance:none;border:none;cursor:pointer;padding:12px 14px;border-radius:12px;font-weight:700}
     .btn-primary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.14)}
@@ -387,7 +441,10 @@
         <section>
           <div class="field">
             <label for="text" id="label-text" data-i18n="label_text">Treść (URL / tekst)</label>
-            <input id="text" type="text" placeholder="https://syntriagency.github.io/syntri-qr-generator/" value="https://syntri.app" />
+            <div class="input-frame" data-focus="#text">
+              <span class="input-affix">https://</span>
+              <input id="text" type="text" placeholder="syntri.app" value="https://syntri.app" />
+            </div>
           </div>
 
           <div class="row" style="margin-top:12px;">
