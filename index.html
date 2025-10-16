@@ -913,7 +913,30 @@
     const margin=$('#margin'); const fg=$('#fg'); const transparent=$('#transparent');
     const qrBox=$('#qr'); const usagePill = $('#usagePill');
 
-
+    // === Link: Rozmiar (input number) <-> Rozmiar (slider) ===
+    const sizeSlider = document.getElementById('size-slider');
+    
+    // start – zgraj wartości
+    if (size && sizeSlider) {
+      sizeSlider.value = String(size.value || sizeSlider.min || 64);
+    }
+    
+    // wpisujesz ręcznie → przesuń suwak
+    size?.addEventListener('input', () => {
+      if (!sizeSlider) return;
+      const v = Math.min(Math.max(parseInt(size.value || 0, 10), parseInt(sizeSlider.min,10)), parseInt(sizeSlider.max,10));
+      const snapped = Math.round(v / parseInt(sizeSlider.step,10)) * parseInt(sizeSlider.step,10);
+      size.value = String(snapped);
+      sizeSlider.value = size.value;
+    });
+    
+    // przesuwasz suwak → ustaw pole + odpal istniejące handlery (liveRender)
+    sizeSlider?.addEventListener('input', () => {
+      if (!size) return;
+      size.value = sizeSlider.value;
+      size.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  
     
     let qr;
 
