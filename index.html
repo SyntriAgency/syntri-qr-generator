@@ -453,10 +453,9 @@
             </div>
           </div>
 
-
-          <!-- 🧩 Syntri UI: Numeric inputs (Rozmiar + Margines, z suwakiem) -->
+          <!-- 🧩 Syntri UI: Numeric inputs (Rozmiar + Margines + Kolor kodu QR) -->
           <div class="row inputs" style="margin-top:12px; align-items:flex-start;">
-            
+          
             <!-- 📏 Rozmiar (z suwakiem) -->
             <div class="field" style="max-width:150px;">
               <label for="size" id="label-size" data-i18n="label_size">Rozmiar</label>
@@ -469,7 +468,7 @@
             </div>
           
             <!-- 📐 Margines -->
-            <div class="field" style="max-width:180px;">
+            <div class="field" style="max-width:120px;">
               <label for="margin" id="label-margin" data-i18n="label_margin">Margines</label>
               <div class="input-frame">
                 <input id="margin" type="number" min="0" max="16" step="1" value="2" />
@@ -477,8 +476,15 @@
               </div>
             </div>
           
+            <!-- 🎨 Kolor kodu QR -->
+            <div class="field" style="max-width:150px;">
+              <label for="fg" id="label-color" data-i18n="label_color">Kolor kodu</label>
+              <div class="input-frame">
+                <input id="fg" type="color" value="#000000" style="width:100%;height:34px;border-radius:8px;" />
+              </div>
+            </div>
+          
           </div>
-                        
           
           <!-- 🧩 Syntri UI: Select – Korekcja błędów (ECC Level) -->
           <div class="row" style="margin-top:12px;">
@@ -491,13 +497,8 @@
                 <option value="H">H (30%)</option>
               </select>
             </div>
-          
-            <!-- 🧩 Syntri UI: ColorInput – Kolor kodu QR -->
-            <div>
-              <label for="fg" id="label-color" data-i18n="label_color">Kolor kodu</label>
-              <input id="fg" type="color" value="#000000" />
-            </div>
           </div>
+
           
           
           <!-- 🧩 Syntri UI: Checkbox – Przezroczyste tło -->
