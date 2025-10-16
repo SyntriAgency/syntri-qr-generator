@@ -446,14 +446,22 @@
             </div>
           </div>
 
+          <!-- Numeric input fields: Rozmiar + Margines (Photoshop-style box z px) -->
           <div class="row" style="margin-top:12px;">
-            <div>
-              <label for="size" id="label-size" data-i18n="label_size">Rozmiar (px)</label>
-              <input id="size" type="number" min="64" max="2048" step="16" value="100" />
+            <div class="field" style="max-width:180px;">
+              <label for="size" id="label-size" data-i18n="label_size">Rozmiar</label>
+              <div class="input-frame">
+                <input id="size" type="number" min="64" max="2048" step="16" value="100" />
+                <span class="input-affix">px</span>
+              </div>
             </div>
-            <div>
+          
+            <div class="field" style="max-width:180px;">
               <label for="margin" id="label-margin" data-i18n="label_margin">Margines</label>
-              <input id="margin" type="number" min="0" max="16" step="1" value="2" />
+              <div class="input-frame">
+                <input id="margin" type="number" min="0" max="16" step="1" value="2" />
+                <span class="input-affix">px</span>
+              </div>
             </div>
           </div>
 
