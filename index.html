@@ -2655,11 +2655,12 @@ setTimeout(() => {
 }, 1200);
 
 // 🔹 backend – pobiera świeże dane (nadpisze cache)
-if (window?.USE_SERVER_USAGE === true) {
-  (window.refreshUsageFromServer ?? refreshUsageFromServer)?.()
+if (window?.USE_SERVER_USAGE === true && window.auth?.currentUser) {
+  // tylko jeśli użytkownik jest zalogowany – unikamy 500 z backendu
+  (window.refreshUsageFromServer ?? refreshUsageFromServer)()
     .finally(() => setUsagePillLoading(false));
 } else {
-  // brak backendu – pokaż od razu
+  // brak backendu lub user niezalogowany – pokaż od razu lokalny stan
   renderUsagePill();
   setUsagePillLoading(false);
 }
