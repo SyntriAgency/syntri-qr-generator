@@ -2654,16 +2654,18 @@ setTimeout(() => {
   }
 }, 1200);
 
-// 🔹 backend – pobiera świeże dane (nadpisze cache)
-if (window?.USE_SERVER_USAGE === true && window.auth?.currentUser) {
-  // tylko jeśli użytkownik jest zalogowany – unikamy 500 z backendu
-  (window.refreshUsageFromServer ?? refreshUsageFromServer)()
+// 🔹 backend – pobiera świeże dane (nadpisze cache) TYLKO gdy zalogowany
+const _loggedIn = !!window.auth?.currentUser;
+
+if (window?.USE_SERVER_USAGE === true && _loggedIn) {
+  (window.refreshUsageFromServer ?? refreshUsageFromServer)?.()
     .finally(() => setUsagePillLoading(false));
 } else {
-  // brak backendu lub user niezalogowany – pokaż od razu lokalny stan
+  // brak backendu ALBO niezalogowany → lokalny fallback
   renderUsagePill();
   setUsagePillLoading(false);
 }
+
   </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
