@@ -1367,44 +1367,44 @@ function remainingMs(){
   return u.quota === Infinity ? 0 : Math.max(0, u.resetAt - Date.now());
 }
 
-    // === Server usage gate toggle ===
-const USE_SERVER_USAGE = true; // ustaw na false, by wrócić do czysto lokalnego licznika  
 // --- Cloud Function: server-side usage limiter ---
 const API_USAGE = 'https://consumeusage-kmibp3saqa-uc.a.run.app';
 
-
 async function consumeServerUsage() {
   try {
-    // 🔹 Unikalny identyfikator urządzenia (trwały między sesjami)
     const deviceId = localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID());
 
-    // 🔹 Token użytkownika (jeśli zalogowany przez Firebase Auth)
-    const user = window.auth?.currentUser;
+    const user  = window.auth?.currentUser || null;
     const token = user ? await user.getIdToken() : null;
 
-    // 🔹 Wywołanie API (z Authorization, jeśli dostępny)
     const res = await fetch(API_USAGE, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}), // <= kluczowy nagłówek
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({ deviceId }),
     });
 
-    const data = await res.json();
-
-    // 🔹 (opcjonalnie) log diagnostyczny w dev
-    if (location.search.includes('dev=1')) {
-      console.log('[consumeServerUsage]', { status: res.status, hasAuth: !!token, data });
+    // Parsuj JSON tylko gdy naprawdę jest JSON
+    const ct = res.headers.get('content-type') || '';
+    let data = null;
+    if (ct.includes('application/json')) {
+      try { data = await res.json(); } catch { data = null; }
+    } else {
+      try { data = { errorText: (await res.text()).slice(0, 400) }; } catch {}
     }
 
+    if (location.search.includes('dev=1')) {
+      console.info('[consumeServerUsage]', { status: res.status, hasAuth: !!token, data });
+    }
     return { status: res.status, data };
   } catch (e) {
     console.warn('consumeServerUsage error', e);
     return { status: 0, data: null };
   }
 }
+
 
     // ----------------------------------------------
     // QR render
@@ -1795,30 +1795,48 @@ async function onGenerateClick() {
     return;
   }
 
-  // 🟠 3️⃣ Tryb serwerowy – zużycie limitu w Cloud Function
-  const { status, data } = await consumeServerUsage();
-  console.info('[consumeServerUsage]', { status, data });
+ // 🟠 3️⃣ Tryb serwerowy – zużycie limitu w Cloud Function
+const { status, data } = await consumeServerUsage();
+console.info('[consumeServerUsage]', { status, data });
 
-  if (status === 200 && data?.ok) {
-    // ✅ Aktualizacja wizualnego licznika z backendu
-    renderQuotaPillFromServer(data);
-    if (Number.isFinite(Number(data.resetAt))) startResetTimer(Number(data.resetAt));
+// 🚧 Guard: brak autoryzacji → login modal
+if (status === 401 || status === 403) {
+  localStorage.setItem('syntri.intent', 'generateAfterLogin');
+  openModal?.('#loginModal');
+  return;
+}
 
-    // 💾 Cache lokalny (do natychmiastowego UI po starcie)
-    try {
-      localStorage.setItem('syntri.lastUsage', JSON.stringify({
-        plan: data.plan ?? (window.SYNTRI_IS_PRO ? 'Pro' : 'Free'),
-        used: Number.isFinite(Number(data.used)) ? Number(data.used) : 0,
-        quota: (data.quota === Infinity || String(data.plan).toLowerCase() === 'pro')
-                 ? Infinity
-                 : (Number.isFinite(Number(data.quota)) ? Number(data.quota) : 15),
-        resetAt: Number(data.resetAt) || 0,
-        ts: Date.now()
-      }));
-    } catch (e) {
-      console.warn('[usage] Cache save failed', e);
-    }
+// ✅ Normalna ścieżka 200 OK
+if (status === 200 && data?.ok) {
+  // --- normalizacja payloadu ---
+  const plan = String(data.plan ?? (window.SYNTRI_IS_PRO ? 'Pro' : 'Free'));
+  const planLower = plan.toLowerCase();
 
+  const quota =
+    planLower === 'pro' ||
+    data.quota === Infinity ||
+    String(data.quota).toLowerCase() === 'infinity'
+      ? Infinity
+      : (Number.isFinite(Number(data.quota)) ? Number(data.quota) : (PLAN_LIMITS?.[plan] ?? 10));
+
+  let used = Number(data.used);
+  if (!Number.isFinite(used)) used = 0;
+  if (quota !== Infinity) used = Math.max(0, Math.min(used, quota));
+
+  const resetAt = Number(data.resetAt) || 0;
+
+  // ✅ UI update
+  renderQuotaPillFromServer({ plan, used, quota });
+  if (Number.isFinite(resetAt) && resetAt > 0) startResetTimer(resetAt);
+
+  // 💾 Cache lokalny
+  try {
+    localStorage.setItem('syntri.lastUsage', JSON.stringify({
+      plan, used, quota, resetAt, ts: Date.now()
+    }));
+  } catch (e) {
+    console.warn('[usage] Cache save failed', e);
+  }
     // 🎬 Generacja QR
     render();
     updateShareLink();
