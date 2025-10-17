@@ -1373,7 +1373,6 @@ const API_USAGE = 'https://consumeusage-kmibp3saqa-uc.a.run.app';
 async function consumeServerUsage() {
   try {
     const deviceId = localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID());
-
     const user  = window.auth?.currentUser || null;
     const token = user ? await user.getIdToken() : null;
 
@@ -1386,22 +1385,30 @@ async function consumeServerUsage() {
       body: JSON.stringify({ deviceId }),
     });
 
-    // Parsuj JSON tylko gdy naprawdę jest JSON
     const ct = res.headers.get('content-type') || '';
+    let raw = '';
     let data = null;
-    if (ct.includes('application/json')) {
-      try { data = await res.json(); } catch { data = null; }
-    } else {
-      try { data = { errorText: (await res.text()).slice(0, 400) }; } catch {}
+
+    // zawsze czytaj jako text, potem próbuj JSON.parse
+    try { raw = await res.text(); } catch { raw = ''; }
+    if (raw) {
+      try { data = JSON.parse(raw); } catch { data = null; }
     }
 
     if (location.search.includes('dev=1')) {
-      console.info('[consumeServerUsage]', { status: res.status, hasAuth: !!token, data });
+      console.info('[consumeServerUsage]', {
+        status: res.status,
+        hasAuth: !!token,
+        ct,
+        dataType: data ? typeof data : 'null',
+        preview: raw.slice(0, 180)
+      });
     }
-    return { status: res.status, data };
+
+    return { status: res.status, data, raw, ct };
   } catch (e) {
     console.warn('consumeServerUsage error', e);
-    return { status: 0, data: null };
+    return { status: 0, data: null, raw: '', ct: '' };
   }
 }
 
@@ -1806,9 +1813,11 @@ if (status === 401 || status === 403) {
   return;
 }
 
-// ✅ Normalna ścieżka 200 OK
-if (status === 200 && data?.ok) {
-  // --- normalizacja payloadu ---
+// ✅ 200 OK – zaakceptuj dane nawet bez "ok:true"
+if (status === 200 && data && (
+     data.ok === true ||
+     ('used' in data && ('quota' in data || String(data.plan).toLowerCase() === 'pro'))
+)) {
   const plan = String(data.plan ?? (window.SYNTRI_IS_PRO ? 'Pro' : 'Free'));
   const planLower = plan.toLowerCase();
 
@@ -1831,9 +1840,7 @@ if (status === 200 && data?.ok) {
 
   // 💾 Cache lokalny
   try {
-    localStorage.setItem('syntri.lastUsage', JSON.stringify({
-      plan, used, quota, resetAt, ts: Date.now()
-    }));
+    localStorage.setItem('syntri.lastUsage', JSON.stringify({ plan, used, quota, resetAt, ts: Date.now() }));
   } catch (e) {
     console.warn('[usage] Cache save failed', e);
   }
