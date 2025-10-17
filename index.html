@@ -889,6 +889,11 @@
  <!-- QR lib – ZAŁADUJ RAZ, POZA innymi scriptami -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 
+<!-- ✅ Globalna flaga trybu serwera -->
+<script>
+  window.USE_SERVER_USAGE = true;
+</script>
+      
  <!-- ✅ Stałe z adresami API – tuż pod Firebase -->
 <script>
   // URL z deploya — Function URL (api)
@@ -1697,7 +1702,7 @@ ctaRow.appendChild(btnUpgrade1);
 }
     
 function ensureHomeGate(){
-  if (USE_SERVER_USAGE) {
+  if (window?.USE_SERVER_USAGE === true) {
     // Nie blokuj przycisku lokalnym licznikiem – decyzję podejmie serwer po animacji
     const btn = document.querySelector('#generate');
     if (btn) {
@@ -1793,7 +1798,7 @@ async function onGenerateClick() {
   }
 
   // 🟡 2️⃣ Tryb lokalny (brak serwera)
-  if (!USE_SERVER_USAGE) {
+  if (window?.USE_SERVER_USAGE === true) {
     render();
     updateShareLink();
     saveState();
@@ -2650,7 +2655,7 @@ setTimeout(() => {
 }, 1200);
 
 // 🔹 backend – pobiera świeże dane (nadpisze cache)
-if (USE_SERVER_USAGE) {
+if (window?.USE_SERVER_USAGE === true) {
   (window.refreshUsageFromServer ?? refreshUsageFromServer)?.()
     .finally(() => setUsagePillLoading(false));
 } else {
