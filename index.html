@@ -621,11 +621,7 @@
 </div>
 
           
-<!-- DEV panel – widoczny tylko z ?dev=1 -->
-<div id="dev-panel" style="display:none; margin-top:8px; display:flex; gap:8px;">
-  <button id="dev-exhaust" class="btn btn-ghost">DEV: Max limit</button>
-  <button id="dev-reset"   class="btn btn-ghost">DEV: Reset</button>
-</div>
+
           
           <p class="muted" id="note-offline" style="margin-top:10px;" data-i18n="note_offline">
             Działa lokalnie w przeglądarce — żadne dane nie opuszczają urządzenia.
@@ -950,7 +946,7 @@
    async function bumpQrCount(){
    if (!AUTH.isLoggedIn()) return;          // Zliczaj tylko zalogowanych
    // TODO: Firestore: increment(qrCount) dla bieżącego użytkownika
-     console.debug('bumpQrCount (mock) – zalogowany:', AUTH.email());
+     
    }
     
     function clamp(n, min, max){ return Math.min(Math.max(n, min), max); }
@@ -1312,7 +1308,7 @@ async function openCheckout() {
     // 🔧 Najczęstszy błąd 404: podwójne /api
     const endpoint = `${API_BASE_PROT}/create-checkout-session`;
 
-    console.log("[checkout] POST", endpoint);
+    
 
     const res = await fetch(endpoint, {
       method: "POST",
@@ -1332,7 +1328,7 @@ async function openCheckout() {
     const data = JSON.parse(text || "{}");
     if (!data.url) throw new Error("Missing checkout URL in response");
 
-    console.log("[checkout] Redirecting to:", data.url);
+    
     window.location.href = data.url;
 
   } catch (e) {
@@ -2015,7 +2011,7 @@ if (planName) planName.textContent = planStored;
   highlightSelectedPlan();
   wirePlanButtons();
   
-  console.log('[DEBUG] tuż przed wireCancelButton');
+  
   wireCancelButton();
   
   if (typeof lastExpiryMs === 'number' && lastExpiryMs > 0) {
@@ -2784,7 +2780,7 @@ onAuthStateChanged(auth, (user) => {
 
     // ✅ Pierwsze zalogowanie → POKAŻ POPUP, ale NIE ustawiaj flagi tu
     if (!localStorage.getItem('syntri.seenPolicy')) {
-      console.log('[POLICY] first login → showing popup');
+      
       setTimeout(() => {
         // jeśli chcesz lekki "pope"
         window.showPolicyPopup?.();
@@ -2999,14 +2995,13 @@ btnDeleteAcc?.addEventListener('click', async () => {
 
   setBusy?.(btnDeleteAcc, true);
   try {
-    console.log('[DeleteAcc] Reauth start for', user.email);
+    
     const cred = EmailAuthProvider.credential(user.email, pass);
     await reauthenticateWithCredential(user, cred);
-    console.log('[DeleteAcc] Reauth OK');
-
-    console.log('[DeleteAcc] Deleting user…');
+    
+    
     await deleteUser(user);
-    console.log('[DeleteAcc] Delete OK');
+    
 
     try { await signOut(auth); } catch {}
     localStorage.removeItem('syntri.auth.uid');
@@ -3036,7 +3031,7 @@ btnDeleteAcc?.addEventListener('click', async () => {
 document.addEventListener('click', async (e) => {
   if (e.target?.id !== 'cpSave') return;   // reaguj tylko na przycisk Save
 
-  console.log('[ChangePass] Save clicked');
+  
   const user = auth.currentUser;
   if (!user?.email) { alert('Nie jesteś zalogowany/a.'); return; }
 
@@ -3142,7 +3137,7 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     const ref = doc(db, 'entitlements', user.uid);
     unsubEnt = onSnapshot(ref, (snap) => {
-      console.log('[entitlements]', snap.exists(), snap.data());
+      
 
     const data = snap.data() || {};
     const endMs   = Number(data.expiryTimeMs ?? 0);
