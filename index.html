@@ -122,11 +122,29 @@
       color: #000000;            /* czarny tekst dla kontrastu */
     }
     
-    /* 🌙 Tryb ciemny (Dark Mode) — automatyczne dopasowanie do systemu */
+        /* 🌙 Tryb ciemny (Dark Mode) — automatyczne dopasowanie do systemu */
     @media (prefers-color-scheme: dark) {
       body {
         background-color: #111111; /* ciemne tło */
         color: #ffffff;            /* jasny tekst */
+      }
+    
+      /* 🧩 Panel Settings – kolory tekstu i tła w dark mode */
+      .settings-panel {
+        background-color: #1a1a1a;   /* ciemne tło panelu */
+        color: #ffffff;              /* jasny tekst */
+      }
+    
+      .settings-panel h2,
+      .settings-panel h3,
+      .settings-panel label,
+      .settings-panel button {
+        color: #ffffff;
+      }
+    
+      /* jeśli przyciski mają białe tło w dark mode → lekko przyciemnij */
+      .settings-panel button {
+        background-color: #2b2b2b;
       }
     }
 
