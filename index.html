@@ -115,6 +115,20 @@
         top: 6px;
       }
     }  
+
+    /* ☀️ Tryb jasny (domyślny) */
+    body {
+      background-color: #ffffff; /* wymusza białe tło */
+      color: #000000;            /* czarny tekst dla kontrastu */
+    }
+    
+    /* 🌙 Tryb ciemny (Dark Mode) — automatyczne dopasowanie do systemu */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #111111; /* ciemne tło */
+        color: #ffffff;            /* jasny tekst */
+      }
+    }
     
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .btn{appearance:none;border:none;cursor:pointer;padding:12px 14px;border-radius:12px;font-weight:700}
