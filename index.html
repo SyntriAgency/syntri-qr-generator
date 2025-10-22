@@ -130,30 +130,38 @@
       }
     }
 
-    /* ⚙️ Panel Settings — dostosowanie dla telefonów */
-@media (max-width: 560px) {
-  .settings-panel {
-    width: 92vw;              /* prawie pełna szerokość ekranu */
-    max-width: 420px;         /* limit, żeby nie wyglądało źle na tabletach */
-    padding: 16px 20px;       /* więcej oddechu wewnątrz */
-    border-radius: 16px;      /* lekko większe zaokrąglenia */
-  }
-
-  .settings-panel h2,
-  .settings-panel h3 {
-    font-size: 1.1rem;        /* mniejsze tytuły */
-  }
-
-  .settings-panel label,
-  .settings-panel button {
-    font-size: 0.95rem;       /* dopasowanie tekstu */
-  }
-
-  .settings-panel .row {
-    grid-template-columns: 1fr; /* pola jedno pod drugim */
-    gap: 10px;
-  }
-}    
+      /* ⚙️ Panel Settings — dopasowanie i proporcje dla telefonów */
+    @media (max-width: 560px) {
+      .settings-panel {
+        width: 92vw;              /* prawie pełna szerokość ekranu */
+        max-width: 420px;         /* limit, żeby nie wyglądało źle na tabletach */
+        padding: 16px 20px;       /* więcej oddechu wewnątrz */
+        border-radius: 16px;      /* lekko większe zaokrąglenia */
+        font-size: 0.95rem;       /* lekko mniejszy tekst */
+        line-height: 1.3;         /* ciaśniejsze odstępy */
+      }
+    
+      .settings-panel h2,
+      .settings-panel h3 {
+        font-size: 1.1rem;        /* mniejsze tytuły */
+        text-align: center;
+        word-break: keep-all;
+      }
+    
+      .settings-panel label,
+      .settings-panel button {
+        font-size: 0.95rem;       /* dopasowanie tekstu */
+      }
+    
+      .settings-panel p {
+        word-wrap: break-word;    /* łamie długie linki */
+      }
+    
+      .settings-panel .row {
+        grid-template-columns: 1fr; /* pola jedno pod drugim */
+        gap: 10px;
+      }
+    }  
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .btn{appearance:none;border:none;cursor:pointer;padding:12px 14px;border-radius:12px;font-weight:700}
     .btn-primary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.14)}
