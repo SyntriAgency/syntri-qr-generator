@@ -102,137 +102,124 @@
     }
     
     /* 📱 Dystans między logo a tytułem na telefonach */
-    @media (max-width: 560px) {
-      .page-title {
-        padding-right: 70px;   /* zostawia miejsce dla logo (było 96px) */
-        white-space: nowrap;   /* 👈 trzyma tytuł w jednej linii */
-        font-size: 1.1rem;     /* opcjonalnie: lekko mniejszy tekst na małych ekranach */
-      }
-    
-      .decor-logo {
-        width: 56px;   /* mniejsze logo na mobile */
-        right: 10px;
-        top: 6px;
-      }
-    }  
+@media (max-width: 560px) {
+  .page-title {
+    padding-right: 70px;
+    white-space: nowrap;
+    font-size: 1.1rem;
+  }
+  .decor-logo {
+    width: 56px;
+    right: 10px;
+    top: 6px;
+  }
+}
 
-    /* ☀️ Tryb jasny (domyślny) */
-    body {
-      background-color: #ffffff; /* wymusza białe tło */
-      color: #000000;            /* czarny tekst dla kontrastu */
-    }
-    
-        /* 🌙 Tryb ciemny (Dark Mode) — automatyczne dopasowanie do systemu */
-    @media (prefers-color-scheme: dark) {
-      body {
-        background-color: #111111; /* ciemne tło */
-        color: #ffffff;            /* jasny tekst */
-      }
-    
-      /* 🧩 Panel Settings – kolory tekstu i tła w dark mode */
-      .settings-panel {
-        background-color: #1a1a1a;   /* ciemne tło panelu */
-        color: #ffffff;              /* jasny tekst */
-      }
-    
-      .settings-panel h2,
-      .settings-panel h3,
-      .settings-panel label,
-      .settings-panel button {
-        color: #ffffff;
-      }
-    
-      /* jeśli przyciski mają białe tło w dark mode → lekko przyciemnij */
-      .settings-panel button {
-        background-color: #2b2b2b;
-      }
-    }
+/* ☀️ Tryb jasny (domyślny) */
+body {
+  background-color: #ffffff;
+  color: #000000;
+}
 
-      /* ⚙️ Panel Settings — dopasowanie i proporcje dla telefonów */
-    @media (max-width: 560px) {
-      .settings-panel {
-        width: 92vw;              /* prawie pełna szerokość ekranu */
-        max-width: 420px;         /* limit, żeby nie wyglądało źle na tabletach */
-        padding: 16px 20px;       /* więcej oddechu wewnątrz */
-        border-radius: 16px;      /* lekko większe zaokrąglenia */
-        font-size: 0.95rem;       /* lekko mniejszy tekst */
-        line-height: 1.3;         /* ciaśniejsze odstępy */
-      }
-    
-      .settings-panel h2,
-      .settings-panel h3 {
-        font-size: 1.1rem;        /* mniejsze tytuły */
-        text-align: center;
-        word-break: keep-all;
-      }
-    
-      .settings-panel label,
-      .settings-panel button {
-        font-size: 0.95rem;       /* dopasowanie tekstu */
-      }
-    
-      .settings-panel p {
-        word-wrap: break-word;    /* łamie długie linki */
-      }
-    
-      .settings-panel .row {
-        grid-template-columns: 1fr; /* pola jedno pod drugim */
-        gap: 10px;
-      }
-    } 
-        /* 📱 Settings modal – mobilny układ (naprawa overflow) */
-    @media (max-width: 560px) {
-      /* Cała karta ustawień jedną kolumną */
-      #settingsModal .modal-card.settings-split{
-        grid-template-columns: 1fr !important;
-        width: 96vw;               /* nie wychodzi poza ekran */
-        max-width: none;
-        box-sizing: border-box;
-      }
-    
-      /* Nawigacja nad treścią, bez pionowego separatora */
-      #settingsModal .settings-nav{
-        flex-direction: row;
-        gap: 8px;
-        border-right: 0;
-        border-bottom: 1px solid rgba(255,255,255,.12);
-        overflow-x: auto;          /* przewijanie poziome, gdy się nie mieści */
-        padding: 8px;
-      }
-      #settingsModal .settings-nav button{
-        white-space: nowrap;
-        padding: 10px 12px;
-        font-size: 0.95rem;
-      }
-      #settingsModal .settings-nav button.active{
-        background: rgba(255,255,255,.06);
-      }
-    
-      /* Treść */
-      #settingsModal .settings-content{
-        padding: 14px;
-      }
-    
-      /* Karty planów – nie wychodzą poza ekran */
-      .plans{
-        gap: 12px;
-      }
-      .plan-card{
-        margin: 0;                 /* bez ujemnych marginesów */
-        width: 100%;
-        box-sizing: border-box;
-      }
-      .plan-head .plan-name{ font-size: 1.05rem; }
-      .plan-head .plan-price{ font-size: 0.95rem; }
-      .plan-feats{ margin: 8px 0 10px; }
-      .plan-btn{ padding: 12px; }
-    
-      /* Łamanie długich słów/linijek, aby nic nie “wyjeżdżało” */
-      .settings-content, .plan-card, .plan-feats, .info-card, .subs-footer{
-        overflow-wrap: anywhere;
-        word-break: break-word;
-      }
-    }
+/* 🌙 DARK MODE – pełne kolory dla Settings modal */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #111111;
+    color: #ffffff;
+  }
+
+  #settingsModal .modal-card.settings-split {
+    background: #0f1720 !important;
+    color: #e5e7eb !important;
+    border-color: #1f2937 !important;
+  }
+
+  #settingsModal .settings-nav {
+    border-right-color: #334155 !important;
+  }
+  #settingsModal .settings-nav button.active {
+    background: rgba(255,255,255,.06) !important;
+  }
+
+  #settingsModal .settings-content,
+  #settingsModal .plan-card,
+  #settingsModal .info-card,
+  #settingsModal .subs-footer {
+    background: #111722 !important;
+    color: #e5e7eb !important;
+    border-color: #1f2937 !important;
+  }
+
+  #settingsModal .plan-btn:not(.secondary) {
+    background: #e5e7eb !important;
+    color: #111827 !important;
+    border: 0 !important;
+  }
+  #settingsModal .plan-btn.secondary,
+  #settingsModal .btn-ghost {
+    background: transparent !important;
+    color: #e5e7eb !important;
+    border-color: #334155 !important;
+  }
+  #settingsModal .btn-danger {
+    color: #e5e7eb !important;
+    border-color: rgba(255,0,0,.35) !important;
+  }
+}
+
+/* 📱 Settings modal – układ mobilny i łamanie tekstu */
+@media (max-width: 560px) {
+  #settingsModal .modal-card.settings-split {
+    grid-template-columns: 1fr !important;
+    width: 96vw;
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  #settingsModal .settings-nav {
+    flex-direction: row;
+    gap: 8px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+    overflow-x: auto;
+    padding: 8px;
+  }
+
+  #settingsModal .settings-nav button {
+    white-space: nowrap;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  #settingsModal .settings-nav button.active {
+    background: rgba(255,255,255,.06);
+  }
+
+  #settingsModal .settings-content {
+    padding: 14px;
+  }
+
+  .plans {
+    gap: 12px;
+  }
+
+  .plan-card {
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .plan-head .plan-name { font-size: 1.05rem; }
+  .plan-head .plan-price { font-size: 0.95rem; }
+  .plan-feats { margin: 8px 0 10px; }
+  .plan-btn { padding: 12px; }
+
+  #settingsModal .settings-content,
+  .plan-card, .plan-feats, .info-card, .subs-footer {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
     
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .btn{appearance:none;border:none;cursor:pointer;padding:12px 14px;border-radius:12px;font-weight:700}
