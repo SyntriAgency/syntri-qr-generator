@@ -161,7 +161,61 @@
         grid-template-columns: 1fr; /* pola jedno pod drugim */
         gap: 10px;
       }
-    }  
+    } 
+        /* 📱 Settings modal – mobilny układ (naprawa overflow) */
+    @media (max-width: 560px) {
+      /* Cała karta ustawień jedną kolumną */
+      #settingsModal .modal-card.settings-split{
+        grid-template-columns: 1fr !important;
+        width: 96vw;               /* nie wychodzi poza ekran */
+        max-width: none;
+        box-sizing: border-box;
+      }
+    
+      /* Nawigacja nad treścią, bez pionowego separatora */
+      #settingsModal .settings-nav{
+        flex-direction: row;
+        gap: 8px;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255,255,255,.12);
+        overflow-x: auto;          /* przewijanie poziome, gdy się nie mieści */
+        padding: 8px;
+      }
+      #settingsModal .settings-nav button{
+        white-space: nowrap;
+        padding: 10px 12px;
+        font-size: 0.95rem;
+      }
+      #settingsModal .settings-nav button.active{
+        background: rgba(255,255,255,.06);
+      }
+    
+      /* Treść */
+      #settingsModal .settings-content{
+        padding: 14px;
+      }
+    
+      /* Karty planów – nie wychodzą poza ekran */
+      .plans{
+        gap: 12px;
+      }
+      .plan-card{
+        margin: 0;                 /* bez ujemnych marginesów */
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .plan-head .plan-name{ font-size: 1.05rem; }
+      .plan-head .plan-price{ font-size: 0.95rem; }
+      .plan-feats{ margin: 8px 0 10px; }
+      .plan-btn{ padding: 12px; }
+    
+      /* Łamanie długich słów/linijek, aby nic nie “wyjeżdżało” */
+      .settings-content, .plan-card, .plan-feats, .info-card, .subs-footer{
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+    }
+    
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .btn{appearance:none;border:none;cursor:pointer;padding:12px 14px;border-radius:12px;font-weight:700}
     .btn-primary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.14)}
