@@ -101,6 +101,17 @@
       -moz-appearance: textfield; /* Firefox */
     }
     
+    /* 📱 Dystans między logo a tytułem na telefonach */
+    @media (max-width: 560px) {
+      .page-title {
+        padding-right: 96px; /* zostawia miejsce dla logo */
+      }
+      .decor-logo {
+        width: 56px;  /* mniejsze logo na mobile */
+        right: 10px;
+        top: 6px;
+      }
+    }    
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .btn{appearance:none;border:none;cursor:pointer;padding:12px 14px;border-radius:12px;font-weight:700}
     .btn-primary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.14)}
