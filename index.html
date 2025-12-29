@@ -3435,7 +3435,7 @@ function updateCancelVisibility(data){
     else if (status === 'cancel') window.location.href = BASE + 'cancel.html';
   })();
 
-<!-- 19) Syntri Premium: QR Logo Toggle / Upload Panel -->
+// --- 19) Syntri Premium: QR Logo Toggle / Upload Panel ---
 
 const qrLogoToggle = document.getElementById('qrLogoToggle');
 const qrLogoPanel  = document.getElementById('qrLogoPanel');
@@ -3446,6 +3446,13 @@ qrLogoToggle?.addEventListener('change', () => {
 
 if (qrLogoPanel)
   qrLogoPanel.style.display = qrLogoToggle?.checked ? 'block' : 'none';
+
+// --- 19a) Syntri Premium: Enable / Disable Logo Toggle by Plan ---
+if (qrLogoToggle) {
+  qrLogoToggle.disabled = !isProClient();
+  if (!isProClient()) qrLogoToggle.checked = false;
+}
+
 
 </script>     
       
