@@ -3453,6 +3453,26 @@ if (qrLogoToggle) {
   if (!isProClient()) qrLogoToggle.checked = false;
 }
 
+// --- 19b) Syntri Premium: Logo File Picker -> Load to window.qrLogoImg ---
+const qrLogoFile = document.getElementById('qrLogoFile');
+const qrLogoPreview = document.getElementById('qrLogoPreview');
+
+qrLogoFile?.addEventListener('change', () => {
+  const file = qrLogoFile.files?.[0];
+  if (!file) { window.qrLogoImg = null; if (qrLogoPreview) qrLogoPreview.src = ''; return; }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      window.qrLogoImg = img;
+      if (qrLogoPreview) qrLogoPreview.src = img.src;
+    };
+    img.src = String(reader.result);
+  };
+  reader.readAsDataURL(file);
+});
+
 
 </script>     
       
