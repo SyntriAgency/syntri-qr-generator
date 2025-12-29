@@ -1094,6 +1094,34 @@ body {
     
     function clamp(n, min, max){ return Math.min(Math.max(n, min), max); }
 
+    // --- 19b) Syntri Premium: QR Logo – Apply Overlay To Preview Canvas ---
+    function applyLogoOverlayToPreview(){
+      if (!isProClient() || !qrLogoToggle?.checked || !window.qrLogoImg) return;
+    
+      const canvas = qrBox?.querySelector('canvas');
+      if (!canvas) return;
+    
+      const ctx = canvas.getContext('2d');
+      const qrSizePx = canvas.width;
+    
+      let logoPx = Math.floor(qrSizePx * 0.22);
+      const maxLogoPx = Math.floor(qrSizePx * LOGO_MAX_RATIO);
+      logoPx = clamp(logoPx, LOGO_MIN_PX, maxLogoPx);
+    
+      const x = Math.floor((qrSizePx - logoPx) / 2);
+      const y = Math.floor((qrSizePx - logoPx) / 2);
+    
+      // biały podkład tylko gdy tło nie jest transparent
+      if (!transparent?.checked) {
+        const pad = Math.floor(logoPx * 0.12);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x - pad, y - pad, logoPx + pad * 2, logoPx + pad * 2);
+      }
+    
+      ctx.drawImage(window.qrLogoImg, x, y, logoPx, logoPx);
+    }
+
+    
     function filename(ext){
     const raw = (text?.value || '').trim() || 'syntri';
     const slug = raw
@@ -1578,6 +1606,9 @@ async function consumeServerUsage() {
 
       qrBox.setAttribute('role','img');
       qrBox.setAttribute('aria-label', `QR code, size ${width}px, ECC ${ecc.value}, margin ${m}`);
+
+        //  PRO: nałóż logo po wyrenderowaniu QR
+      setTimeout(applyLogoOverlayToPreview, 0);
     }
 
 
@@ -3459,7 +3490,12 @@ const qrLogoPreview = document.getElementById('qrLogoPreview');
 
 qrLogoFile?.addEventListener('change', () => {
   const file = qrLogoFile.files?.[0];
-  if (!file) { window.qrLogoImg = null; if (qrLogoPreview) qrLogoPreview.src = ''; return; }
+  if (!file) {
+    window.qrLogoImg = null;
+    if (qrLogoPreview) qrLogoPreview.src = '';
+    render(); // ← odśwież QR bez logo
+    return;
+  }
 
   const reader = new FileReader();
   reader.onload = () => {
@@ -3467,11 +3503,13 @@ qrLogoFile?.addEventListener('change', () => {
     img.onload = () => {
       window.qrLogoImg = img;
       if (qrLogoPreview) qrLogoPreview.src = img.src;
+      render(); // ← 🔑 TO JEST KLUCZ
     };
     img.src = String(reader.result);
   };
   reader.readAsDataURL(file);
 });
+
 
 
 </script>     
