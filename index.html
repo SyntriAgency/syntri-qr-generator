@@ -786,15 +786,15 @@ body {
     </div>
 
     <div class="field-row">
-      <label for="loginPass" class="muted">Hasło</label>
-      <input id="loginPass" type="password" placeholder="min. 6 znaków"
+      <label for="loginPass" class="muted" data-i18n="login_pass_label">Hasło</label>
+      <input id="loginPass" ... data-i18n-placeholder="login_pass_ph" placeholder="min. 6 znaków" />
              required autocomplete="current-password" />
     </div>
 
     <div class="field-row" style="margin-top:12px;display:flex;gap:8px;">
-      <button id="btnRegister" class="btn btn-primary" type="button">Zarejestruj</button>
-      <button id="btnLogin"    class="btn btn-ghost"   type="button">Zaloguj</button>
-      <button id="btnForgot"   class="btn btn-ghost"   type="button">Forgot password?</button>
+    <button id="btnRegister" class="btn btn-primary" type="button" data-i18n="btn_register">Zarejestruj</button>
+    <button id="btnLogin"    class="btn btn-ghost"   type="button" data-i18n="btn_login">Zaloguj</button>
+    <button id="btnForgot"   class="btn btn-ghost"   type="button" data-i18n="btn_forgot">Forgot password?</button>
     </div>
 
     <div class="modal-actions">
@@ -2435,7 +2435,13 @@ const I18N = {
     // --- MODAL: LOGIN ---
     login_title: 'Logowanie',
     login_email_label: 'Email',
+    login_pass_label: 'Hasło',
+    login_pass_ph: 'min. 6 znaków',
+    btn_register: 'Zarejestruj',
+    btn_login: 'Zaloguj',
+    btn_forgot: 'Nie pamiętasz hasła?',
 
+    
     // --- MODAL: ACCOUNT ---
     account_title: 'Konto',
     account_manage: 'Zarządzanie kontem',
@@ -2612,6 +2618,11 @@ const I18N = {
     // --- MODAL: LOGIN ---
     login_title: 'Log in',
     login_email_label: 'Email',
+    login_pass_label: 'Password',
+    login_pass_ph: 'min. 6 characters',
+    btn_register: 'Register',
+    btn_login: 'Log in',
+    btn_forgot: 'Forgot password?',
 
     // --- MODAL: ACCOUNT ---
     account_title: 'Account',
