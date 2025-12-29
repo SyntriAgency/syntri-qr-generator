@@ -3488,10 +3488,11 @@ qrLogoToggle?.addEventListener('change', () => {
 if (qrLogoPanel)
   qrLogoPanel.style.display = qrLogoToggle?.checked ? 'block' : 'none';
 
-// --- 19a) Syntri Premium: Enable / Disable Logo Toggle by Plan ---
+// --- 19a) Syntri Premium: Enable / Disable Logo Toggle by Plan (SAFE) ---
 if (qrLogoToggle) {
-  qrLogoToggle.disabled = !isProClient();
-  if (!isProClient()) qrLogoToggle.checked = false;
+  const pro = (typeof isProClient === 'function') && isProClient();
+  qrLogoToggle.disabled = !pro;
+  if (!pro) qrLogoToggle.checked = false;
 }
 
 // --- 19b) Syntri Premium: Logo File Picker -> Load to window.qrLogoImg ---
