@@ -646,7 +646,20 @@ body {
             <input id="transparent" type="checkbox">
             <span class="muted" data-i18n="label_transparent">Przezroczyste tło</span>
           </label>
-          
+
+          <!-- 🧩 Syntri UI: Checkbox – Logo w środku QR (Premium) -->
+          <label style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+          <input id="qrLogoToggle" type="checkbox" disabled>
+          <span class="muted">Logo (Pro)</span>
+          <span class="muted" data-i18n="label_logo_pro">Logo (Pro)</span>
+          </label>
+
+          <!-- 🧩 Syntri UI: QR Logo Upload (Premium) -->
+          <div id="qrLogoPanel" style="display:none;margin-top:10px;">
+            <input id="qrLogoInput" type="file" accept="image/*" class="input">
+          </div>
+
+
           
           <!-- 🧩 Syntri UI: Actions – Generuj / Wyczyść / Quota -->
           <div style="display:flex; gap:10px; align-items:center; margin-top:16px;">
@@ -1067,6 +1080,10 @@ body {
     
     let qr;
 
+  // ---Syntri Premium: QR Logo Size Guard (Hard Clamp & Safety) ---
+    const LOGO_MAX_RATIO = 0.28; // max 28% szerokości QR – bezpieczne dla skanowania
+    const LOGO_MIN_PX = 12;      // minimalny sensowny rozmiar logo (px)
+    
    // --- metrics (stub) ---
    // Podmień na wywołanie Firestore, gdy podepniesz Firebase.
    async function bumpQrCount(){
@@ -1581,6 +1598,26 @@ function downloadCanvasAsPNG(canvas, name){
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(canvas, 0, 0, target, target);
 
+ // --- 19) Syntri Premium: PNG Export – Logo Overlay (Clamped) ---
+  if (isProClient() && qrLogoToggle?.checked && window.qrLogoImg) {
+    const qrSizePx = target;
+
+    let logoPx = Math.floor(qrSizePx * 0.22);
+    const maxLogoPx = Math.floor(qrSizePx * LOGO_MAX_RATIO);
+    logoPx = clamp(logoPx, LOGO_MIN_PX, maxLogoPx);
+
+    const x = Math.floor((qrSizePx - logoPx) / 2);
+    const y = Math.floor((qrSizePx - logoPx) / 2);
+
+    // biały podkład tylko gdy tło nie jest transparent
+    if (!transparent.checked) {
+      const pad = Math.floor(logoPx * 0.12);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x - pad, y - pad, logoPx + pad * 2, logoPx + pad * 2);
+    }
+
+    ctx.drawImage(window.qrLogoImg, x, y, logoPx, logoPx);
+  }
   const a = document.createElement('a');
   a.download = name;
   a.href = off.toDataURL('image/png');
@@ -2405,6 +2442,8 @@ const I18N = {
     label_transparent: 'Przezroczyste tło',
     note_offline: 'Działa lokalnie w przeglądarce — żadne dane nie opuszczają urządzenia.',
     hint_hotkey: '— szybkie generowanie',
+    label_logo_pro: 'Logo (Pro)',
+    
 
     // --- PRZYCISKI ---
     btn_generate: 'Generuj',
@@ -2589,6 +2628,8 @@ const I18N = {
     label_transparent: 'Transparent background',
     note_offline: 'Runs locally in your browser — no data leaves your device.',
     hint_hotkey: '— quick generate',
+    label_logo_pro: 'Logo (Pro)',
+
 
     // --- BUTTONS ---
     btn_generate: 'Generate',
@@ -3393,6 +3434,19 @@ function updateCancelVisibility(data){
     if (status === 'success') window.location.href = BASE + 'success.html';
     else if (status === 'cancel') window.location.href = BASE + 'cancel.html';
   })();
+
+<!-- 19) Syntri Premium: QR Logo Toggle / Upload Panel -->
+
+const qrLogoToggle = document.getElementById('qrLogoToggle');
+const qrLogoPanel  = document.getElementById('qrLogoPanel');
+
+qrLogoToggle?.addEventListener('change', () => {
+  qrLogoPanel.style.display = qrLogoToggle.checked ? 'block' : 'none';
+});
+
+if (qrLogoPanel)
+  qrLogoPanel.style.display = qrLogoToggle?.checked ? 'block' : 'none';
+
 </script>     
       
 </body>
