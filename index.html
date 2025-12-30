@@ -3486,29 +3486,16 @@ function updateCancelVisibility(data){
 
 <!--18) Checkout Redirect Handler ”--->
  <script>
-(() => {
-  const url = new URL(window.location.href);
-  const status = (url.searchParams.get('status') || '').toLowerCase();
+  (function () {
+    const url = new URL(window.location.href);
+    const status = (url.searchParams.get('status') || '').toLowerCase();
 
-  // GitHub Pages base (dopasuj jeśli masz inną ścieżkę)
-  const BASE = 'https://syntriagency.github.io/syntri-qr-generator/';
+    // absolutne URL-e do Twojego repo:
+    const BASE = 'https://syntriagency.github.io/syntri-qr-generator/';
+    if (status === 'success') window.location.href = BASE + 'success.html';
+    else if (status === 'cancel') window.location.href = BASE + 'cancel.html';
+  })();
 
-  if (status === 'success') {
-    window.location.replace(BASE + 'success.html');
-    return;
-  }
-  if (status === 'cancel') {
-    window.location.replace(BASE + 'cancel.html');
-    return;
-  }
-
-  // opcjonalnie: usuń śmieciowe paramy (status) bez przeładowania strony
-  if (url.searchParams.has('status')) {
-    url.searchParams.delete('status');
-    window.history.replaceState({}, '', url.toString());
-  }
-})();
-</script>
 
 
 // --- 19) Syntri Premium: QR Logo Toggle / Upload Panel ---
