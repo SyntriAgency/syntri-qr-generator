@@ -647,12 +647,16 @@ body {
             <span class="muted" data-i18n="label_transparent">Przezroczyste tło</span>
           </label>
 
-          <!-- 🧩 Syntri UI: Checkbox – Logo w środku QR (Premium) -->
+         <!-- 🧩 Syntri UI: Checkbox – Logo w środku QR (Premium) -->
           <label style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-          <input id="qrLogoToggle" type="checkbox" disabled>
-          <span class="muted" data-i18n="label_logo_pro">Logo (Pro)</span>
+            <input id="qrLogoToggle" type="checkbox" disabled>
+            <span class="muted" data-i18n="label_logo_pro">Logo (Pro)</span>
           </label>
-
+          
+          <div id="qrLogoPanel" style="display:none;margin-top:8px;">
+            <div class="muted">Logo placeholder enabled (Pro)</div>
+          </div>
+          
           </div>
 
           
@@ -1547,32 +1551,38 @@ async function consumeServerUsage() {
     // QR render
     // ----------------------------------------------
     function render(){
-      qrBox.innerHTML = '';
-      const placeholderDefault = 'https://syntri-qr-generator.web.app/';
-      const value = text.value.trim() || placeholderDefault;
-      const colorDark = fg.value || '#000000';
-      const colorLight = transparent?.checked ? 'rgba(0,0,0,0)' : '#ffffff';
-      const width = clamp(parseInt(size.value||100,10), 64, 2048);
-      const m = clamp(parseInt(margin.value||2,10), 0, 16);
+  qrBox.innerHTML = '';
 
-       qr = new QRCode(qrBox, {
-        text: value, width, height: width,
-        colorDark, colorLight,
-        correctLevel: QRCode.CorrectLevel[ecc.value || 'M'],
-        margin: m
-      });
+  const placeholderDefault = 'https://syntri-qr-generator.web.app/';
+  const value = text.value.trim() || placeholderDefault;
 
-      // --- FORCE CANVAS MODE (qrcodejs hides canvas by default) ---
-    const c = qrBox.querySelector('canvas');
-    const img = qrBox.querySelector('img');
-    if (c) c.style.display = 'block';
-    if (img) img.remove();
-      qrBox.setAttribute('role','img');
-      qrBox.setAttribute('aria-label', `QR code, size ${width}px, ECC ${ecc.value}, margin ${m}`);
+  const colorDark  = fg.value || '#000000';
+  const colorLight = transparent?.checked ? 'rgba(0,0,0,0)' : '#ffffff';
 
-        //  PRO: nałóż logo po wyrenderowaniu QR
-      setTimeout(applyLogoOverlayToPreview, 0);
-    }
+  const width = clamp(parseInt(size.value || 100, 10), 64, 2048);
+  const m     = clamp(parseInt(margin.value || 2, 10), 0, 16);
+
+  qr = new QRCode(qrBox, {
+    text: value,
+    width,
+    height: width,
+    colorDark,
+    colorLight,
+    correctLevel: QRCode.CorrectLevel[ecc.value || 'M'],
+    margin: m
+  });
+
+  // --- FORCE CANVAS MODE (qrcodejs hides canvas by default) ---
+  const c = qrBox.querySelector('canvas');
+  const img = qrBox.querySelector('img');
+  if (c) c.style.display = 'block';
+  if (img) img.remove();
+
+  qrBox.setAttribute('role','img');
+  qrBox.setAttribute('aria-label', `QR code, size ${width}px, ECC ${ecc.value}, margin ${m}`);
+
+  // ✅ NO LOGO OVERLAY IN PREVIEW (export-only)
+}
 
 
 
