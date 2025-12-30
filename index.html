@@ -1598,26 +1598,27 @@ async function consumeServerUsage() {
       const m = clamp(parseInt(margin.value||2,10), 0, 16);
 
        qr = new QRCode(qrBox, {
-        text: value,
-        width,
-        height: width,
-        colorDark,
-        colorLight,
-        correctLevel: QRCode.CorrectLevel[ecc.value || 'M'],
-        margin: m
-      });
-      
-      // --- FORCE CANVAS MODE (qrcodejs hides canvas by default) ---
-      const c = qrBox.querySelector('canvas');
-      const img = qrBox.querySelector('img');
-      if (c) c.style.display = 'block';
-      if (img) img.remove();
-      
-      qrBox.setAttribute('role','img');
-      qrBox.setAttribute('aria-label', `QR code, size ${width}px, ECC ${ecc.value}, margin ${m}`);
-      
-      // ✅ PRO: nałóż logo po wyrenderowaniu QR
-      requestAnimationFrame(() => applyLogoOverlayToPreview());
+  text: value,
+  width,
+  height: width,
+  colorDark,
+  colorLight,
+  correctLevel: QRCode.CorrectLevel[ecc.value || 'M'],
+  margin: m
+});
+
+// --- FORCE CANVAS MODE (qrcodejs hides canvas by default) ---
+const c = qrBox.querySelector('canvas');
+const img = qrBox.querySelector('img');
+if (c) c.style.display = 'block';
+if (img) img.remove();
+
+qrBox.setAttribute('role','img');
+qrBox.setAttribute('aria-label', `QR code, size ${width}px, ECC ${ecc.value}, margin ${m}`);
+
+// ✅ PRO: nałóż logo po wyrenderowaniu QR
+requestAnimationFrame(() => applyLogoOverlayToPreview());
+
 
 
 
