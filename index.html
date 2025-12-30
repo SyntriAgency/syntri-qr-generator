@@ -646,19 +646,7 @@ body {
             <input id="transparent" type="checkbox">
             <span class="muted" data-i18n="label_transparent">Przezroczyste tło</span>
           </label>
-
-         <!-- 🧩 Syntri UI: Checkbox – Logo w środku QR (Premium) -->
-          <label style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-            <input id="qrLogoToggle" type="checkbox" disabled>
-            <span class="muted" data-i18n="label_logo_pro">Logo (Pro)</span>
-          </label>
           
-          <div id="qrLogoPanel" style="display:none;margin-top:8px;">
-            <div class="muted">Logo placeholder enabled (Pro)</div>
-          </div>
-          
-          </div>
-
           
           <!-- 🧩 Syntri UI: Actions – Generuj / Wyczyść / Quota -->
           <div style="display:flex; gap:10px; align-items:center; margin-top:16px;">
@@ -1079,10 +1067,6 @@ body {
     
     let qr;
 
-  // ---Syntri Premium: QR Logo Size Guard (Hard Clamp & Safety) ---
-    const LOGO_MAX_RATIO = 0.28; // max 28% szerokości QR – bezpieczne dla skanowania
-    const LOGO_MIN_PX = 12;      // minimalny sensowny rozmiar logo (px)
-    
    // --- metrics (stub) ---
    // Podmień na wywołanie Firestore, gdy podepniesz Firebase.
    async function bumpQrCount(){
@@ -1093,7 +1077,16 @@ body {
     
     function clamp(n, min, max){ return Math.min(Math.max(n, min), max); }
 
-
+    function filename(ext){
+    const raw = (text?.value || '').trim() || 'syntri';
+    const slug = raw
+    .replace(/^https?:\/\//,'')
+    .slice(0,64)
+    .replace(/[^a-z0-9\-_.]+/gi,'-')
+    .replace(/-+/g,'-')
+    .replace(/(^-|-$)/g,'');
+    return `syntri-qr-${slug || 'code'}.${ext}`;
+}
 
   // ----------------------------------------------
   // --- modal helpers (uniwersalne) ---
@@ -1551,39 +1544,24 @@ async function consumeServerUsage() {
     // QR render
     // ----------------------------------------------
     function render(){
-  qrBox.innerHTML = '';
+      qrBox.innerHTML = '';
+      const placeholderDefault = 'https://syntri-qr-generator.web.app/';
+      const value = text.value.trim() || placeholderDefault;
+      const colorDark = fg.value || '#000000';
+      const colorLight = transparent?.checked ? 'rgba(0,0,0,0)' : '#ffffff';
+      const width = clamp(parseInt(size.value||100,10), 64, 2048);
+      const m = clamp(parseInt(margin.value||2,10), 0, 16);
 
-  const placeholderDefault = 'https://syntri-qr-generator.web.app/';
-  const value = text.value.trim() || placeholderDefault;
+      qr = new QRCode(qrBox, {
+        text: value, width, height: width,
+        colorDark, colorLight,
+        correctLevel: QRCode.CorrectLevel[ecc.value || 'M'],
+        margin: m
+      });
 
-  const colorDark  = fg.value || '#000000';
-  const colorLight = transparent?.checked ? 'rgba(0,0,0,0)' : '#ffffff';
-
-  const width = clamp(parseInt(size.value || 100, 10), 64, 2048);
-  const m     = clamp(parseInt(margin.value || 2, 10), 0, 16);
-
-  qr = new QRCode(qrBox, {
-    text: value,
-    width,
-    height: width,
-    colorDark,
-    colorLight,
-    correctLevel: QRCode.CorrectLevel[ecc.value || 'M'],
-    margin: m
-  });
-
-  // --- FORCE CANVAS MODE (qrcodejs hides canvas by default) ---
-  const c = qrBox.querySelector('canvas');
-  const img = qrBox.querySelector('img');
-  if (c) c.style.display = 'block';
-  if (img) img.remove();
-
-  qrBox.setAttribute('role','img');
-  qrBox.setAttribute('aria-label', `QR code, size ${width}px, ECC ${ecc.value}, margin ${m}`);
-
-  // ✅ NO LOGO OVERLAY IN PREVIEW (export-only)
-}
-
+      qrBox.setAttribute('role','img');
+      qrBox.setAttribute('aria-label', `QR code, size ${width}px, ECC ${ecc.value}, margin ${m}`);
+    }
 
 
     
@@ -1603,22 +1581,11 @@ function downloadCanvasAsPNG(canvas, name){
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(canvas, 0, 0, target, target);
 
- // --- 19) Syntri Premium: PNG Export – Center Placeholder (Clamped) ---
-if (isProClient() && qrLogoToggle?.checked) {
-  const qrSizePx = target;
-
-  let boxPx = Math.floor(qrSizePx * 0.22);
-  const maxBoxPx = Math.floor(qrSizePx * LOGO_MAX_RATIO);
-  boxPx = clamp(boxPx, LOGO_MIN_PX, maxBoxPx);
-
-  const x = Math.floor((qrSizePx - boxPx) / 2);
-  const y = Math.floor((qrSizePx - boxPx) / 2);
-
-  const pad = Math.floor(boxPx * 0.12);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(x - pad, y - pad, boxPx + pad * 2, boxPx + pad * 2);
+  const a = document.createElement('a');
+  a.download = name;
+  a.href = off.toDataURL('image/png');
+  a.click();
 }
-
 
 // === TRUE-VECTOR SVG from QR matrix ===
 function downloadVectorSVGFromQR(qObj, {
@@ -2438,8 +2405,6 @@ const I18N = {
     label_transparent: 'Przezroczyste tło',
     note_offline: 'Działa lokalnie w przeglądarce — żadne dane nie opuszczają urządzenia.',
     hint_hotkey: '— szybkie generowanie',
-    label_logo_pro: 'Logo (Pro)',
-    
 
     // --- PRZYCISKI ---
     btn_generate: 'Generuj',
@@ -2624,8 +2589,6 @@ const I18N = {
     label_transparent: 'Transparent background',
     note_offline: 'Runs locally in your browser — no data leaves your device.',
     hint_hotkey: '— quick generate',
-    label_logo_pro: 'Logo (Pro)',
-
 
     // --- BUTTONS ---
     btn_generate: 'Generate',
@@ -2840,6 +2803,7 @@ if (window?.USE_SERVER_USAGE === true && _loggedIn) {
   renderUsagePill();
   setUsagePillLoading(false);
 }
+
   </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
@@ -3429,30 +3393,6 @@ function updateCancelVisibility(data){
     if (status === 'success') window.location.href = BASE + 'success.html';
     else if (status === 'cancel') window.location.href = BASE + 'cancel.html';
   })();
-
-// --- 19) Syntri Premium: QR Logo Toggle / Upload Panel ---
-
-const qrLogoToggle = document.getElementById('qrLogoToggle');
-const qrLogoPanel  = document.getElementById('qrLogoPanel');
-
-qrLogoToggle?.addEventListener('change', () => {
-  qrLogoPanel.style.display = qrLogoToggle.checked ? 'block' : 'none';
-});
-
-if (qrLogoPanel)
-  qrLogoPanel.style.display = qrLogoToggle?.checked ? 'block' : 'none';
-
-// --- 19a) Syntri Premium: Enable / Disable Logo Toggle by Plan ---
-if (qrLogoToggle) {
-  qrLogoToggle.disabled = !isProClient();
-  if (!isProClient()) qrLogoToggle.checked = false;
-}
-
-
-
-
-
-
 </script>     
       
 </body>
