@@ -3510,26 +3510,30 @@ qrLogoFile?.addEventListener('change', () => {
 
   if (!file) {
     window.qrLogoImg = null;
-    if (qrLogoPreview) qrLogoPreview.src = '';
-    render(); // QR bez logo
+    if (qrLogoPreview) {
+      qrLogoPreview.src = '';
+      qrLogoPreview.style.display = 'none';
+    }
+    render();
     return;
   }
 
-  const reader = new FileReader();
-  reader.onload = () => {
+  const fr = new FileReader();
+  fr.onload = () => {
     const img = new Image();
     img.onload = () => {
       window.qrLogoImg = img;
 
-      // ✅ PREVIEW
-      if (qrLogoPreview) qrLogoPreview.src = img.src;
+      if (qrLogoPreview) {
+        qrLogoPreview.src = img.src;
+        qrLogoPreview.style.display = 'block';
+      }
 
-      // ✅ odśwież QR z logo
       render();
     };
-    img.src = String(reader.result);
+    img.src = String(fr.result);
   };
-  reader.readAsDataURL(file);
+  fr.readAsDataURL(file);
 });
 
 
