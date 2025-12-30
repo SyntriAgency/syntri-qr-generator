@@ -1089,30 +1089,6 @@ body {
     
     function clamp(n, min, max){ return Math.min(Math.max(n, min), max); }
 
-    // --- 19b) Syntri Premium: QR Logo Placeholder – Apply Center Box ---
-function applyLogoSpaceToPreview(){
-  if (!isProClient() || !qrLogoToggle?.checked) return;
-
-  const canvas = qrBox?.querySelector('canvas');
-  if (!canvas) return;
-
-  const ctx = canvas.getContext('2d');
-  const qrSizePx = canvas.width;
-
-  let boxPx = Math.floor(qrSizePx * 0.22);
-  const maxBoxPx = Math.floor(qrSizePx * LOGO_MAX_RATIO);
-  boxPx = clamp(boxPx, LOGO_MIN_PX, maxBoxPx);
-
-  const x = Math.floor((qrSizePx - boxPx) / 2);
-  const y = Math.floor((qrSizePx - boxPx) / 2);
-
-  // placeholder ZAWSZE biały (niezależnie od transparent)
-  const pad = Math.floor(boxPx * 0.12);
-  ctx.save();
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(x - pad, y - pad, boxPx + pad * 2, boxPx + pad * 2);
-  ctx.restore();
-}
 
 
   // ----------------------------------------------
