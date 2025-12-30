@@ -654,11 +654,22 @@ body {
           <span class="muted" data-i18n="label_logo_pro">Logo (Pro)</span>
           </label>
 
-          <!-- 🧩 Syntri UI: QR Logo Upload (Premium) -->
+          <<!-- 🧩 Syntri UI: QR Logo Upload (Premium) -->
           <div id="qrLogoPanel" style="display:none;margin-top:10px;">
             <input id="qrLogoInput" type="file" accept="image/*" class="input">
+          
+            <img
+              id="qrLogoPreview"
+              alt="Logo preview"
+              style="
+                max-width:120px;
+                max-height:120px;
+                margin-top:8px;
+                border-radius:12px;
+                display:none;
+              "
+            />
           </div>
-
 
           
           <!-- 🧩 Syntri UI: Actions – Generuj / Wyczyść / Quota -->
@@ -3491,15 +3502,16 @@ if (qrLogoToggle) {
 }
 
 // --- 19b) Syntri Premium: Logo File Picker -> Load to window.qrLogoImg ---
-const qrLogoFile = document.getElementById('qrLogoFile');
+const qrLogoFile = document.getElementById('qrLogoInput');
 const qrLogoPreview = document.getElementById('qrLogoPreview');
 
 qrLogoFile?.addEventListener('change', () => {
   const file = qrLogoFile.files?.[0];
+
   if (!file) {
     window.qrLogoImg = null;
     if (qrLogoPreview) qrLogoPreview.src = '';
-    render(); // ← odśwież QR bez logo
+    render(); // QR bez logo
     return;
   }
 
@@ -3508,13 +3520,18 @@ qrLogoFile?.addEventListener('change', () => {
     const img = new Image();
     img.onload = () => {
       window.qrLogoImg = img;
+
+      // ✅ PREVIEW
       if (qrLogoPreview) qrLogoPreview.src = img.src;
-      render(); // ← 🔑 TO JEST KLUCZ
+
+      // ✅ odśwież QR z logo
+      render();
     };
     img.src = String(reader.result);
   };
   reader.readAsDataURL(file);
 });
+
 
 
 
