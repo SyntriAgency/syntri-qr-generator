@@ -3510,31 +3510,29 @@ qrLogoFile?.addEventListener('change', () => {
 
   if (!file) {
     window.qrLogoImg = null;
-    if (qrLogoPreview) {
-      qrLogoPreview.src = '';
-      qrLogoPreview.style.display = 'none';
-    }
+    if (qrLogoPreview) qrLogoPreview.src = '';
     render();
     return;
   }
 
-  const fr = new FileReader();
-  fr.onload = () => {
-    const img = new Image();
-    img.onload = () => {
-      window.qrLogoImg = img;
+  const url = URL.createObjectURL(file);
 
-      if (qrLogoPreview) {
-        qrLogoPreview.src = img.src;
-        qrLogoPreview.style.display = 'block';
-      }
+  // preview
+  if (qrLogoPreview) {
+    qrLogoPreview.src = url;
+    qrLogoPreview.style.display = 'block';
+  }
 
-      render();
-    };
-    img.src = String(fr.result);
+  // image do renderowania QR
+  const img = new Image();
+  img.onload = () => {
+    window.qrLogoImg = img;
+    render();                 // <- tu ma się zaktualizować QR
+    // URL.revokeObjectURL(url); // opcjonalnie (po renderze)
   };
-  fr.readAsDataURL(file);
+  img.src = url;
 });
+
 
 
 
