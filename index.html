@@ -1107,42 +1107,55 @@ body {
 
     // --- 19b) Syntri Premium: QR Logo – Apply Overlay To Preview Canvas ---
     function applyLogoOverlayToPreview(){
-      if (!isProClient() || !qrLogoToggle?.checked || !window.qrLogoImg) return;
-    
-      const canvas = qrBox?.querySelector('canvas');
-      if (!canvas) return;
-    
-      const ctx = canvas.getContext('2d');
-      const qrSizePx = canvas.width;
-    
-      let logoPx = Math.floor(qrSizePx * 0.22);
-      const maxLogoPx = Math.floor(qrSizePx * LOGO_MAX_RATIO);
-      logoPx = clamp(logoPx, LOGO_MIN_PX, maxLogoPx);
-    
-      const x = Math.floor((qrSizePx - logoPx) / 2);
-      const y = Math.floor((qrSizePx - logoPx) / 2);
-    
-      // biały podkład tylko gdy tło nie jest transparent
-      if (!transparent?.checked) {
-        const pad = Math.floor(logoPx * 0.12);
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(x - pad, y - pad, logoPx + pad * 2, logoPx + pad * 2);
-      }
-    
-      ctx.drawImage(window.qrLogoImg, x, y, logoPx, logoPx);
-    }
+  const canvas = qrBox?.querySelector('canvas');
+  if (!canvas) return;
 
-    
-    function filename(ext){
-    const raw = (text?.value || '').trim() || 'syntri';
-    const slug = raw
-    .replace(/^https?:\/\//,'')
-    .slice(0,64)
-    .replace(/[^a-z0-9\-_.]+/gi,'-')
-    .replace(/-+/g,'-')
-    .replace(/(^-|-$)/g,'');
-    return `syntri-qr-${slug || 'code'}.${ext}`;
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  // snapshot QR (żeby nigdy nie zostać z białym tłem)
+  const snap = document.createElement('canvas');
+  snap.width = w; snap.height = h;
+  const sctx = snap.getContext('2d');
+  sctx.drawImage(canvas, 0, 0);
+
+  // restore snapshot (w razie wcześniejszych clear/overdraw)
+  ctx.clearRect(0, 0, w, h);
+  ctx.drawImage(snap, 0, 0);
+
+  const img = window.qrLogoImg;
+  if (!img || !img.complete || !img.naturalWidth) return;
+
+  // rozmiar logo (np. 22% szerokości QR)
+  const size = Math.round(w * 0.22);
+  const x = Math.round((w - size) / 2);
+  const y = Math.round((h - size) / 2);
+
+  // biała podkładka (czytelność)
+  const pad = Math.round(size * 0.10);
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  const r = Math.round((size + pad*2) * 0.18);
+  roundRect(ctx, x - pad, y - pad, size + pad*2, size + pad*2, r);
+  ctx.fill();
+
+  // logo
+  ctx.drawImage(img, x, y, size, size);
 }
+
+function roundRect(ctx, x, y, w, h, r){
+  r = Math.min(r, w/2, h/2);
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y,   x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x,   y+h, r);
+  ctx.arcTo(x,   y+h, x,   y,   r);
+  ctx.arcTo(x,   y,   x+w, y,   r);
+  ctx.closePath();
+}
+
 
   // ----------------------------------------------
   // --- modal helpers (uniwersalne) ---
