@@ -1624,8 +1624,21 @@ async function consumeServerUsage() {
       qrBox.setAttribute('aria-label', `QR code, size ${width}px, ECC ${ecc.value}, margin ${m}`);
 
         //  PRO: nałóż logo po wyrenderowaniu QR
-      setTimeout(applyLogoOverlayToPreview, 0);
+      queueLogoOverlay();
     }
+    function queueLogoOverlay(tries = 12){
+  if (!qrBox) return;
+  if (!isProClient() || !qrLogoToggle?.checked || !window.qrLogoImg) return;
+
+  const canvas = qrBox.querySelector('canvas');
+  if (!canvas || canvas.width === 0 || canvas.height === 0) {
+    if (tries > 0) requestAnimationFrame(() => queueLogoOverlay(tries - 1));
+    return;
+  }
+
+  applyLogoOverlayToPreview();
+}
+
 
 
 
