@@ -3499,30 +3499,16 @@ function updateCancelVisibility(data){
 
 <!--18) Checkout Redirect Handler ”--->
  <script>
-(() => {
-  try {
+  (function () {
     const url = new URL(window.location.href);
     const status = (url.searchParams.get('status') || '').toLowerCase();
 
-    // uruchamiaj to WYŁĄCZNIE na stronie callback
-    const path = (url.pathname || '').toLowerCase();
-    if (!path.endsWith('/return.html')) return;
+    // absolutne URL-e do Twojego repo:
+    const BASE = 'https://syntriagency.github.io/syntri-qr-generator/';
+    if (status === 'success') window.location.href = BASE + 'success.html';
+    else if (status === 'cancel') window.location.href = BASE + 'cancel.html';
+  })();
 
-    // base z bieżącego hosta (bez hardcode)
-    const BASE = url.origin + '/syntri-qr-generator/';
-
-    if (status === 'success') return window.location.replace(BASE + 'success.html');
-    if (status === 'cancel')  return window.location.replace(BASE + 'cancel.html');
-
-    // cleanup
-    if (url.searchParams.has('status')) {
-      url.searchParams.delete('status');
-      window.history.replaceState({}, '', url.toString());
-    }
-  } catch (e) {
-    // nic – nie blokuj UI
-  }
-})();
 </script>
 
 
